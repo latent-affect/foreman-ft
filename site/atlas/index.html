@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atlas · Foreman</title>
+  <meta name="description" content="Atlas joins hook verdicts to tickets.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="mast">
+    <a class="mark" href="../">Foreman</a>
+    <nav>
+        <a href="../">Foreman</a>
+        <a href="../install/">Install</a>
+        <a href="../bollard/">Bollard</a>
+        <a href="../tessera/">Tessera</a>
+        <a href="./" aria-current="page">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+    </nav>
+    <a class="cta" href="../install/">Install</a>
+    <details class="menu">
+      <summary>Menu</summary>
+      <div>
+        <a href="../">Foreman</a>
+        <a href="../install/">Install</a>
+        <a href="../bollard/">Bollard</a>
+        <a href="../tessera/">Tessera</a>
+        <a href="./" aria-current="page">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+        <a class="cta" href="../install/">Install</a>
+      </div>
+    </details>
+  </header>
+  <main class="wrap">
+    <p class="eyebrow">warehouse</p>
+    <h1>Two maps. One query.</h1>
+    <p class="lede">Atlas joins Bollard's verdict ledger to Tessera's tickets so a question like "which gate has never fired outside a test fixture" is a view, not a week of digging. The design doc in the repo is fourteen hundred lines. That file is what the process produces.</p>
+
+    <div class="split">
+      <article class="panel">
+        <h3>Closed</h3>
+        <p>An earlier ingest script silently ingested zero rows into three tables while still reporting a clean pass. Caught by a dogfood run, not by the pipeline. Fixed.</p>
+      </article>
+      <article class="panel">
+        <h3>Open</h3>
+        <p>Ship-readiness evidence for Atlas itself needed hand correction in three of five commits in one week while that was being measured. Most Bash invocations on the watched machine still do not resolve to a single registered project. A map that hides the unsurveyed parts is not a map.</p>
+      </article>
+    </div>
+
+    <p>GifSmith, wat, and hyphy are separate public repos. They are not this tree.</p>
+    <div class="actions">
+      <a class="cta" href="../install/">Install Foreman</a>
+    </div>
+  </main>
+  <footer class="foot">
+    <a href="https://github.com/latent-affect/foreman-ft">GitHub</a>
+    <a href="https://github.com/latent-affect/hyphy">hyphy</a>
+    <a href="https://github.com/latent-affect/wat">wat</a>
+    <a href="https://github.com/latent-affect/gifsmith">GifSmith</a>
+    <span>latent-affect</span>
+  </footer>
+</body>
+</html>

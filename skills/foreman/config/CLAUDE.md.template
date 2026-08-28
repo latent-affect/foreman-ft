@@ -1,0 +1,30 @@
+# CLAUDE.md — {{CODENAME}} ({{PREFIX}})
+
+{{PURPOSE}}
+
+## Foreman is active here
+
+This project uses Foreman (hard-gated V-Model). `.foreman/` marks it as opted in;
+`.claude/settings.json` registers the hard hooks (`architecture_gate.py`,
+`concept_gate.py`, `goals_freeze_gate.py`, `preflight_blocking_gate.py`,
+`dependency_provenance_gate.py`, `ship_readiness_gate.py`) — written to disk by
+`foreman-init.sh` **before this session started**, specifically so project-local hook
+registration is live from the first tool call, not created mid-session. If a hook denial
+ever seems wrong, report it and route to the stage it names — do not work around it.
+
+## All work is documented in TESSERA
+
+Ticket prefix: `{{PREFIX}}-N`, tracked in TESSERA (`/path/to/ticket-system`, CLI:
+`python3 -m tessera.api.cli --db data/tessera.db ...`, every write needs `--actor`). Every
+bug, design decision, and fix in this project gets a ticket — create one before starting,
+freeze criteria before implementing, claim with `--file`/`--commit` evidence, close once
+verified. This is a standing expectation, not something that needs to be asked for per task.
+
+## Real gotchas
+
+- `GOALS.json`'s schema template lives in this harness at
+  `skills/foreman/config/GOALS.template.json` — copied locally to
+  `.foreman/GOALS.template.json` by init, so there's no need to search for it.
+- Component globs in `ARCHITECTURE.md`'s fenced `components` block are prefix matches
+  (`"dir/**"`), not full glob syntax — see `component_coupling.py`'s own docstring before
+  assuming `**/*.py`-style patterns work.

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foreman Status — every project</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #f3f6f6; --surface: #ffffff; --surface-2: #eef2f2; --border: #d8e0e1;
+    --text: #182226; --text-dim: #5b6d72; --accent: #1f7c88; --accent-soft: #e3f0f1;
+    --good: #2f8f57; --good-soft: #e5f3ea; --warn: #a8721f; --warn-soft: #f6ecdb;
+    --critical: #b8432c; --critical-soft: #f8e6e1;
+    --font-ui: 'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12171b; --surface: #1a2126; --surface-2: #212a30; --border: #2b363d;
+      --text: #e6ecee; --text-dim: #90a0a8; --accent: #5fc4cf; --accent-soft: #1e3236;
+      --good: #7bcb98; --good-soft: #1c2f24; --warn: #e3b45c; --warn-soft: #332a17;
+      --critical: #e78872; --critical-soft: #34211c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12171b; --surface: #1a2126; --surface-2: #212a30; --border: #2b363d;
+    --text: #e6ecee; --text-dim: #90a0a8; --accent: #5fc4cf; --accent-soft: #1e3236;
+    --good: #7bcb98; --good-soft: #1c2f24; --warn: #e3b45c; --warn-soft: #332a17;
+    --critical: #e78872; --critical-soft: #34211c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); }
+  .wrap { max-width: clamp(1080px, 82vw, 2400px); margin: 0 auto; padding: 2.5rem clamp(1.5rem, 4vw, 4rem) 5rem; display: flex; flex-direction: column; gap: 2.25rem; }
+  header.page { display: flex; flex-direction: column; gap: 0.6rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1 { margin: 0; font-size: clamp(1.6rem, 2.6vw, 2.1rem); font-weight: 700; text-wrap: balance; letter-spacing: -0.01em; }
+  .subtitle { color: var(--text-dim); font-size: 0.95rem; max-width: 74ch; }
+  .live-row { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); }
+  .live-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--good); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+  .banner { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 10px; padding: 0.9rem 1.1rem; font-size: 0.88rem; display: flex; gap: 0.7rem; align-items: flex-start; }
+  .banner.critical { background: var(--critical-soft); border-color: color-mix(in srgb, var(--critical) 45%, transparent); }
+  .banner .dot { flex: none; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--warn); margin-top: 0.4rem; }
+  .banner.critical .dot { background: var(--critical); }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .stat { background: var(--surface); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; }
+  .stat .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; }
+  .stat .value { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .value.good { color: var(--good); } .stat .value.warn { color: var(--warn); } .stat .value.critical { color: var(--critical); }
+  .stat .note { font-size: 0.78rem; color: var(--text-dim); }
+  section.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .panel-head { padding: 1rem 1.3rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .panel-head h2 { margin: 0; font-size: 1.02rem; font-weight: 600; }
+  .panel-head .hint { font-size: 0.8rem; color: var(--text-dim); }
+  .panel-body { padding: 1.3rem; }
+  .pill { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; padding: 0.22rem 0.6rem; border-radius: 999px; white-space: nowrap; }
+  .pill.good { background: var(--good-soft); color: var(--good); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.critical { background: var(--critical-soft); color: var(--critical); }
+  .pill.idle { background: var(--surface-2); color: var(--text-dim); }
+  .pill .dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: currentColor; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th, td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 600; cursor: pointer; user-select: none; }
+  th:hover { color: var(--text); }
+  th.sorted::after { content: ' \25BE'; color: var(--accent); }
+  td.mono, th.mono { font-family: var(--font-mono); }
+  td.path { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 26ch; }
+  tr:last-child td { border-bottom: none; }
+  tr.project-row:hover { background: var(--surface-2); }
+  .bar-cell { display: flex; align-items: center; gap: 0.5rem; }
+  .bar-track { width: 70px; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; flex: none; }
+  .bar-fill { height: 100%; background: var(--good); }
+  .filter-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+  input#filter { font-family: var(--font-ui); font-size: 0.85rem; padding: 0.45rem 0.7rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); min-width: 220px; }
+  input#filter:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .empty-state { display: flex; flex-direction: column; gap: 0.4rem; padding: 1.4rem 0.2rem; color: var(--text-dim); font-size: 0.9rem; }
+  .empty-state strong { color: var(--text); }
+  code.inline { font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2); padding: 0.1em 0.4em; border-radius: 4px; }
+  footer.page { border-top: 1px solid var(--border); padding-top: 1.2rem; font-size: 0.8rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 0.3rem; }
+  footer.page code { font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <span class="eyebrow">Foreman / TESSERA / ATLAS</span>
+  <h1>Project status — every project this harness touches</h1>
+  <p class="subtitle">One roster instead of one dashboard per project. Project identity comes straight from TESSERA's own project registry; ticket and gate-activity numbers come from ATLAS's read-only query facade against the live warehouse.</p>
+  <div class="live-row"><span class="live-dot"></span><span id="live-status">loading…</span></div>
+</header>
+
+<div id="warehouse-banner"></div>
+
+<div class="stat-grid" id="global-stats"></div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Projects</h2>
+    <div class="filter-row">
+      <input id="filter" type="text" placeholder="Filter by codename, prefix, or path…">
+      <span class="hint" id="project-count-hint"></span>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="table-scroll" id="projects-body"></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Gate health (global)</h2>
+    <span class="hint">From <code class="inline">v_gate_proven_live</code> — has each hook fired on real, resolved project traffic, not just a test fixture.</span>
+  </div>
+  <div class="panel-body">
+    <div class="table-scroll" id="gate-health-body"></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Warehouse sources</h2>
+    <span class="hint">From <code class="inline">v_source_freshness</code> — how current the ATLAS warehouse's own ingest is.</span>
+  </div>
+  <div class="panel-body">
+    <div class="table-scroll" id="freshness-body"></div>
+  </div>
+</section>
+
+<footer class="page">
+  <span>Data: <code>foreman_status_dashboard_data.py</code> · TESSERA <code>projects</code> table + ATLAS warehouse <code>atlas/warehouse/atlas.db</code> via <code>atlas/query/facade.py</code>.</span>
+  <span>Loopback only — <code>foreman_status_dashboard_server.py [port]</code>, default port 8424.</span>
+</footer>
+
+</div>
+
+<script>
+const REFRESH_MS = 15000;
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let lastData = null;
+let sortKey = 'codename';
+let sortDir = 1;
+
+function warehouseBanner(w) {
+  const el = document.getElementById('warehouse-banner');
+  if (!w || !w.available) {
+    el.innerHTML = `<div class="banner critical"><span class="dot"></span><div><strong>ATLAS warehouse unavailable.</strong> ${esc(w ? w.reason : 'no warehouse data returned')}. Ticket and gate numbers below are shown as unavailable, not zero.</div></div>`;
+    return;
+  }
+  if (w.state !== 'clean') {
+    el.innerHTML = `<div class="banner"><span class="dot"></span><div><strong>Warehouse state: ${esc(w.state)}.</strong> ${esc(w.detail)}. Ticket and gate numbers below are shown as unavailable until the next clean ingest run.</div></div>`;
+    return;
+  }
+  el.innerHTML = '';
+}
+
+function globalStats(data) {
+  const el = document.getElementById('global-stats');
+  const projects = data.projects || [];
+  const withRoot = projects.filter(p => p.source_root);
+  const totalTickets = projects.reduce((n, p) => n + (p.tickets ? p.tickets.total : 0), 0);
+  const openTickets = projects.reduce((n, p) => n + (p.tickets ? (p.tickets.total - p.tickets.closed) : 0), 0);
+  const totalDenies = projects.reduce((n, p) => n + (p.gates ? (p.gates.deny || 0) : 0), 0);
+  const w = data.warehouse || {};
+  el.innerHTML = `
+    <div class="stat"><span class="label">Projects</span><span class="value">${esc(projects.length)}</span><span class="note">${esc(withRoot.length)} with a resolved source root</span></div>
+    <div class="stat"><span class="label">Open tickets</span><span class="value ${openTickets ? 'warn' : 'good'}">${esc(openTickets)}</span><span class="note">of ${esc(totalTickets)} total, across all projects</span></div>
+    <div class="stat"><span class="label">Gate denies</span><span class="value ${totalDenies ? 'warn' : 'good'}">${esc(totalDenies)}</span><span class="note">lifetime, from the warehouse's verdict ledger</span></div>
+    <div class="stat"><span class="label">Warehouse run</span><span class="value ${w.state === 'clean' ? 'good' : 'critical'}">${esc(w.state || 'unavailable')}</span><span class="note">${w.run_id ? 'run #' + esc(w.run_id) : ''}</span></div>
+  `;
+}
+
+function pctBar(closed, total) {
+  if (!total) return '<span class="pill idle"><span class="dot"></span>no tickets</span>';
+  const pct = Math.round((closed / total) * 100);
+  return `<div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span class="mono" style="font-size:0.78rem">${esc(closed)}/${esc(total)}</span></div>`;
+}
+
+function sortProjects(projects) {
+  const dir = sortDir;
+  return [...projects].sort((a, b) => {
+    let av, bv;
+    if (sortKey === 'tickets_open') {
+      av = a.tickets ? (a.tickets.total - a.tickets.closed) : -1;
+      bv = b.tickets ? (b.tickets.total - b.tickets.closed) : -1;
+    } else if (sortKey === 'gate_deny') {
+      av = a.gates ? a.gates.deny : -1;
+      bv = b.gates ? b.gates.deny : -1;
+    } else {
+      av = (a[sortKey] || '').toString().toLowerCase();
+      bv = (b[sortKey] || '').toString().toLowerCase();
+    }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function renderProjects(data) {
+  const filterVal = (document.getElementById('filter').value || '').toLowerCase();
+  let projects = (data.projects || []).filter(p =>
+    !filterVal ||
+    (p.codename || '').toLowerCase().includes(filterVal) ||
+    (p.prefix || '').toLowerCase().includes(filterVal) ||
+    (p.source_root || '').toLowerCase().includes(filterVal)
+  );
+  document.getElementById('project-count-hint').textContent = `${projects.length} of ${(data.projects || []).length} shown`;
+  projects = sortProjects(projects);
+
+  const cols = [
+    ['codename', 'Project'], ['prefix', 'Prefix'], ['tickets_open', 'Tickets (open/total)'],
+    ['gate_deny', 'Gate denies'], ['source_root', 'Source root'],
+  ];
+  const head = cols.map(([key, label]) =>
+    `<th class="${sortKey === key ? 'sorted' : ''}" data-key="${key}">${esc(label)}</th>`
+  ).join('');
+
+  const rows = projects.map(p => {
+    const tix = p.tickets;
+    const gates = p.gates;
+    const denyCls = gates && gates.deny > 20 ? 'critical' : (gates && gates.deny > 0 ? 'warn' : 'good');
+    return `<tr class="project-row">
+      <td><strong>${esc(p.codename)}</strong></td>
+      <td class="mono">${esc(p.prefix)}</td>
+      <td>${tix ? pctBar(tix.closed, tix.total) : '<span class="pill idle"><span class="dot"></span>unavailable</span>'}</td>
+      <td>${gates ? `<span class="pill ${denyCls}"><span class="dot"></span>${esc(gates.deny || 0)} deny · ${esc(gates.ask || 0)} ask</span>` : '<span class="pill idle"><span class="dot"></span>unavailable</span>'}</td>
+      <td class="path" title="${esc(p.source_root || '')}">${esc(p.source_root || '—')}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('projects-body').innerHTML = projects.length
+    ? `<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`
+    : `<div class="empty-state"><strong>No projects match.</strong></div>`;
+
+  document.querySelectorAll('th[data-key]').forEach(th => {
+    th.onclick = () => {
+      const key = th.dataset.key;
+      if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = 1; }
+      renderProjects(lastData);
+    };
+  });
+}
+
+function renderGateHealth(data) {
+  const rows = (data.global && data.global.gate_health) || [];
+  const body = document.getElementById('gate-health-body');
+  if (!rows.length) {
+    body.innerHTML = `<div class="empty-state"><strong>No gate-health data.</strong><span>Warehouse may be unavailable — see the banner above.</span></div>`;
+    return;
+  }
+  body.innerHTML = `<table><thead><tr><th>handler</th><th class="mono">fires</th><th class="mono">resolved</th><th class="mono">unresolved</th><th class="mono">projects fired in</th><th>proven live</th></tr></thead><tbody>${
+    rows.map(r => `<tr>
+      <td class="mono">${esc(r.handler_id)}</td>
+      <td class="mono">${esc(r.fires_total)}</td>
+      <td class="mono">${esc(r.fires_resolved)}</td>
+      <td class="mono">${esc(r.fires_unresolved)}</td>
+      <td class="mono">${esc(r.registered_projects_fired_in)}</td>
+      <td>${r.f10_proven_live ? '<span class="pill good"><span class="dot"></span>yes</span>' : '<span class="pill idle"><span class="dot"></span>no</span>'}</td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+function renderFreshness(data) {
+  const rows = (data.global && data.global.source_freshness) || [];
+  const body = document.getElementById('freshness-body');
+  if (!rows.length) {
+    body.innerHTML = `<div class="empty-state"><strong>No source-freshness data.</strong></div>`;
+    return;
+  }
+  body.innerHTML = `<table><thead><tr><th>source</th><th>path</th><th class="mono">rows ingested</th><th class="mono">staleness (min)</th></tr></thead><tbody>${
+    rows.map(r => {
+      const stale = r.staleness_minutes;
+      const cls = stale > 1440 ? 'critical' : (stale > 120 ? 'warn' : 'good');
+      return `<tr><td>${esc(r.source_name)}</td><td class="path">${esc(r.source_path)}</td><td class="mono">${esc(r.rows_ingested)}</td><td class="mono"><span class="pill ${cls}"><span class="dot"></span>${esc(Math.round(stale))}</span></td></tr>`;
+    }).join('')
+  }</tbody></table>`;
+}
+
+function render(data) {
+  lastData = data;
+  warehouseBanner(data.warehouse);
+  globalStats(data);
+  renderProjects(data);
+  renderGateHealth(data);
+  renderFreshness(data);
+  document.getElementById('live-status').textContent = `updated ${new Date().toLocaleTimeString()} — next refresh in ${REFRESH_MS/1000}s`;
+}
+
+async function tick() {
+  try {
+    const res = await fetch('/data.json', {cache: 'no-store'});
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    document.getElementById('live-status').textContent = 'refresh failed: ' + e;
+  }
+}
+
+document.getElementById('filter').addEventListener('input', () => { if (lastData) renderProjects(lastData); });
+
+tick();
+setInterval(tick, REFRESH_MS);
+</script>
+</body>
+</html>

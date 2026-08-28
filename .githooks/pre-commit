@@ -1,0 +1,3 @@
+#!/bin/sh
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 1
+PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m tessera.tessguard.gitgate

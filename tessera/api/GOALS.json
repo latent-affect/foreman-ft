@@ -1,0 +1,245 @@
+{
+  "project": "tessera",
+  "component": "api",
+  "scope_version": 1,
+  "created": "2026-08-15T00:00:00Z",
+  "criteria_frozen_at": "2026-08-19T10:49:19.926Z",
+  "done_state": "tessera/api/ provides a CLI and a localhost-only HTTP API (thin wrappers over store/gitops) with an SSE live-update stream that sees writes from other processes, docs/ file read/write as the sole write path with real cross-process locking, and discrepancy computation for the diff-vs-claim view, demonstrated end to end with a deliberately-mismatched claim. comment (CLI) and POST /tickets/:tid/comments (HTTP) also accept an optional code_snippet field (C12-C13), passed straight through to store.add_comment().",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "CLI subcommands exist for create/get/list/comment/transition/link/set-field/set-reference-docs/claim/promote/rollback/stage-sync, each a thin call into store/gitops with no duplicated business logic.",
+      "verification": "python3 -m unittest tessera.api.tests.test_cli.CliTests.test_core_subcommands_roundtrip exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "HTTP API exposes equivalent JSON endpoints for the same operations as C1's CLI commands, returning the same underlying data.",
+      "verification": "python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_core_endpoints_roundtrip exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "The HTTP server binds 127.0.0.1 only -- a connection attempt to the same port on a real non-loopback interface address is refused, never silently accepted.",
+      "verification": "python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_binds_localhost_only exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "The SSE endpoint delivers a ticket event created by a DIFFERENT OS process (not just in-process writes) within the poll interval, proving the rowid-poll design actually closes the cross-process blind spot ARCHITECTURE.md's review found.",
+      "verification": "python3 -m unittest tessera.api.tests.test_sse.SseTests.test_sse_sees_cross_process_write exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "docs/ file writes go through api only, using flock(LOCK_EX) held across the full read-modify-write (not just a threading.Lock), restricted to paths under the docs/ root -- a path escaping docs/ (e.g. '../../etc/passwd') is rejected.",
+      "verification": "python3 -m unittest tessera.api.tests.test_docs.DocsTests.test_docs_write_locked_and_path_restricted exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "A docs/ file write emits no store event (a stated design decision, not an oversight) -- verified by asserting the events table row count is unchanged by a docs write.",
+      "verification": "python3 -m unittest tessera.api.tests.test_docs.DocsTests.test_docs_write_emits_no_event exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "discrepancy(ticket_id) compares a claim's files_touched against gitops's real diff files for the claimed commit and returns the set difference in both directions; a deliberately-mismatched claim (omits a touched file) is demonstrated to produce a non-empty discrepancy.",
+      "verification": "python3 -m unittest tessera.api.tests.test_discrepancy.DiscrepancyTests.test_mismatched_claim_produces_discrepancy exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "A claim matching the real diff exactly produces an empty discrepancy (no false positives).",
+      "verification": "python3 -m unittest tessera.api.tests.test_discrepancy.DiscrepancyTests.test_matching_claim_produces_no_discrepancy exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C9",
+      "statement": "HTTP responses use distinct, correct status codes: 201 on ticket creation, 400 on a WorkflowError/HierarchyError/CycleError from store (with the real error message in the body), 404 for a ticket id that doesn't exist -- not everything defaulting to 200.",
+      "verification": "python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_status_codes_distinct_and_correct exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C10",
+      "statement": "actor identity threads from the CLI (--actor flag, required) and from the HTTP API (required JSON field) into every store/gitops call that records one -- a request missing it is rejected, not defaulted to a generic value that would defeat the audit trail.",
+      "verification": "python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_actor_required_not_defaulted exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C11",
+      "statement": "create-ticket accepts an optional idempotency_key end to end through the HTTP layer and a retried request with the same key returns the same ticket_id (thin pass-through of store's already-proven guarantee, not re-implemented here).",
+      "verification": "python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_idempotency_key_passthrough exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C12",
+      "statement": "CLI 'comment' command accepts an optional --code-snippet flag, passed through to store.add_comment(), retrievable via 'tessera get'.",
+      "verification": "python3 -m unittest tessera.api.tests.test_cli.CliTests.test_comment_code_snippet_flag_roundtrip exits 0.",
+      "verifiable": true,
+      "added": "2026-08-19T10:49:19.926Z"
+    },
+    {
+      "id": "C13",
+      "statement": "HTTP POST /tickets/:tid/comments accepts an optional code_snippet key in the request body and passes it through to store.add_comment(); omitting it is unchanged behavior.",
+      "verification": "python3 -m unittest tessera.api.tests.test_http_api exits 0 (all existing tests pass, plus a new passthrough test).",
+      "verifiable": true,
+      "added": "2026-08-19T10:49:19.926Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "The localhost-only bind is only true in a comment, not in the actual server construction call.",
+      "detection": "C3 connects from a real non-loopback address and asserts refusal, not just reads the bind-call source."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A latency/throughput claim about the SSE poll appears with no reproduction path.",
+      "detection": "grep the diff for numeric claims; each must name the command that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "api re-implements workflow/hierarchy/cycle/idempotency logic instead of calling store, risking drift from store's already-tested behavior.",
+      "detection": "api's ticket-mutation code paths call store methods directly; no duplicated validation logic exists in tessera/api/."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A store/gitops exception is caught in the HTTP layer and turned into a 200 with an error buried in the body, or logged and swallowed.",
+      "detection": "C9 asserts a non-200 status code specifically for each error class, not just that SOME response was returned."
+    },
+    {
+      "id": "F5",
+      "signature": 4,
+      "statement": "The docs/ path-restriction check can be bypassed with a symlink or a '..'-containing path that resolves outside docs/ after normalization.",
+      "detection": "C5's path-restriction test uses a real '../' traversal attempt, checked against the RESOLVED path, not the raw string."
+    }
+  ],
+  "out_of_scope": [
+    "The review UI's HTML/JS/CSS itself (tessera/reviewui/).",
+    "Authentication/authorization (no auth in scope per SCOPE.md).",
+    "Rate limiting, request size limits beyond basic sanity.",
+    "A general-purpose web framework -- stdlib http.server only."
+  ],
+  "constraints": [
+    "Python 3.9+ stdlib only (http.server, socketserver, argparse, json, fcntl, threading) plus tessera.common/store/gitops.",
+    "Server binds 127.0.0.1 explicitly, never an empty host string.",
+    "No business-logic duplication -- every mutation routes through store or gitops."
+  ],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_cli.CliTests.test_core_subcommands_roundtrip -v\ntest_core_subcommands_roundtrip ... ok (create/get/comment/transition/list/set-field/set-reference-docs/link/claim all exercised)",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_core_endpoints_roundtrip -v\ntest_core_endpoints_roundtrip ... ok",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_binds_localhost_only -v\ntest_binds_localhost_only ... ok (connected to the host's real LAN IP, refused; loopback confirmed working in the same test)",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_sse.SseTests.test_sse_sees_cross_process_write -v\ntest_sse_sees_cross_process_write ... ok (ticket created by a genuinely separate `python3 -c` subprocess, seen by the poll loop)",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_docs.DocsTests.test_docs_write_locked_and_path_restricted -v\ntest_docs_write_locked_and_path_restricted ... ok. Real bug caught during development: the test originally used read_doc()+write_doc() as two separate locked calls (lock released in between) and lost 65/100 concurrent increments across 5 real OS processes -- fixed by adding update_doc(), an atomic read-modify-write holding one lock across both steps; write_doc() alone is correctly documented as last-write-wins, not atomic RMW.",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_docs.DocsTests.test_docs_write_emits_no_event -v\ntest_docs_write_emits_no_event ... ok",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_discrepancy.DiscrepancyTests.test_mismatched_claim_produces_discrepancy -v\ntest_mismatched_claim_produces_discrepancy ... ok",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C8",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_discrepancy.DiscrepancyTests.test_matching_claim_produces_no_discrepancy -v\ntest_matching_claim_produces_no_discrepancy ... ok",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C9",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_status_codes_distinct_and_correct -v\ntest_status_codes_distinct_and_correct ... ok (201 create, 404 missing ticket, 400 WorkflowError with real message, 400 HierarchyError with real message)",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C10",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_actor_required_not_defaulted -v\ntest_actor_required_not_defaulted ... ok",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C11",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_idempotency_key_passthrough -v\ntest_idempotency_key_passthrough ... ok",
+      "recorded": "2026-08-15T17:00:00Z"
+    },
+    {
+      "criterion_id": "C12",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_cli.CliTests.test_comment_code_snippet_flag_roundtrip -v\ntest_comment_code_snippet_flag_roundtrip ... ok",
+      "recorded": "2026-08-19T11:05:00Z"
+    },
+    {
+      "criterion_id": "C13",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.api.tests.test_http_api.HttpApiTests.test_comment_code_snippet_passthrough -v\ntest_comment_code_snippet_passthrough ... ok. Full test_http_api.py suite re-run: 21/21 pass, no regressions.",
+      "recorded": "2026-08-19T11:05:00Z"
+    }
+  ],
+  "amendments": [
+    {
+      "amended_at": "2026-08-19T10:49:19.926Z",
+      "reason": "comment CLI/HTTP gain an optional code_snippet field (using the storage layer's existing support). New criteria C12-C13 added; nothing in C1-C11 changed or was removed. reviewui display of code_snippet is explicitly out of scope for this amendment -- not silently dropped, a disclosed follow-up.",
+      "criteria_added": [
+        "C12",
+        "C13"
+      ]
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:8ef6cd45f0b17d98824ac69374090ed3a8f891d26d41508556dd57eb823c3b23",
+    "criteria_hash_at_completion": "sha256:8ef6cd45f0b17d98824ac69374090ed3a8f891d26d41508556dd57eb823c3b23",
+    "match": true
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 3,
+    "test_criteria": 13,
+    "frozen_at": "2026-08-19T10:49:19.926Z"
+  }
+}

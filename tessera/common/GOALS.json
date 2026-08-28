@@ -1,0 +1,149 @@
+{
+  "project": "tessera",
+  "component": "common",
+  "scope_version": 1,
+  "created": "2026-08-15T00:00:00Z",
+  "criteria_frozen_at": "2026-08-15T12:05:00Z",
+  "done_state": "tessera/common/ provides canonical_json(), sha256_hex(), event_hash(), and utc_now_iso() with no third-party dependencies, importable and passing their own test suite standalone.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "canonical_json(obj) is deterministic regardless of input dict key order.",
+      "verification": "python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_canonical_json_order_independent exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "canonical_json(obj) raises TypeError on a non-JSON-serializable value rather than silently dropping or coercing it.",
+      "verification": "python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_canonical_json_rejects_unserializable exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "sha256_hex(data) matches Python stdlib hashlib.sha256 on known test vectors, including empty input and unicode input.",
+      "verification": "python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_sha256_hex_vectors exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "event_hash(payload) = sha256_hex(canonical_json(payload)) composition is stable: two dicts with the same content in different key order produce the identical event_hash.",
+      "verification": "python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_event_hash_stable_across_key_order exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "utc_now_iso() returns an ISO 8601 UTC timestamp string parseable by datetime.fromisoformat after normalizing a trailing 'Z', and successive calls are non-decreasing.",
+      "verification": "python3 -m unittest tessera.common.tests.test_timestamps.TimestampTests.test_utc_now_iso_format_and_monotonic exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "tessera/common/ imports only Python stdlib modules, no third-party packages.",
+      "verification": "python3 tessera/common/tests/check_stdlib_only.py exits 0 (parses every import in tessera/common/*.py, excluding tests/, and asserts each resolves to a stdlib module).",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "canonical_json or event_hash fails open on bad input (returns a value instead of raising) on the path that matters for hash integrity.",
+      "detection": "C2 explicitly asserts a rejection path exists, not only an acceptance path."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A numeric claim about hashing/timestamp behavior appears in a docstring with no reproduction path.",
+      "detection": "grep the diff for numeric claims; each must name the command that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "Code assumes a locale, timezone, or platform-specific float/str repr that isn't actually pinned.",
+      "detection": "test_event_hash_stable_across_key_order and test_sha256_hex_vectors run against fixed, explicit inputs, not environment-derived values."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "An error in canonical_json/sha256_hex/utc_now_iso is written to a channel nobody reads.",
+      "detection": "No function in this component catches and logs-only; every error path is either a return value or a raised exception a caller must handle."
+    }
+  ],
+  "out_of_scope": [
+    "Hash algorithms other than sha256.",
+    "Encryption or signing of any kind.",
+    "Timestamp formats other than ISO 8601 UTC.",
+    "Any store/api/gitops/reviewui-specific logic \u2014 this component is generic utilities only."
+  ],
+  "constraints": [
+    "Python 3.9+ stdlib only (hashlib, json, datetime) \u2014 no third-party dependencies.",
+    "Must be importable standalone without importing any other tessera component (store, api, gitops, reviewui must not be imported from here, to avoid a dependency cycle back through common)."
+  ],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_canonical_json_order_independent -v\ntest_canonical_json_order_independent (tessera.common.tests.test_hashing.HashingTests) ... ok\nOK",
+      "recorded": "2026-08-15T12:10:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_canonical_json_rejects_unserializable -v\ntest_canonical_json_rejects_unserializable ... ok\nOK",
+      "recorded": "2026-08-15T12:10:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_sha256_hex_vectors -v\ntest_sha256_hex_vectors ... ok\nOK",
+      "recorded": "2026-08-15T12:10:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.common.tests.test_hashing.HashingTests.test_event_hash_stable_across_key_order -v\ntest_event_hash_stable_across_key_order ... ok\nOK",
+      "recorded": "2026-08-15T12:10:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.common.tests.test_timestamps.TimestampTests.test_utc_now_iso_format_and_monotonic -v\ntest_utc_now_iso_format_and_monotonic ... ok\nOK",
+      "recorded": "2026-08-15T12:10:00Z"
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 tessera/common/tests/check_stdlib_only.py\nOK: tessera/common imports only stdlib",
+      "recorded": "2026-08-15T12:10:00Z"
+    }
+  ],
+  "amendments": [
+    {
+      "criterion_id": "C1-C5",
+      "change": "verification",
+      "from": "pytest ... :: test_name exits 0",
+      "to": "python3 -m unittest tessera.common.tests.<module>.<TestCase>.<test_name> exits 0",
+      "reason": "pytest is not installed on this host or in the project venv (confirmed: 'No module named pytest' on both /usr/bin/python3 and /path/to/venv/bin/python3), and ARCHITECTURE.md commits this project to stdlib-only with no third-party dependencies. unittest is stdlib and achieves the same verification.",
+      "requested_by": "agent",
+      "ratified_by": "agent",
+      "at": "2026-08-15T12:05:00Z"
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:e8c03ab04b197be5b09ceeb377dae2b76d569909ec51e5e37f144d6de4d15b2b",
+    "criteria_hash_at_completion": "sha256:e8c03ab04b197be5b09ceeb377dae2b76d569909ec51e5e37f144d6de4d15b2b",
+    "match": true
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 2,
+    "test_criteria": 6,
+    "frozen_at": "2026-08-15T12:05:00Z"
+  }
+}

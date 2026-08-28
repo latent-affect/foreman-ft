@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tessera · Foreman</title>
+  <meta name="description" content="Tessera is a local ticket ledger.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="mast">
+    <a class="mark" href="../">Foreman</a>
+    <nav>
+        <a href="../">Foreman</a>
+        <a href="../install/">Install</a>
+        <a href="../bollard/">Bollard</a>
+        <a href="./" aria-current="page">Tessera</a>
+        <a href="../atlas/">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+    </nav>
+    <a class="cta" href="../install/">Install</a>
+    <details class="menu">
+      <summary>Menu</summary>
+      <div>
+        <a href="../">Foreman</a>
+        <a href="../install/">Install</a>
+        <a href="../bollard/">Bollard</a>
+        <a href="./" aria-current="page">Tessera</a>
+        <a href="../atlas/">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+        <a class="cta" href="../install/">Install</a>
+      </div>
+    </details>
+  </header>
+  <main class="wrap">
+    <p class="eyebrow">tickets</p>
+    <h1>One tile. Check it is actually there.</h1>
+    <p class="lede">A tessera is one tile set into a floor. The floor only holds if each tile is where it claims to be. Tessera is local and zero-dependency on purpose. A networked system with an API and an auth flow could never sit under a hard gate synchronously the way this can.</p>
+
+    <div class="panel">
+      <h3>The gap, named</h3>
+      <p>The real move was supposed to be this: a ticket marked done gets checked against the actual git diff, not against the closing session's own description. The code for that, discrepancy_for_ticket(), is real. Nobody calls it. Searched every hook and Tessera's own automation. Zero matches. On Tessera's own closed tickets, 83 of 104, eighty percent, closed with no claim event recorded at all. That is the worst rate of any project this system tracks, on the project that built the mechanism meant to catch it.</p>
+    </div>
+
+    <p>A schema is a place to write a claim. Tessera has the code to check one against reality and is not running it yet. That is the next thing to build, not a footnote.</p>
+
+    <div class="actions">
+      <a class="cta" href="../install/">Install Foreman</a>
+    </div>
+  </main>
+  <footer class="foot">
+    <a href="https://github.com/latent-affect/foreman-ft">GitHub</a>
+    <a href="https://github.com/latent-affect/hyphy">hyphy</a>
+    <a href="https://github.com/latent-affect/wat">wat</a>
+    <a href="https://github.com/latent-affect/gifsmith">GifSmith</a>
+    <span>latent-affect</span>
+  </footer>
+</body>
+</html>

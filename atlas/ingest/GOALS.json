@@ -1,0 +1,340 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "atlas",
+  "component": "ingest",
+  "scope_version": 1,
+  "created": "2026-08-21T23:20:00Z",
+  "criteria_frozen_at": "2026-08-22T01:15:00Z",
+  "done_state": "Given a fixture verdicts.jsonl-shaped file, the ingest component tails it into hook_verdict with content-addressed stream identity, no data loss or duplication across a full pass, a chunked crash-resume, file growth, a trailing partial line, or a copy-truncate rotation, and derives ts_resolution correctly for both real writer implementations (verdict_ledger.py's genuine microsecond timestamps and the two shell writers' fake-precision second timestamps) -- the permanent regression test for that earlier finding.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "stream_id is sha256(first 4096 bytes) of the source file, with no inode or path component, matching ARCHITECTURE.md section 2's stated design.",
+      "verification": "atlas/ingest/tests/test_stream_identity.py: two fixture files with byte-identical first 4096 bytes but different paths/inodes (a real filesystem copy) produce the same stream_id; two files differing anywhere in the first 4096 bytes produce different stream_ids.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "A full single-pass ingest and a five-chunk crash-resume ingest of the same fixture file produce byte-identical hook_verdict row sets, with the row insert and watermark update in one transaction so a crash between them cannot duplicate or lose a row.",
+      "verification": "atlas/ingest/tests/test_crash_resume.py: ingests a fixture file in one call, records the resulting (stream_id, byte_offset, ts, handler_id) tuples; re-ingests the same fixture into a fresh db in five separate calls simulating a crash between each; asserts the two row sets are identical.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "A file that grows between two ingest passes causes the second pass to ingest only the newly-appended bytes, not re-ingest the whole file.",
+      "verification": "atlas/ingest/tests/test_growth_and_partial_lines.py: ingests a fixture file, appends more lines, ingests again, asserts the second pass's affected-row count equals only the newly-appended lines and the total row count is not doubled.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "A trailing partial line (no terminating newline) is not consumed on the pass that observes it, and is correctly ingested once a later pass observes it completed with a newline.",
+      "verification": "atlas/ingest/tests/test_growth_and_partial_lines.py: writes a fixture file ending in a partial line with no newline, ingests, asserts that line is absent from hook_verdict and the watermark stops before it; completes the line with a trailing newline, ingests again, asserts it is now present exactly once.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "A copy-truncate rotation (the file is replaced by a new one whose first 4096 bytes differ from the previous stream) is detected, recorded in ingest_stream_history with reason='rotation', and the new stream is ingested from byte 0, not from the old file's watermark.",
+      "verification": "atlas/ingest/tests/test_rotation.py: ingests a fixture file to completion, replaces it with a different fixture file (simulating rotation), ingests again, asserts a new ingest_stream_history row with reason='rotation' and prior_stream_id/prior_byte_offset naming the old stream, and asserts the new stream's rows start from byte 0 of the new file.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "An unparseable JSON line is counted and skipped -- the pass continues, does not raise, and the line is reflected in a skip count the caller can observe -- not silently dropped with no trace.",
+      "verification": "atlas/ingest/tests/test_malformed_lines.py: a fixture file with one malformed JSON line among valid ones; asserts the valid lines are ingested, the malformed line is not, and the ingest result reports a non-zero skipped-line count naming the byte offset.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "Regression: ts_resolution is derived from epoch_ms % 1000 == 0 combined with writer_impl (the shell writers session-log.sh and laa-commit-flow-advisory.sh emit fake-precision second-resolution timestamps with a literal .000000Z suffix), not from the naive '.' in ts rule an earlier finding showed mislabels 15,932 real rows.",
+      "verification": "atlas/ingest/tests/test_ts_resolution.py: a fixture row from verdict_ledger.py-style writer_impl with epoch_ms not a multiple of 1000 derives ts_resolution='microsecond'; a fixture row from session-log.sh-style writer_impl with epoch_ms a multiple of 1000 and a literal .000000Z suffix derives ts_resolution='second', not 'microsecond' as the naive '.' rule would.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "An unknown field present in a source line (one hook_verdict has no column for) does not cause the row to be rejected -- the known fields are still ingested, matching ARCHITECTURE.md section 4's 'an unknown field is preserved' -- interpreted here as 'does not corrupt or drop the rest of the row', since hook_verdict has no catch-all column to literally store it in.",
+      "verification": "atlas/ingest/tests/test_malformed_lines.py: a fixture line with a real extra key not in hook_verdict's schema; asserts the row is still ingested with all its known fields intact and no exception raised.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C9",
+      "statement": "ingest_source is updated after each pass with the correct stream_id, byte_offset, and rows_ingested, and a first-seen stream gets an ingest_stream_history row with reason='first-seen'.",
+      "verification": "atlas/ingest/tests/test_stream_identity.py: ingests a fixture file for the first time, asserts ingest_source has one row with the correct byte_offset/rows_ingested and ingest_stream_history has exactly one reason='first-seen' row for that stream_id.",
+      "verifiable": true,
+      "added": "2026-08-21T23:20:00Z"
+    },
+    {
+      "id": "C10",
+      "statement": "tessera_to_ingest pulls only v_flat rows newer than the current watermark, where the watermark is MAX(event_id) already present in tessera_event (not a separate cursor row) -- a second pull with no new TESSERA events ingests exactly zero rows, and a pull after new events arrive ingests only those.",
+      "verification": "atlas/ingest/tests/test_tessera_pull.py: test_second_pull_with_no_new_events_ingests_zero and test_pull_after_new_events_arrive_only_ingests_the_new_ones against a real sqlite v_flat-shaped fixture view.",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C11",
+      "statement": "tessera_event rows carry event_id as TESSERA's own v_flat.event_id (not an ATLAS-assigned id) and every declared tessera_event column is mirrored from v_flat by name, not re-derived, per ARCHITECTURE.md line 672.",
+      "verification": "atlas/ingest/tests/test_tessera_pull.py: test_mapped_row_carries_declared_columns_and_real_values asserts event_type/status_from/status_to/ticket_priority/ticket_has_frozen_criteria round-trip exactly from a fixture v_flat row.",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C12",
+      "statement": "A tessera_to_ingest pass that inserts a row but never commits (a simulated crash) leaves the watermark unmoved -- the next pull re-fetches and ingests everything from the last real commit, matching this component's own F1 crash-safety contract.",
+      "verification": "atlas/ingest/tests/test_tessera_pull.py: test_a_crash_between_insert_and_commit_leaves_the_watermark_unmoved.",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C13",
+      "statement": "gitrepo_to_ingest correctly parses real `git log --numstat` output (commit sha/timestamp/author/subject and per-file insertions/deletions) for zero, one, and multiple commits, including a repo whose branch has no commits yet (a real, valid empty state, not a failure).",
+      "verification": "atlas/ingest/tests/test_gitrepo_pull.py: GitLogParsingTests, run against a real temporary git repo with real git subprocess calls (no mocked git output).",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C14",
+      "statement": "A ticket-shaped candidate in a commit subject whose prefix is registered becomes a git_commit_ticket row (origin='commit-message-regex'); one whose prefix is not registered becomes a git_ticket_candidate_dropped row (reason='unregistered-prefix') -- never silently discarded either way. The regex reproduces every example ARCHITECTURE.md section 8 cites from the real corpus as a candidate (P0-2/3/4/6, F5-001..004, MR-0, ISO-8601), so validation, not the regex, is what filters them.",
+      "verification": "atlas/ingest/tests/test_gitrepo_pull.py: TicketCandidateRegexTests.test_regex_matches_every_cited_real_corpus_example and InsertAndValidationTests.test_a_registered_prefix_candidate_becomes_a_real_ticket_link / test_an_unregistered_prefix_candidate_is_dropped_not_linked.",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C15",
+      "statement": "git_commit.author_hash is a salted sha256 digest of the raw git author string; the raw string never appears in any stored value (D8).",
+      "verification": "atlas/ingest/tests/test_gitrepo_pull.py: InsertAndValidationTests.test_author_is_stored_hashed_not_in_plaintext.",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C16",
+      "statement": "gitrepo_to_ingest is idempotent: re-inserting the same commit (or re-pulling a repo whose full history was already ingested) does not duplicate git_commit, git_commit_file, or git_commit_ticket rows -- INSERT OR IGNORE against each table's real primary key, not a separate dedup pass.",
+      "verification": "atlas/ingest/tests/test_gitrepo_pull.py: InsertAndValidationTests.test_reinserting_the_same_commit_is_a_no_op_not_a_duplicate and PullOrchestrationTests.test_pull_against_a_real_repo_ingests_every_commit_exactly_once_across_two_passes.",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C17",
+      "statement": "A real git log failure (bad path, not a repo) raises a named GitLogError with the real stderr; it is never confused with the legitimate zero-commit-repo case, which returns cleanly instead of raising.",
+      "verification": "atlas/ingest/tests/test_gitrepo_pull.py: GitLogParsingTests.test_a_nonexistent_repo_path_raises_gitlogerror_not_silently_empty and test_a_repo_with_no_commits_parses_to_an_empty_list.",
+      "verifiable": true,
+      "added": "2026-08-22T00:35:00Z"
+    },
+    {
+      "id": "C18",
+      "statement": "run_pull.py's detect_root_state correctly classifies a real source_root's git status by checking the filesystem (accepting .git as either a directory or a file, per ARCHITECTURE.md's dim_project.root_state comment and the worktree-misclassification defect it names) -- not copied from TESSERA, which has no way to know whether a root still exists or has a real .git.",
+      "verification": "atlas/ingest/tests/test_run_pull.py: DetectRootStateTests, covering no-source-root, root-missing, not-a-git-repo, git-repo (dot-git-as-directory), and git-repo (dot-git-as-file, the worktree case).",
+      "verifiable": true,
+      "added": "2026-08-22T01:10:00Z"
+    },
+    {
+      "id": "C19",
+      "statement": "run_pull.run() opens the real TESSERA database strictly read-only at the SQLite level (mode=ro), so a write attempt against it fails loudly rather than silently succeeding -- TESSERA is live production data shared with every other project on this machine, not this component's own fixture.",
+      "verification": "atlas/ingest/tests/test_run_pull.py: RunOrchestrationTests.test_tessera_db_opened_readonly_cannot_be_written_by_this_process.",
+      "verifiable": true,
+      "added": "2026-08-22T01:10:00Z"
+    },
+    {
+      "id": "C20",
+      "statement": "run_pull.run() against real files (a real sqlite TESSERA-shaped db, a real temporary git repo) creates a real persistent warehouse database and correctly populates dim_project, tessera_event, and git_commit/git_commit_ticket in one pass; a second real run against the same files ingests zero new TESSERA events and does not duplicate any git_commit/git_commit_ticket row.",
+      "verification": "atlas/ingest/tests/test_run_pull.py: RunOrchestrationTests.test_run_against_real_files_populates_all_three_targets and test_a_second_real_run_does_not_duplicate_anything. Independently confirmed against the REAL production tessera.db and all 35 real registered projects on this machine, 2026-08-22: first run synced 35 projects, ingested 1,794 tessera_event rows, pulled 31 real git repos (1,047 commits, 166 real ticket links, 19 dropped for unregistered prefix), 19 dq_runner checks with 0 contract failures; second run against the same warehouse db ingested 0 new tessera_event rows, confirming idempotency on live data, not just fixtures.",
+      "verifiable": true,
+      "added": "2026-08-22T01:10:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "A malformed or partially-written line silently advances the watermark past it, or a crash mid-pass leaves the watermark ahead of what was actually committed.",
+      "detection": "Every ingest pass commits row inserts and the watermark advance in a single SQLite transaction (already true of migrate.apply's pattern); a test kills the process mid-write via a simulated exception between insert and commit and asserts the watermark did not advance."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A row/byte-offset/skip-count number in this component's code comments, docstrings, or commit messages has no reproduction path.",
+      "detection": "grep the component's source and its commit messages for numeric claims; each must name the command or test that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "The ingester assumes a source file exists, is readable, or has a specific shape without checking, rather than reporting a real per-source failure.",
+      "detection": "Every source-file open is wrapped so a missing/unreadable file produces a named, observable failure (a skipped source with a reason), not an unhandled exception that kills the whole pass for every source."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A parse error, rotation, or truncation event is written to a channel nobody reads (bare print, a swallowed exception).",
+      "detection": "Every such event is either recorded in ingest_stream_history/the pass result object a caller/test observes, or raised -- never both silent and non-raising."
+    }
+  ],
+  "out_of_scope": [
+    "Real end-to-end ingestion of the live 127,000+ row verdicts.jsonl, real audit-plane files, the real TESSERA database, or a real registered git repo's full history -- this component's tests use synthetic/real-but-local fixtures (a hand-built v_flat-shaped view, a real temporary git repo created and torn down per test); end-to-end correctness against this machine's real TESSERA db and real registered repos is foreman:integration-test's job.",
+    "Actually installing a cron/scheduler entry to run run_pull.py periodically -- this component (C18-C20) builds and verifies the entrypoint itself, against real production data; wiring it into this machine's scheduler is a separate, later concern.",
+    "Incremental (non-full-rewalk) git history fetching -- gitrepo_to_ingest always re-walks full `git log` output and relies on INSERT OR IGNORE for idempotency (C16), a deliberate simplicity choice given the real corpus's small size (1,097 commits total, ARCHITECTURE.md section 8); a since-last-sha incremental fetch is not implemented.",
+    "The dq_check runner's checkers that consume ingest's output (ingest_rows_match_bytes, ingest_rows_monotonic, watermark_le_filesize, watermark_advanced) -- those are warehouse's own component and already implemented against fixtures there; this component only needs to produce the ingest_source/hook_verdict state those checkers read.",
+    "Any architecture-review finding not selected as fix-during-build for ingest specifically by the QUALITY-BAR triage -- only the ts_resolution derivation finding above is this component's."
+  ],
+  "constraints": [
+    "Zero third-party dependencies -- Python 3 stdlib only (hashlib, json, pathlib, re), matching this environment's established convention.",
+    "Row insert and watermark advance happen in one SQLite transaction per pass, matching ARCHITECTURE.md section 2's stated crash-safety design.",
+    "Tests use Python's stdlib unittest, matching warehouse's own convention."
+  ],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_stream_identity.StreamIdContentAddressedTests -v\ntest_byte_identical_copy_has_same_stream_id_different_inode ... ok\ntest_different_content_has_different_stream_id ... ok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_crash_resume -v\ntest_replaying_the_same_range_after_a_lost_watermark_inserts_zero_new_rows ... ok\ntest_single_pass_and_five_chunk_resume_produce_identical_rows ... ok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_growth_and_partial_lines.FileGrowthTests -v\ntest_second_pass_ingests_only_newly_appended_lines ... ok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_growth_and_partial_lines.PartialLineTests -v\ntest_trailing_partial_line_not_consumed_then_ingested_once_completed ... ok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_rotation -v\ntest_copy_truncate_rotation_starts_new_stream_from_zero ... ok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_malformed_lines.MalformedLineTests.test_malformed_json_line_is_counted_and_skipped_not_fatal -v\nok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_ts_resolution -v\ntest_epoch_ms_none_defaults_to_microsecond ... ok\ntest_shell_writer_fake_precision_row_is_second ... ok\ntest_shell_writer_with_non_round_epoch_ms_is_microsecond ... ok\ntest_verdict_ledger_writer_is_microsecond_even_with_round_epoch_ms ... ok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C8",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_malformed_lines.MalformedLineTests.test_unknown_extra_field_does_not_reject_the_row -v\nok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C9",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_stream_identity.IngestSourceBookkeepingTests -v\ntest_first_seen_records_history_and_ingest_source ... ok\nOK",
+      "recorded": "2026-08-21T23:45:00Z"
+    },
+    {
+      "criterion_id": "C10",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_tessera_pull -v\ntest_a_crash_between_insert_and_commit_leaves_the_watermark_unmoved ... ok\ntest_mapped_row_carries_declared_columns_and_real_values ... ok\ntest_pull_after_new_events_arrive_only_ingests_the_new_ones ... ok\ntest_pull_ingests_every_row_when_watermark_is_zero ... ok\ntest_second_pull_with_no_new_events_ingests_zero ... ok\ntest_watermark_is_zero_on_an_empty_warehouse ... ok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C11",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_tessera_pull.TesseraPullTests.test_mapped_row_carries_declared_columns_and_real_values -v\nok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C12",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_tessera_pull.TesseraPullTests.test_a_crash_between_insert_and_commit_leaves_the_watermark_unmoved -v\nok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C13",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_gitrepo_pull.GitLogParsingTests -v\ntest_a_nonexistent_repo_path_raises_gitlogerror_not_silently_empty ... ok\ntest_a_repo_with_no_commits_parses_to_an_empty_list ... ok\ntest_multiple_commits_multiple_files_parse_in_reverse_chronological_order ... ok\ntest_single_commit_single_file_parses_correctly ... ok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C14",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_gitrepo_pull.TicketCandidateRegexTests atlas.ingest.tests.test_gitrepo_pull.InsertAndValidationTests -v\ntest_regex_matches_every_cited_real_corpus_example ... ok\ntest_a_registered_prefix_candidate_becomes_a_real_ticket_link ... ok\ntest_an_unregistered_prefix_candidate_is_dropped_not_linked ... ok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C15",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_gitrepo_pull.InsertAndValidationTests.test_author_is_stored_hashed_not_in_plaintext -v\nok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C16",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_gitrepo_pull.InsertAndValidationTests.test_reinserting_the_same_commit_is_a_no_op_not_a_duplicate atlas.ingest.tests.test_gitrepo_pull.PullOrchestrationTests -v\ntest_reinserting_the_same_commit_is_a_no_op_not_a_duplicate ... ok\ntest_pull_against_a_real_repo_ingests_every_commit_exactly_once_across_two_passes ... ok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C17",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_gitrepo_pull.GitLogParsingTests.test_a_nonexistent_repo_path_raises_gitlogerror_not_silently_empty atlas.ingest.tests.test_gitrepo_pull.GitLogParsingTests.test_a_repo_with_no_commits_parses_to_an_empty_list -v\nok\nok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C18",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_run_pull.DetectRootStateTests -v\ntest_a_path_that_does_not_exist_is_root_missing ... ok\ntest_a_real_directory_with_no_git_is_not_a_git_repo ... ok\ntest_a_real_git_repo_with_dot_git_as_a_directory_is_git_repo ... ok\ntest_a_worktree_with_dot_git_as_a_file_is_still_git_repo ... ok\ntest_no_source_root_is_no_source_root ... ok\nOK",
+      "recorded": "2026-08-22T01:15:00Z"
+    },
+    {
+      "criterion_id": "C19",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_run_pull.RunOrchestrationTests.test_tessera_db_opened_readonly_cannot_be_written_by_this_process -v\nok\nOK",
+      "recorded": "2026-08-22T01:15:00Z"
+    },
+    {
+      "criterion_id": "C20",
+      "status": "MET",
+      "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_run_pull.RunOrchestrationTests -v\ntest_a_second_real_run_does_not_duplicate_anything ... ok\ntest_run_against_real_files_populates_all_three_targets ... ok\ntest_tessera_db_opened_readonly_cannot_be_written_by_this_process ... ok\nOK\n\n$ /path/to/venv/bin/python3 -m atlas.ingest.run_pull  (REAL production tessera.db + all 35 real registered projects)\n[run_pull] dim_project synced: 35 real TESSERA projects\n[run_pull] tessera_event rows ingested this pass: 1794\n[run_pull] git repos pulled: 31\n[run_pull] dq_runner: 19 checks run, 0 contract failures: []\n\n$ (second real run) tessera_event rows ingested this pass: 0",
+      "recorded": "2026-08-22T01:20:00Z"
+    }
+  ],
+  "amendments": [
+    {
+      "from": "9 criteria (C1-C9); tessera_to_ingest/gitrepo_to_ingest deferred, per this file's own out_of_scope text",
+      "to": "17 criteria (C1-C17); C10-C17 cover tessera_to_ingest and gitrepo_to_ingest",
+      "reason": "The project owner's relayed priority (2026-08-22): get real TESSERA/git data flowing into the warehouse so queries can run against a live pipeline, not one-off copied test slices. Resolve override-scope reconciliation was sequenced first since it affects the resolve step this ingest path feeds into. Investigated the real target schema first (v_flat's actual columns on /path/to/ticket-system/data/tessera.db, git_commit's real primary key) rather than guessing at design -- found the watermark for both sources can be derived from the target table itself (tessera_event.event_id IS TESSERA's own id; git_commit's (project_prefix, sha) primary key makes a full re-walk with INSERT OR IGNORE naturally idempotent), so no ARCHITECTURE.md schema change was needed.",
+      "requested_by": "the project owner",
+      "ratified_by": "claude-atlas",
+      "at": "2026-08-22T00:50:00Z"
+    },
+    {
+      "from": "17 criteria (C1-C17); no orchestration entrypoint, per this file's own out_of_scope text",
+      "to": "20 criteria (C1-C20); C18-C20 cover run_pull.py, the orchestration entrypoint",
+      "reason": "Filed directly by the project owner: 'the last blocker before real queries can run'. Confirmed via direct code read (not just the commit message) that C10-C17's pull logic already backfills full history correctly on an empty table/repo. Built run_pull.py and ran it for real against the production tessera.db and all 35 real registered projects on this machine -- not just fixtures -- per the ticket's own explicit ask. First real run: atlas/warehouse/atlas.db now exists and is populated (1,794 tessera_event rows, 1,047 git_commit rows across 31 real repos, 166 real ticket links). Second real run confirmed idempotency on live data.",
+      "requested_by": "the project owner",
+      "ratified_by": "claude-atlas",
+      "at": "2026-08-22T01:15:00Z"
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:d00ad38cff8876783e604e16a2b679f14db65025c81791bc912a8a445b390fc0",
+    "criteria_hash_at_completion": "sha256:d00ad38cff8876783e604e16a2b679f14db65025c81791bc912a8a445b390fc0",
+    "match": true
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 5,
+    "test_criteria": 20,
+    "frozen_at": "2026-08-22T01:15:00Z"
+  }
+}

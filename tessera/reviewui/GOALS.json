@@ -1,0 +1,163 @@
+{
+  "project": "tessera",
+  "component": "reviewui",
+  "scope_version": 1,
+  "created": "2026-08-15T00:00:00Z",
+  "criteria_frozen_at": "2026-08-15T18:30:00Z",
+  "done_state": "tessera/reviewui/static/ is a live-updating HTML/JS/CSS page (served by api, talking only to api) showing open bugs/todos and a diff-vs-claim view that surfaces api's computed discrepancy prominently, with explicit-save doc editing (verified no network write before Save is clicked) and HTML-escaped rendering of all agent-generated content -- all demonstrated in a real headless-browser session against a real running server, not asserted from reading the JS.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "The open bugs/todos view, loaded in a real headless browser against a real running tessera server, displays ticket data actually fetched from the API (not hardcoded/mock content).",
+      "verification": "/path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check open_list exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "The diff-vs-claim view, for a ticket with a deliberately-mismatched claim (claims fewer files than the real diff touched), visibly surfaces the discrepancy (a distinct, non-hidden DOM element listing the mismatched files) rather than requiring a human to compare two panels unaided.",
+      "verification": "/path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check diff_vs_claim_mismatch exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "The diff-vs-claim view for a MATCHING claim shows no discrepancy element flagged as a mismatch (no false positive) -- both the positive and negative case are demonstrated in the same browser session.",
+      "verification": "/path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check diff_vs_claim_match exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "A ticket whose title/comment contains HTML/script content is rendered escaped: no JavaScript dialog fires (proving no script execution) and the raw '<script>' text is not present unescaped in the rendered DOM.",
+      "verification": "/path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check xss_escaping exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "Editing a doc's content in the browser and NOT clicking Save results in zero PUT requests to /docs/*; clicking Save results in exactly one, with the edited content -- proving no autosave-on-blur/interval exists.",
+      "verification": "/path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check explicit_save exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "The SSE connection indicator shows connected on page load, and a ticket created by a genuinely separate OS process appears in the open list without a page reload, within the poll interval.",
+      "verification": "/path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check live_update exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "The server response for reviewui's page sends a Content-Security-Policy header restricting script sources.",
+      "verification": "python3 -m unittest tessera.reviewui.tests.test_headers.HeaderTests.test_csp_header_present exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "The escaping guard only covers ticket titles, not comments/claim summaries -- an XSS vector remains in a field that was not tested.",
+      "detection": "C4's test injects the payload into both a ticket title AND a comment body."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A claim about the UI's behavior (e.g. 'live-updating') is asserted without a real browser session proving it.",
+      "detection": "Every criterion here is verified against a real headless-browser session against a real running server (reviewui_browser_check.py), not by reading the JS source and reasoning about what it should do."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "reviewui writes to store, gitops, or the filesystem directly, bypassing api -- the single-write-path design ARCHITECTURE.md specifies is violated.",
+      "detection": "grep tessera/reviewui/static/*.js for any URL that isn't a call to the api's own HTTP endpoints; there should be none."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A fetch() error (e.g. the API being down) is caught and silently ignored, leaving the UI looking fine while showing stale/wrong data.",
+      "detection": "The SSE/fetch error paths update the visible connection-status indicator, not just console.log."
+    }
+  ],
+  "out_of_scope": [
+    "A JS build pipeline / bundler / framework (React, Vue, etc.) -- plain HTML/CSS/JS only, matching the stdlib-only, fewer-moving-parts architecture.",
+    "Mobile-responsive layout.",
+    "Rich-text/WYSIWYG doc editing -- plain textarea.",
+    "User accounts / per-user preferences (no auth in scope)."
+  ],
+  "constraints": [
+    "No third-party JS libraries or CDN scripts (CSP + no-network-dependency constraints from ARCHITECTURE.md/SCOPE.md).",
+    "Talks only to api (reviewui_to_api / api_to_reviewui edges) -- never store, gitops, or the filesystem directly.",
+    "All dynamic content insertion goes through a single escaping helper, not scattered innerHTML assignments."
+  ],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check open_list\nopen_list: PASS - ['BT-1 Bug open\\nreporter: alice']",
+      "recorded": "2026-08-15T19:00:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check diff_vs_claim_mismatch\ndiff_vs_claim_mismatch: PASS - Discrepancy detected |  | touched but NOT claimed: b.py",
+      "recorded": "2026-08-15T19:00:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check diff_vs_claim_match\ndiff_vs_claim_match: PASS - Claim matches the real diff.",
+      "recorded": "2026-08-15T19:00:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check xss_escaping\nxss_escaping: PASS - no script execution, no raw <script> in DOM (payload injected into both reporter field and a comment, per F1)",
+      "recorded": "2026-08-15T19:00:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check explicit_save\nexplicit_save: PASS - 0 PUTs before Save, 1 PUT after",
+      "recorded": "2026-08-15T19:00:00Z"
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ /path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check live_update\nlive_update: PASS - cross-process ticket appeared without reload. Real bugs caught by running this in an actual browser rather than reading the JS: (1) JS boolean String(data.matches) stringifies lowercase ('false'/'true'), the test's own assertion wrongly expected Python-style capitalization; (2) reviewui's own CSP (script-src 'self', no unsafe-eval) blocks Playwright's string-based wait_for_function, which needs in-page eval -- fixed by polling from the Python side instead of weakening the CSP, since the CSP doing exactly this is a correct security property, not a bug.",
+      "recorded": "2026-08-15T19:00:00Z"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.reviewui.tests.test_headers.HeaderTests.test_csp_header_present -v\ntest_csp_header_present ... ok",
+      "recorded": "2026-08-15T19:00:00Z"
+    }
+  ],
+  "amendments": [
+    {
+      "criterion_id": "C1-C6",
+      "change": "verification",
+      "from": "python3 tests/reviewui_browser_check.py --check <name> exits 0.",
+      "to": "/path/to/tools/latent-loop-verify/.venv/bin/python3 tests/reviewui_browser_check.py --check <name> exits 0.",
+      "reason": "Real browser verification requires Playwright, which is not installed for /usr/bin/python3 or this project's own environment (this project is stdlib-only by ARCHITECTURE.md's own constraint, and Playwright is verification tooling, not a product dependency). The existing latent-loop-verify tool's venv already has Playwright installed and is the appropriate interpreter for this one-time build-verification step.",
+      "requested_by": "agent",
+      "ratified_by": "agent",
+      "at": "2026-08-15T18:30:00Z"
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:f5c189416362e265e65399d5a5bbfcdddf4996d7d8b5b651e8850412919f79ed",
+    "criteria_hash_at_completion": "sha256:f5c189416362e265e65399d5a5bbfcdddf4996d7d8b5b651e8850412919f79ed",
+    "match": true
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 2,
+    "test_criteria": 7,
+    "frozen_at": "2026-08-15T18:30:00Z"
+  }
+}

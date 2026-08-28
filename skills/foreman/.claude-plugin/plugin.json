@@ -1,0 +1,5 @@
+{
+  "name": "foreman",
+  "description": "Software-build process router: architecture, detailed design + scope, integration test, and validation stages for a hybrid V-Model, plus the router skill itself. Reuses scope, GOALS.json, Clint Eastwood, adversarial-code-review, the audit-plane judge pattern, and /goal rather than duplicating them.",
+  "version": "0.3.0"
+}

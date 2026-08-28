@@ -1,0 +1,5 @@
+{
+  "name": "code-safety",
+  "description": "For projects that run code ingesting something they did not author: adversarial-code-review, prompt-injection-protection, risk-assessment, library-scout for vetting new dependencies, tool-docs-first for verifying surprising tool behavior before theorizing about it, and warden for a review that runs in its own process and never saw the code being written.",
+  "version": "1.1.0"
+}

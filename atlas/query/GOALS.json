@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "atlas",
+  "component": "query",
+  "scope_version": 1,
+  "created": "2026-08-22T00:30:00Z",
+  "criteria_frozen_at": "2026-08-22T00:35:00Z",
+
+  "done_state": "A read-only facade opens the warehouse, checks v_atlas_status before answering anything (distinguishing never-run, failed-run, and checks-evaluated=0 from a genuinely clean run -- the vacuous-pass principle applied at this layer), refuses every request when the run is not genuinely clean with a reason naming which state it is in, and otherwise serves reads only from the declared set of gated views, never a raw table, matching ARCHITECTURE.md section 8's stated guarantee that primary enforcement of the trust gate lives here.",
+
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "The facade's connection to the warehouse is genuinely read-only -- a write attempt through it raises, not merely a convention the facade's own methods happen to honor.",
+      "verification": "atlas/query/tests/test_readonly.py: opens a facade against a migrated warehouse db, attempts an INSERT through the facade's own connection, asserts it raises sqlite3.OperationalError (SQLite's real read-only-connection error).",
+      "verifiable": true,
+      "added": "2026-08-22T00:30:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "status() returns a structured result distinguishing four states that must never collapse into each other: never-run (no ingest_run rows at all), a run whose own status is not 'ok', a run that IS 'ok' but recorded zero dq_check_run rows (checks_evaluated=0 -- the known vacuous-pass case), and a genuinely clean run (status='ok', checks_evaluated>0, contract_failures=0).",
+      "verification": "atlas/query/tests/test_status.py: four separate fixtures, one per state, each asserting status() returns the correct, distinct classification -- most importantly that checks_evaluated=0 is never reported the same way as a genuine contract_failures=0 clean pass.",
+      "verifiable": true,
+      "added": "2026-08-22T00:30:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "fetch() only permits reading from the 18 views declared in ARCHITECTURE.md section 16 -- a request naming a raw table (e.g. hook_verdict directly) or any name outside that declared set is refused with a clear reason, never silently allowed.",
+      "verification": "atlas/query/tests/test_fetch_allowlist.py: fetch('hook_verdict') and fetch('not_a_real_view') both raise a facade-specific refusal naming the requested name; fetch('v_gate_proven_live') against a clean run does not raise.",
+      "verifiable": true,
+      "added": "2026-08-22T00:30:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "When status() is not genuinely clean, fetch() refuses EVERY request (system-wide, not per-source) with a reason naming which of the three non-clean states applies -- extending section 8's per-source refusal with this component's own stronger, simpler policy, since the gated views already self-gate per-source at the SQL layer.",
+      "verification": "atlas/query/tests/test_fetch_allowlist.py: for each of the three non-clean status() states, fetch() against a real, otherwise-valid view name raises a refusal whose message names that specific state, not a generic error.",
+      "verifiable": true,
+      "added": "2026-08-22T00:30:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "When the run is genuinely clean, fetch() against a real gated view returns rows identical to a direct SQL SELECT against the same view.",
+      "verification": "atlas/query/tests/test_fetch_allowlist.py: loads a fixture with a clean run and real hook_verdict data, asserts facade.fetch('v_gate_proven_live') returns the same rows as a direct 'SELECT * FROM v_gate_proven_live' on the same connection.",
+      "verifiable": true,
+      "added": "2026-08-22T00:30:00Z"
+    }
+  ],
+
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "fetch() returns data (or an empty result silently indistinguishable from 'no rows') when status() is not genuinely clean, rather than raising a distinguishable refusal.",
+      "detection": "Every non-clean status() state has its own fetch()-refuses test (C4); a refusal must be a raised, named exception type, never a quiet empty return."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A view/table count or allowlist size in this component's code comments or commit messages has no reproduction path.",
+      "detection": "grep the component's source and commit messages for numeric claims; each must name the command or test that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "The facade assumes the warehouse database file exists and is a valid ATLAS schema, rather than reporting a named failure when it is missing or unmigrated.",
+      "detection": "Opening a facade against a nonexistent or unmigrated db path produces a named, observable error, not an unhandled exception with no context."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A refused query is logged to a channel nobody reads instead of being raised to the caller who can act on it.",
+      "detection": "Every refusal is a raised Python exception with a message the caller/test directly asserts on -- never a bare print or a swallowed condition."
+    }
+  ],
+
+  "out_of_scope": [
+    "Foreman's periodic pattern-detection consumer itself (D12 in ARCHITECTURE.md) -- unbuilt and undesigned per the architecture document; this component only provides the read facade a future consumer would use.",
+    "The dashboard's specific query needs (D9) -- dashboard gets its own criteria once it is rewired against this facade.",
+    "Real end-to-end queries against the live warehouse populated by real ingest/resolve runs -- this component's tests use synthetic fixtures; end-to-end correctness is foreman:integration-test's job.",
+    "A general arbitrary-SQL escape hatch -- fetch() is restricted to the declared view allowlist by design (C3), not a general query() that accepts caller-supplied SQL against arbitrary tables."
+  ],
+
+  "constraints": [
+    "Zero third-party dependencies -- Python 3 stdlib only (sqlite3), matching this environment's established convention.",
+    "The warehouse connection is opened in SQLite's real read-only URI mode (file:...?mode=ro), not merely a connection the facade's own code promises not to write through.",
+    "Tests use Python's stdlib unittest, matching every other component's own convention."
+  ],
+
+  "results": [
+    {"criterion_id": "C1", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_readonly -v\ntest_opening_a_nonexistent_db_raises_a_named_error ... ok\ntest_write_through_facade_connection_raises ... ok\nOK", "recorded": "2026-08-22T00:50:00Z"},
+    {"criterion_id": "C2", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_status -v\ntest_checks_not_evaluated_is_not_confused_with_clean ... ok\ntest_failed_run ... ok\ntest_genuinely_clean ... ok\ntest_never_run ... ok\ntest_run_ok_with_checks_but_a_real_contract_failure_is_failed_not_clean ... ok\nOK", "recorded": "2026-08-22T00:50:00Z"},
+    {"criterion_id": "C3", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_raw_table_name_is_refused atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_unknown_name_is_refused -v\nok\nok\nOK", "recorded": "2026-08-22T00:50:00Z"},
+    {"criterion_id": "C4", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchRefusalWhenNotCleanTests -v\ntest_checks_not_evaluated_refuses_a_valid_view_name ... ok\ntest_failed_run_refuses_a_valid_view_name ... ok\ntest_never_run_refuses_a_valid_view_name ... ok\nOK", "recorded": "2026-08-22T00:50:00Z"},
+    {"criterion_id": "C5", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_fetch_result_matches_direct_sql -v\nok\nOK", "recorded": "2026-08-22T00:50:00Z"}
+  ],
+  "amendments": [],
+
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:03489c49ec1cd584ae95a846d662f600d15b02d765e9b234de762e60bd914d06",
+    "criteria_hash_at_completion": "sha256:03489c49ec1cd584ae95a846d662f600d15b02d765e9b234de762e60bd914d06",
+    "match": true
+  },
+
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 2,
+    "test_criteria": 5,
+    "frozen_at": "2026-08-22T00:35:00Z"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/architecture_gate.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/concept_gate.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/goals_freeze_gate.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/preflight_blocking_gate.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/dependency_provenance_gate/dependency_provenance_gate.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/ship_readiness_gate.py"
+          }
+        ]
+      }
+    ]
+  }
+}

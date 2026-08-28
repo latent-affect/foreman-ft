@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "GOALS.json v0.1. Pilot by hand before wiring any hook. The load-bearing property is that `criteria` is append-only from the moment work starts: completion appends to `results`, never edits a criterion. A model updating its own success criteria at completion will write criteria that describe what it built, because that is the coherent-sounding completion. That failure is silent and it happens in the control designed to catch silent failures.",
+
+  "project": "gif-smith",
+  "scope_version": 1,
+  "created": "2026-08-10T09:00:00Z",
+  "criteria_frozen_at": "2026-08-10T09:12:00Z",
+
+  "done_state": "One sentence a third party could check. Not a description of the work, a description of the finished state.",
+
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "What must be true. One claim, checkable, no conjunctions.",
+      "verification": "The exact command, and what its output must show. Not 'tests pass' but 'go test ./... exits 0'.",
+      "verifiable": true,
+      "added": "2026-08-10T09:05:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "Decompression bomb cap holds at 64MB for all input formats.",
+      "verification": "scripts/fuzz-bomb.sh exits 0 and reports 0 caps exceeded across the fixture set.",
+      "verifiable": true,
+      "added": "2026-08-10T09:06:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "Example of a criterion that cannot be mechanically checked.",
+      "verification": "UNVERIFIABLE: requires a human viewing output GIFs for visual artifacts.",
+      "verifiable": false,
+      "added": "2026-08-10T09:07:00Z"
+    }
+  ],
+
+  "$comment_failure": "Failure criteria are not the negation of the criteria. They are the specific ways this work could appear complete while not being complete. The eight signatures are the general set; add project-specific ones.",
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "A guard fails open on the path that matters. A new validation returns success on its own error path.",
+      "detection": "Every new guard has a test asserting it rejects, not only one asserting it accepts."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A number appears in a README, docstring or commit message with no reproduction path.",
+      "detection": "grep the diff for numeric claims; each must name the command that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "Code references a path, fixture or binary assumed to exist.",
+      "detection": "Every referenced path is either created in the same change or checked at startup."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "An error is written to a channel nobody reads. stderr on exit 0, a log nobody tails, a console.warn.",
+      "detection": "Every error path terminates in something a human or a test will observe."
+    }
+  ],
+
+  "out_of_scope": [
+    "Named non-goals. Things a reasonable reader would assume are included and are not.",
+    "This section exists because scope creep during the work is indistinguishable from thoroughness."
+  ],
+
+  "constraints": [
+    "Hard limits the work must respect. Runtime, dependency, compatibility, budget."
+  ],
+
+  "$comment_results": "Appended at completion. One row per criterion. Never edits `criteria`. `evidence` is the actual pasted output, not a description of it.",
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ go test ./...\nok  github.com/x/gifsmith\t2.4s\nexit 0",
+      "recorded": "2026-08-10T14:30:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "UNVERIFIED",
+      "evidence": "No execution path available in this session; requires manual visual review.",
+      "recorded": "2026-08-10T14:30:00Z"
+    }
+  ],
+
+  "$comment_amendments": "A criterion may become wrong. It may not be quietly rewritten. Every change is an event here, with a reason, and the start-to-end diff of the criteria block is surfaced to the operator at completion. A criteria change during the work is a finding whether or not it was justified.",
+  "amendments": [
+    {
+      "criterion_id": "C2",
+      "change": "verification",
+      "from": "manual inspection of output size",
+      "to": "scripts/fuzz-bomb.sh exits 0",
+      "reason": "Original verification was not mechanically checkable, which violates the schema's own requirement.",
+      "requested_by": "agent",
+      "ratified_by": "operator",
+      "at": "2026-08-10T11:15:00Z"
+    }
+  ],
+
+  "$comment_integrity": "Makes tampering visible rather than preventing it. A hash mismatch at completion means the criteria moved.",
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:...",
+    "criteria_hash_at_completion": "sha256:...",
+    "match": null
+  },
+
+  "$comment_status_values": {
+    "results.status": ["MET", "NOT_MET", "UNVERIFIED", "UNVERIFIABLE"],
+    "note": "UNVERIFIED means it could have been checked and was not. UNVERIFIABLE means no execution path exists. The count of UNVERIFIED rows over time is the number worth tracking; a rising count means the gate is being satisfied on paper."
+  },
+
+  "$comment_injection": "The block delivered to the model each turn is done_state + criteria statements + failure_criteria statements. Not this whole file. Target a few hundred tokens, not two thousand. Verification strings and results stay on disk and are read on demand."
+}

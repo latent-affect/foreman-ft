@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bollard · Foreman</title>
+  <meta name="description" content="Bollard is the part that can say no.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="mast">
+    <a class="mark" href="../">Foreman</a>
+    <nav>
+        <a href="../">Foreman</a>
+        <a href="../install/">Install</a>
+        <a href="./" aria-current="page">Bollard</a>
+        <a href="../tessera/">Tessera</a>
+        <a href="../atlas/">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+    </nav>
+    <a class="cta" href="../install/">Install</a>
+    <details class="menu">
+      <summary>Menu</summary>
+      <div>
+        <a href="../">Foreman</a>
+        <a href="../install/">Install</a>
+        <a href="./" aria-current="page">Bollard</a>
+        <a href="../tessera/">Tessera</a>
+        <a href="../atlas/">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+        <a class="cta" href="../install/">Install</a>
+      </div>
+    </details>
+  </header>
+  <main class="wrap">
+    <p class="eyebrow">enforcement</p>
+    <h1>Bollard is the wall.</h1>
+    <p class="lede">A bollard is a fixed post. It does not negotiate. Six PreToolUse hooks can deny a write. Ran is not the same as fired. Fired on a test fixture is not the same as fired on a registered project. The Quality Bar's 3-of-6 mixed those. The ledger does not.</p>
+
+    <div class="proof">
+      <div><strong>5/6</strong><span>deny on a registered project cwd (architecture, goals-freeze, preflight, concept, dep-prov)</span></div>
+      <div><strong>1/6</strong><span>ship_readiness: 3 denies, all one scratchpad path</span></div>
+      <div><strong>6/6</strong><span>have run. Each has thousands of silents except concept, which still has thousands.</span></div>
+      <div><strong>ATLAS</strong><span>run 4 clean. v_gate_proven_live trust_state=ok.</span></div>
+    </div>
+
+    <h2>What the ledger actually shows</h2>
+    <p>architecture_gate, goals_freeze_gate, and preflight_blocking_gate were already live in the Quality Bar snapshot. concept_gate has since denied on FORE and HYPHY. dependency_provenance_gate still spends most of its fires in its own test fixture (39 of 56), but it also denied on HYPHY and SELFTEST. ship_readiness_gate has three fires, all under a /private/tmp scratchpad. That last one still has not met the bar.</p>
+
+    <h2>What this is not</h2>
+    <p>These counts are ATLAS v_gate_proven_live after ingest run 4 (clean: 19 checks, 0 contract failures). A hook that only ever denies inside its test suite is still an untested hook wearing a passing suite. ship_readiness is in that bucket. dep-prov is no longer fully in it.</p>
+
+    <h2>What holds across all six</h2>
+    <p>Every hook decision, fired or silent, lands in one ledger. A compliance cron re-judges those decisions on a schedule. One dated pass judged 95 hook-firing events: 7 compliant, 26 genuinely non-compliant, 60 dismissed. That is one pass, not a settled rate. The scorer behind it has a documented 3.4x swing across passes with no changelog explaining the swing. Treat the breakdown as a snapshot, and treat dismissed as dismissed by that pass of that scorer.</p>
+
+    <div class="actions">
+      <a class="cta" href="../install/">Install Foreman</a>
+    </div>
+  </main>
+  <footer class="foot">
+    <a href="https://github.com/latent-affect/foreman-ft">GitHub</a>
+    <a href="https://github.com/latent-affect/hyphy">hyphy</a>
+    <a href="https://github.com/latent-affect/wat">wat</a>
+    <a href="https://github.com/latent-affect/gifsmith">GifSmith</a>
+    <span>latent-affect</span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html><script>
+async function cancelJob(id) {
+  try { await fetch('/api/jobs/' + id, {method:'DELETE'}); }
+  catch (_) {}                    // SEED: silent-failure, mechanical
+}
+async function loadStats() {
+  try { return await fetch('/stats'); }
+  catch (e) { dbg("stats failed: " + e.message); }  // CONTROL: logs. NOT a seed.
+}
+</script></html>

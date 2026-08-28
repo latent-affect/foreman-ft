@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "FORE",
+  "component": "preflight_blocking_gate",
+  "scope_version": 1,
+  "created": "2026-08-24T05:58:00Z",
+  "criteria_frozen_at": "2026-08-24T06:10:00Z",
+  "done_state": "When preflight_blocking_gate.py would DENY because tessera_resolver.resolve returned ambiguous or unreachable, an Edit, Write, or Bash call whose sole write target resolves to {project_root}/.foreman/tessera-prefix is not denied; every other Edit, Write, or Bash call in that state is still denied.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "When tessera_resolver.resolve returns ambiguous or unreachable, an Edit or Write whose file_path resolves to {project_root}/.foreman/tessera-prefix is not denied, including when that file does not yet exist.",
+      "verification": "cd bollard && python3 -m unittest test_preflight_blocking_gate -v exits 0. Process cwd stays the unittest cwd; payload cwd is the tmp fixture; no os.chdir. tessera-prefix file is absent. Edit and Write, relative file_path '.foreman/tessera-prefix' and absolute {tmp}/.foreman/tessera-prefix, each against mocked ambiguous and unreachable (2x2x2). deny not called; set_rule FOREMAN-PREFLIGHT-GATE:{status}-remedy-write. test that remedy_path(tmp).name == tessera_resolver.OVERRIDE_FILENAME.",
+      "verifiable": true,
+      "added": "2026-08-24T05:58:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "When tessera_resolver.resolve returns ambiguous or unreachable, a Bash call whose extract_bash_write_targets list contains exactly one path and that path resolves to {project_root}/.foreman/tessera-prefix is not denied.",
+      "verification": "Same module: Bash 'echo FORE > .foreman/tessera-prefix' and 'echo FORE > {tmp}/.foreman/tessera-prefix' against mocked ambiguous and unreachable; deny not called; set_rule FOREMAN-PREFLIGHT-GATE:{status}-remedy-write.",
+      "verifiable": true,
+      "added": "2026-08-24T05:58:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "When tessera_resolver.resolve returns ambiguous or unreachable, an Edit, Write, or Bash whose write target is any path other than {project_root}/.foreman/tessera-prefix is still denied.",
+      "verification": "Same module, deny called once per case, both ambiguous and unreachable: Write {tmp}/.claude/settings.json; Write {tmp}/.foreman/other; Write {tmp}/vendor/.foreman/tessera-prefix; Write {tmp}/.foreman/tessera-prefix.bak; Edit {tmp}/src/foo.py; Bash 'echo x > README.md'; Bash 'true'.",
+      "verifiable": true,
+      "added": "2026-08-24T05:58:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "A Bash call that writes {project_root}/.foreman/tessera-prefix and at least one other extracted write target is still denied when resolve() is ambiguous or unreachable.",
+      "verification": "Same module: 'echo FORE > .foreman/tessera-prefix && echo x > README.md' against mocked ambiguous AND unreachable; deny called once each.",
+      "verifiable": true,
+      "added": "2026-08-24T05:58:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "Carve-out matches the relative string .foreman/tessera-prefix (or a suffix of tessera-prefix) and tests only send that relative file_path. Harness Write/Edit payloads with an absolute file_path still DENY. Looks done; operator still locked out.",
+      "detection": "C1 verification requires both a relative and an absolute file_path payload; Path.resolve equality against {project_root}/.foreman/tessera-prefix, not string equality."
+    },
+    {
+      "id": "F2",
+      "statement": "Carve-out covers Write because the deny text says Write, but Edit or Bash of the same file is still denied. Matcher is unconditional Edit|Write|Bash; the operator's echo FORE > .foreman/tessera-prefix is still locked.",
+      "detection": "C1 names Edit and Write; C2 names a simple > redirect extract_bash_write_targets already models. A green Write-only test file does not close F2."
+    },
+    {
+      "id": "F3",
+      "statement": "Bash sole-target check fails closed against the operator: extract_bash_write_targets returns zero targets or a false extra target, so the carve-out never fires and the named redirect is still denied. Tests that only cover Edit/Write go green.",
+      "detection": "C2 uses echo FORE > .foreman/tessera-prefix (and the absolute form), the same redirect class test_concept_gate.py already uses as a positive extraction case."
+    },
+    {
+      "id": "F4",
+      "signature": 1,
+      "statement": "Carve-out reuses component_coupling._is_control or exempts all of .foreman/ (or any command whose text contains tessera-prefix). The named file becomes writable, so the intended fix looks done, but .claude/settings.json and other .foreman/ files open too.",
+      "detection": "C3 must deny Write of .claude/settings.json and Write of .foreman/other; C4 must deny a two-target Bash. Passing C1/C2 alone is not done."
+    }
+  ],
+  "out_of_scope": [
+    "Dual AREM/FORE registration and dual-prefix cleanup. The ambiguous root is why the override file exists; this ticket does not disambiguate the registry.",
+    "A family-wide property that every hard gate must have a reachable self-remedy. Ticket says that is a later pass.",
+    "Grok dual-vocab handling.",
+    "The two follow-up items tracked separately.",
+    "Exempting .claude/settings.json. The incident also blocked that file; the ticket names .foreman/tessera-prefix as the fix and leaves settings.json out unless argued in with an explicit amendment.",
+    "Changing tessera_resolver.resolve statuses, OVERRIDE_FILENAME, or read_override.",
+    "Changing the Edit|Write|Bash matcher.",
+    "Widening component_coupling._is_control or CONTROL_FILENAMES so the freeze gate and this gate share a class-wide exemption."
+  ],
+  "constraints": [
+    "Implementation is preflight_blocking_gate.py plus its unittest. Do not edit goals_freeze_gate.py or component_coupling.py to share the exemption.",
+    "Remedy path is exactly {project_root}/.foreman/ concatenated with tessera_resolver.OVERRIDE_FILENAME (tessera-prefix). No other filename.",
+    "Path identity is Path.resolve equality against that remedy path, not string suffix, endswith, or basename match.",
+    "Bash side reuses component_coupling.extract_bash_write_targets. Sole target means that list has length 1 and that one path resolves to the remedy file.",
+    "If the tool call cannot be shown to be that sole target, keep the existing ambiguous/unreachable DENY (fail toward closed).",
+    "This file sits at bollard/GOALS.json because that is the component root the freeze gate resolves; criteria cover this carve-out only. Do not land the other follow-up items, dual-prefix work, or other bollard changes under this freeze.",
+    "Do not treat the deny-text mention of the file as license to also exempt hook-registration files."
+  ],
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 2,
+    "test_criteria": 4,
+    "frozen_at": "2026-08-24T06:10:00Z"
+  },
+  "results": [],
+  "amendments": [
+    {
+      "criterion_id": "C1",
+      "change": "verification",
+      "from": "From /path/to/dev-harness/bollard, python3 -m unittest test_preflight_blocking_gate -v exits 0. Tests mock resolve() to each of ambiguous and unreachable, send Edit and Write payloads whose file_path is the relative string .foreman/tessera-prefix and the absolute {tmp}/.foreman/tessera-prefix, without pre-creating the file. Each asserts hc.deny was not called and hc.set_rule was called with FOREMAN-PREFLIGHT-GATE:{status}-remedy-write.",
+      "to": "cd bollard && python3 -m unittest test_preflight_blocking_gate -v exits 0. Process cwd stays the unittest cwd; payload cwd is the tmp fixture; no os.chdir. tessera-prefix file is absent. Edit and Write, relative file_path '.foreman/tessera-prefix' and absolute {tmp}/.foreman/tessera-prefix, each against mocked ambiguous and unreachable (2x2x2). deny not called; set_rule FOREMAN-PREFLIGHT-GATE:{status}-remedy-write. test that remedy_path(tmp).name == tessera_resolver.OVERRIDE_FILENAME.",
+      "reason": "Clint Eastwood falsification: verification still greened suffix/basename matchers, process-cwd resolve, unreachable fail-open, and omitted two-target Bash.",
+      "requested_by": "clint-eastwood",
+      "ratified_by": "grok-4.6",
+      "at": "2026-08-24T06:10:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "change": "verification",
+      "from": "Same module: Bash payload echo FORE > .foreman/tessera-prefix and the same redirect with an absolute destination, mocked ambiguous and unreachable; hc.deny not called; set_rule argument FOREMAN-PREFLIGHT-GATE:{status}-remedy-write.",
+      "to": "Same module: Bash 'echo FORE > .foreman/tessera-prefix' and 'echo FORE > {tmp}/.foreman/tessera-prefix' against mocked ambiguous and unreachable; deny not called; set_rule FOREMAN-PREFLIGHT-GATE:{status}-remedy-write.",
+      "reason": "Clint Eastwood falsification: verification still greened suffix/basename matchers, process-cwd resolve, unreachable fail-open, and omitted two-target Bash.",
+      "requested_by": "clint-eastwood",
+      "ratified_by": "grok-4.6",
+      "at": "2026-08-24T06:10:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "change": "verification",
+      "from": "Same module: Write of {tmp}/.claude/settings.json, Write of {tmp}/.foreman/other, and a Bash redirect to a non-remedy file, each against mocked ambiguous; hc.deny called once per case. A run that never sends those payloads does not satisfy this criterion.",
+      "to": "Same module, deny called once per case, both ambiguous and unreachable: Write {tmp}/.claude/settings.json; Write {tmp}/.foreman/other; Write {tmp}/vendor/.foreman/tessera-prefix; Write {tmp}/.foreman/tessera-prefix.bak; Edit {tmp}/src/foo.py; Bash 'echo x > README.md'; Bash 'true'.",
+      "reason": "Clint Eastwood falsification: verification still greened suffix/basename matchers, process-cwd resolve, unreachable fail-open, and omitted two-target Bash.",
+      "requested_by": "clint-eastwood",
+      "ratified_by": "grok-4.6",
+      "at": "2026-08-24T06:10:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "change": "verification",
+      "from": "Same module: command echo FORE > .foreman/tessera-prefix && echo x > README.md against mocked ambiguous (two > redirects, so extract_bash_write_targets sees two targets); hc.deny called once.",
+      "to": "Same module: 'echo FORE > .foreman/tessera-prefix && echo x > README.md' against mocked ambiguous AND unreachable; deny called once each.",
+      "reason": "Clint Eastwood falsification: verification still greened suffix/basename matchers, process-cwd resolve, unreachable fail-open, and omitted two-target Bash.",
+      "requested_by": "clint-eastwood",
+      "ratified_by": "grok-4.6",
+      "at": "2026-08-24T06:10:00Z"
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:22af280b95e06b5396ca1f430eb308bba613366133de2eb9e7211010ee11f3df",
+    "match": null
+  }
+}

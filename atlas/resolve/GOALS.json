@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "atlas",
+  "component": "resolve",
+  "scope_version": 1,
+  "created": "2026-08-22T00:00:00Z",
+  "criteria_frozen_at": "2026-08-22T00:05:00Z",
+
+  "done_state": "Given dim_project/project_root state and a list of cwd values, resolve rebuilds cwd_project (and cwd_project_candidate for ambiguous cases) using path-component-aware longest-match matching ARCHITECTURE.md section 3's design exactly: never a bare string prefix, correctly ambiguous when two projects tie at the same depth, correctly unregistered when nothing matches, honoring a .foreman/tessera-prefix override when present, and idempotent -- re-running against unchanged registry state or a changed one always leaves cwd_project consistent with the CURRENT registry, never a stale prior answer.",
+
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "Matching is path-component-aware, never a bare string prefix: a registered root that is a literal string prefix of another real, differently-registered path (e.g. /path/to/example-project vs /path/to/example-project-ft) must not match the wrong one just because the string overlaps.",
+      "verification": "atlas/resolve/tests/test_matching.py: registers two projects at /proj/example-project and /proj/example-project-ft; resolves a cwd of /proj/example-project-ft/src; asserts it resolves uniquely to the example-project-ft project, not ambiguously or to example-project.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "A cwd matching exactly one registered root at the longest matching depth resolves unique, with matched_root, project_prefix, and candidate_count=1 all correctly populated.",
+      "verification": "atlas/resolve/tests/test_matching.py: registers one project, resolves a cwd nested under its root, asserts resolution='unique' and the CHECK-constraint-implied triple is consistent.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "A cwd matching two or more registered roots at the SAME longest depth (the real AREM/FORE shape: two projects sharing one source_root) resolves ambiguous, with all candidates recorded in cwd_project_candidate and project_prefix NULL in cwd_project.",
+      "verification": "atlas/resolve/tests/test_matching.py: registers two projects at the identical source_root, resolves a cwd equal to that root, asserts resolution='ambiguous', candidate_count=2, and both prefixes present in cwd_project_candidate.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "A cwd matching no registered root resolves unregistered, with matched_root and project_prefix both NULL and candidate_count=0.",
+      "verification": "atlas/resolve/tests/test_matching.py: resolves a cwd under no registered root, asserts resolution='unregistered'.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "A .foreman/tessera-prefix override file, when present for a given root, is read and takes precedence over the registry for cwds under that root -- ARCHITECTURE.md section 3's already-decided remedy for the AREM/FORE-shaped ambiguity.",
+      "verification": "atlas/resolve/tests/test_override.py: registers two projects sharing one source_root (ambiguous by registry alone); supplies a tessera-prefix override naming one of the two for that root; asserts the cwd now resolves unique to the overridden prefix, not ambiguous.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "Re-running resolve against UNCHANGED registry state is idempotent: no duplicate cwd_project rows, no drift in resolution/matched_root/project_prefix/candidate_count.",
+      "verification": "atlas/resolve/tests/test_idempotency.py: runs resolve twice against the same dim_project/project_root/cwd list, asserts cwd_project row count and content are identical before and after the second run.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "A registry CHANGE (a new project_root registered after the first resolve) causes the next resolve run to UPDATE the affected cwd_project rows to the new correct answer, not leave them keyed to the stale pre-change resolution -- ARCHITECTURE.md section 4's 'a registry change re-resolves history rather than leaving rows keyed to a stale answer'.",
+      "verification": "atlas/resolve/tests/test_idempotency.py: resolves a cwd as unregistered, registers a new project whose root covers that cwd, re-runs resolve, asserts the SAME cwd_project row (same cwd PK) now reads resolution='unique' with the new project_prefix, not a second stale row.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "Every write resolve makes to cwd_project satisfies its own CHECK constraints (resolution/project_prefix/candidate_count consistency, already enforced by the warehouse schema) -- resolve never needs PRAGMA ignore_check_constraints or a constraint-bypassing write path.",
+      "verification": "atlas/resolve/tests/test_matching.py and test_idempotency.py: every resolve call in every test runs against a real migrated warehouse database with all CHECK constraints live (no bypass), and a passing test run is itself the evidence -- a constraint violation would raise and fail the test.",
+      "verifiable": true,
+      "added": "2026-08-22T00:00:00Z"
+    }
+  ],
+
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "An ambiguous or unregistered cwd is silently written as if it were the single matching project, or a stale resolution is left in place after a registry change without being corrected.",
+      "detection": "Every resolution path (unique/ambiguous/unregistered) has its own asserting test, including the specific re-resolution-after-registry-change case (C7), not just the happy path."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A resolved-project count or match count in this component's code comments, docstrings, or commit messages has no reproduction path.",
+      "detection": "grep the component's source and its commit messages for numeric claims; each must name the command or test that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "The matcher assumes a root string is well-formed (no trailing slash inconsistency, no symlink resolution) rather than normalizing it, silently producing a false non-match.",
+      "detection": "Root and cwd paths are compared via pathlib.Path component lists after normalization, not raw string equality -- a test with a trailing-slash-inconsistent root/cwd pair must still match correctly."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A malformed or unreadable .foreman/tessera-prefix override is silently ignored, falling back to the registry with no signal that the override was present but broken.",
+      "detection": "A malformed override file (unreadable, or naming a prefix not in dim_project) produces a named, observable result the caller/test can see -- not a silent fallback indistinguishable from 'no override file exists'."
+    }
+  ],
+
+  "out_of_scope": [
+    "Populating dim_project or project_root from the real TESSERA registry -- that is ingest's job (tessera_to_ingest interface, out of scope in ingest's own GOALS.json too, pending its own criteria); this component consumes whatever rows are already there.",
+    "Real end-to-end resolution against the live 35-project registry and 575 real distinct cwds -- this component's tests use synthetic fixtures; end-to-end correctness is foreman:integration-test's job.",
+    "Any MAJOR/MINOR finding not specifically about resolve's own matching logic per the QUALITY-BAR triage."
+  ],
+
+  "constraints": [
+    "Zero third-party dependencies -- Python 3 stdlib only (pathlib), matching this environment's established convention.",
+    "Matching uses pathlib.Path component comparison, never str.startswith, per ARCHITECTURE.md section 3's explicit requirement and the five real root-pair collisions it names.",
+    "Tests use Python's stdlib unittest, matching warehouse/ingest's own convention."
+  ],
+
+  "results": [
+    {"criterion_id": "C1", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_string_prefix_collision_does_not_falsely_match -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C2", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_unique_match_populates_consistent_triple -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C3", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_shared_root_resolves_ambiguous_with_both_candidates_recorded -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C4", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_no_matching_root_resolves_unregistered -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C5", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_override -v\ntest_no_override_file_leaves_shared_root_ambiguous ... ok\ntest_override_naming_a_non_candidate_prefix_is_ignored_not_silently_applied ... ok\ntest_valid_override_disambiguates_a_shared_root ... ok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C6", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency.IdempotencyTests.test_rerun_against_unchanged_registry_is_a_no_op -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C7", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency.IdempotencyTests.test_registry_change_updates_the_same_row_not_a_new_one -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C8", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest discover -s atlas -t . -v (whole suite, no CHECK-constraint bypass anywhere in resolve's tests)\nRan 41 tests in 0.238s\nOK", "recorded": "2026-08-22T00:20:00Z"}
+  ],
+  "amendments": [],
+
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:ff81e68ca7f53f8bb7c3991519ba07232b49d0f6159a185b4f813a9a3e872472",
+    "criteria_hash_at_completion": "sha256:ff81e68ca7f53f8bb7c3991519ba07232b49d0f6159a185b4f813a9a3e872472",
+    "match": true
+  },
+
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 3,
+    "test_criteria": 8,
+    "frozen_at": "2026-08-22T00:05:00Z"
+  }
+}

@@ -1,0 +1,85 @@
+; deny_keychain.sb
+;
+; Seatbelt (sandbox-exec) profile used by neutralize_credentials.sh to run a
+; single subprocess (and everything it forks/execs) with macOS Keychain
+; access categorically denied, while leaving everything else about that
+; subprocess's environment alone -- filesystem, network, process exec, etc.
+; all still work normally, per (allow default) below. Only Keychain reads/
+; writes and the IPC path Keychain access actually goes over are removed.
+;
+; WHY THIS FILE EXISTS:
+; Unsetting a credential environment variable is not sufficient to neutralize
+; a credential. Many CLI tools resolve an API key from an environment variable
+; FIRST and fall back to a platform credential store when it is absent -- and
+; that fallback path does not consult environment variables at all. So a test
+; harness that unsets the env var and believes it has produced a
+; credential-free subprocess can still hand that subprocess a live key, which
+; then reaches wherever the subprocess writes: logs, transcripts, artifacts.
+;
+; This profile addresses the fallback half. It makes the Keychain unreachable
+; to the wrapped subprocess tree, so there is no fallback left to fall back
+; to. Use it together with the env-var unset in neutralize_credentials.sh;
+; neither half is sufficient alone.
+;
+; WHY A DENY-ONLY PROFILE ON TOP OF (allow default), NOT A SCRATCH KEYCHAIN:
+; An earlier design-time recommendation assumed a
+; separate scratch keychain (security create-keychain + a temporary search
+; list) would be the correct mechanism. Building the real thing surfaced a
+; strictly safer alternative: a scratch keychain requires creating a new
+; keychain file and mutating the process's keychain SEARCH LIST (even if
+; scoped to a subshell/subprocess env, `security list-keychains -s` is a
+; global-per-user-session operation in some invocation forms, and getting
+; that scoping wrong risks the real login keychain silently dropping off the
+; search list or a new keychain silently becoming default). This profile
+; touches, creates, unlocks, and modifies NOTHING about the user's real
+; keychain or its search list -- it only denies one subprocess tree the
+; ability to reach Keychain services at all. A profile that can't read
+; anything can't leak anything, and there is no shared mutable state for a
+; concurrent trial to race against or for a bug in this profile to corrupt.
+;
+; HOW TO VERIFY IT ON YOUR OWN TOOL, and the one trap in doing so:
+; Run your tool's own "is a key present" check three ways -- normal
+; environment; credential env var unset with no sandbox; env var unset UNDER
+; this profile. Only the third should report no key. If the second also
+; reports no key, your tool has no credential-store fallback and this profile
+; is not doing anything for you.
+;
+; The trap: under this profile a Keychain query fails with an EXTRA
+; "SecKeychainSearchCreateFromAttributes: One or more parameters passed to a
+; function were not valid" error before the generic not-found message. A
+; query for an item that simply does not exist produces only the generic
+; message, with no such prefix. Check for the prefix. Without it you cannot
+; distinguish "the sandbox denied this" from "the item was never there," and
+; a test that cannot tell those apart will pass whether or not the profile
+; works.
+;
+; This profile is intentionally coarse: it denies ALL Keychain access for
+; the wrapped subprocess tree, not just the one named item a target declares
+; via api_key_keychain. A named-item-only deny would require trusting that
+; no OTHER Keychain item could also satisfy whatever the target's fallback
+; logic is looking for -- a blanket deny needs no such trust.
+
+(version 1)
+(allow default)
+
+; HOME_KEYCHAINS is supplied by neutralize_credentials.sh via sandbox-exec -D.
+; It is a parameter rather than a literal for two reasons: the caller's real home
+; directory should not be committed to this repo, and a hardcoded placeholder path
+; here would match nothing at runtime -- the rule would read as protective while
+; denying access to a directory that does not exist. A guard that silently covers
+; the wrong path is worse than no guard, because it still reads as covered.
+(deny file-read* file-write*
+  (subpath (param "HOME_KEYCHAINS"))
+  (subpath "/Library/Keychains")
+  (subpath "/System/Library/Keychains")
+  (subpath "/private/var/db/mds"))
+
+(deny mach-lookup
+  (global-name "com.apple.securityd")
+  (global-name "com.apple.securityd.xpc")
+  (global-name "com.apple.security.agent")
+  (global-name "com.apple.SecurityServer")
+  (global-name "com.apple.trustd")
+  (global-name "com.apple.trustd.agent")
+  (global-name "com.apple.ocspd")
+  (global-name "com.apple.security.keychain-circle.notification"))

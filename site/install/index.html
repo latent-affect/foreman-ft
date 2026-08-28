@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Install · Foreman</title>
+  <meta name="description" content="Install Foreman from the repo.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="mast">
+    <a class="mark" href="../">Foreman</a>
+    <nav>
+        <a href="../">Foreman</a>
+        <a href="./" aria-current="page">Install</a>
+        <a href="../bollard/">Bollard</a>
+        <a href="../tessera/">Tessera</a>
+        <a href="../atlas/">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+    </nav>
+    <a class="cta" href="./">Install</a>
+    <details class="menu">
+      <summary>Menu</summary>
+      <div>
+        <a href="../">Foreman</a>
+        <a href="./" aria-current="page">Install</a>
+        <a href="../bollard/">Bollard</a>
+        <a href="../tessera/">Tessera</a>
+        <a href="../atlas/">Atlas</a>
+        <a href="../quality-bar/">Quality Bar</a>
+        <a href="../support/">Support</a>
+        <a class="cta" href="./">Install</a>
+      </div>
+    </details>
+  </header>
+  <main class="wrap">
+    <p class="eyebrow">try path</p>
+    <h1>Install Foreman.</h1>
+    <p class="lede">Clone the repo. Run the install script. Point git hooks at the copy in the tree. Humans stay on the README. Agents follow README.agents.md.</p>
+
+    <h2>From a clone</h2>
+<pre class="cmd">git clone https://github.com/latent-affect/foreman-ft.git
+cd foreman
+sh scripts/install-dev-harness.sh
+git config core.hooksPath .githooks</pre>
+    <p>The script fail-closes if a required hook is missing. Runtime paths ship as <code>/path/to/...</code> tokens and get rewritten on install. It never copies a private CLAUDE.md.</p>
+
+    <h2>New project</h2>
+    <p>Do this before that project's first session. Init fail-closes if the hooks are not already on disk.</p>
+<pre class="cmd">python3 skills/foreman/scripts/foreman_init.py /path/to/new/project CODENAME PREFIX ["purpose"]</pre>
+    <p>A Foreman project needs ARCHITECTURE.md at its own root. This repo does not ship one for itself. That is origin, not a template.</p>
+
+    <h2>Installed means</h2>
+    <div class="split">
+      <article class="panel">
+        <h3>Hooks</h3>
+        <p>Bollard files under <code>~/.claude/hooks/</code>. architecture_gate.py has to exist or you are not installed.</p>
+      </article>
+      <article class="panel">
+        <h3>Skills</h3>
+        <p>Foreman, code-safety, and research-lifecycle under <code>~/.claude/skills/</code>. Same tree can be copied to Grok.</p>
+      </article>
+    </div>
+
+    <h2>Verify</h2>
+<pre class="cmd">test -f ~/.claude/hooks/architecture_gate.py
+test -x .githooks/commit-msg
+git config --get core.hooksPath</pre>
+    <p>The last line must print <code>.githooks</code> in the clone.</p>
+
+    <p><a href="https://github.com/latent-affect/foreman-ft">github.com/latent-affect/foreman-ft</a></p>
+  </main>
+  <footer class="foot">
+    <a href="https://github.com/latent-affect/foreman-ft">GitHub</a>
+    <a href="https://github.com/latent-affect/hyphy">hyphy</a>
+    <a href="https://github.com/latent-affect/wat">wat</a>
+    <a href="https://github.com/latent-affect/gifsmith">GifSmith</a>
+    <span>latent-affect</span>
+  </footer>
+</body>
+</html>

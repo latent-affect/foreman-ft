@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.db
+*.db-wal
+*.db-shm
+.DS_Store
+ROADMAP.md
+.claude/settings.json
+.claude/settings.json.pre-*
+ARCHITECTURE-REVIEW.md
+prepare_notebook.py
+repo_context_part_*.txt

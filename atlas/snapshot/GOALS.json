@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "atlas",
+  "component": "snapshot",
+  "scope_version": 1,
+  "created": "2026-08-22T01:00:00Z",
+  "criteria_frozen_at": "2026-08-22T01:05:00Z",
+
+  "done_state": "Given warehouse rollup data and an injected ticket-rollup dict (the real live TESSERA read is out of scope here, per every other component's own established pattern), the snapshot publisher writes index.json and per-project shards matching ARCHITECTURE.md section 17's documented shape into a new generation directory and flips the current symlink to it last -- never mutating a prior generation, never publishing a torn or partial generation -- retains generations by the age-AND-count rule section 7 specifies, and refuses to publish (leaving current unchanged) when the warehouse is not genuinely clean or the snapshot_ticket_rollup_identity check fails against the supplied ticket rollup.",
+
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "publish() writes every file of a new generation into a freshly-created gen-<timestamp>/ directory and flips the current symlink to it only after every file in that directory is fully written -- never mutating an existing generation directory in place.",
+      "verification": "atlas/snapshot/tests/test_publish_atomicity.py: calls publish() twice with different fixture data, asserts each call creates a NEW gen-*/ directory distinct from the last, asserts the first generation's files are byte-identical before and after the second publish (never mutated), and asserts current always points at the most recently completed generation, never a partially-written one (checked by asserting index.json is present and parses inside every generation current has ever pointed to during the test).",
+      "verifiable": true,
+      "added": "2026-08-22T01:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "A reader that resolves current once and then reads files under that resolved path is guaranteed a consistent generation even if publish() is called again afterward -- the old generation's files remain valid and unchanged at their resolved path (never deleted while it could still be the most recent generation kept by C3's retention rule).",
+      "verification": "atlas/snapshot/tests/test_publish_atomicity.py: resolves current to a real path, publishes again, re-reads the ORIGINAL resolved path's index.json, asserts it is unchanged and still parses -- the old generation was not deleted or mutated out from under an in-progress reader.",
+      "verifiable": true,
+      "added": "2026-08-22T01:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "Retention keeps a generation only when it is younger than max_age_seconds OR is among the newest 3 generations -- ARCHITECTURE.md section 7's age-AND-count rule, tested with an injectable clock since real wall-clock time cannot be controlled in a fast unit test.",
+      "verification": "atlas/snapshot/tests/test_retention.py: publishes 6 generations with a fake clock advancing past max_age_seconds between some of them, asserts the on-disk generation set after each publish matches exactly what the rule predicts -- old-and-not-in-newest-3 generations are removed, young or newest-3 generations survive.",
+      "verifiable": true,
+      "added": "2026-08-22T01:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "publish() refuses to write a new generation or move current when the warehouse's query-facade status() is not genuinely clean, or when snapshot_ticket_rollup_identity fails against the supplied ticket rollup -- both refusals leave the filesystem exactly as it was before the call, not a partial write.",
+      "verification": "atlas/snapshot/tests/test_publish_refusal.py: two separate tests, one with a non-clean warehouse fixture and one with a ticket_rollup dict whose open_total deliberately does not equal open_null_severity + sum(open_by_severity), both asserting publish() raises and current/generation-directory-list are byte-for-byte unchanged from before the call.",
+      "verifiable": true,
+      "added": "2026-08-22T01:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "index.json's shape matches ARCHITECTURE.md section 17 exactly for a real fixture: schema_version, generated_at, refresh_cadence_seconds, max_age_seconds (derived as 3x refresh_cadence_seconds per section 5, not independently configurable), warehouse_run_id, cursors, verdict_window_days, rate_uninterpretable_handlers, severity_rubric, roots, unresolved_scopes, and a projects block with open_total/open_by_severity/open_null_severity/open_null_tier/root_state/root_is_shared/tickets per project, with the open_total identity holding for every project (guaranteed by C4's refusal on violation).",
+      "verification": "atlas/snapshot/tests/test_index_shape.py: publishes against a multi-project fixture, parses the resulting index.json, asserts every documented top-level key is present with the correct type, and asserts max_age_seconds == 3 * refresh_cadence_seconds exactly.",
+      "verifiable": true,
+      "added": "2026-08-22T01:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "A project shard whose source_root is shared with another registered prefix (the real FORE/AREM shape) sets rollup_scope='<ambiguous>' and rollup_is_shared_with naming the other prefix(es) -- ARCHITECTURE.md section 6's 'no consumer can read FORE's rollup as FORE's alone.'",
+      "verification": "atlas/snapshot/tests/test_shard_sharing.py: fixture with two projects sharing one source_root, publishes, asserts both shards' rollup_scope='<ambiguous>' and rollup_is_shared_with correctly names the other; a third, non-shared project's shard has rollup_scope equal to its own prefix and rollup_is_shared_with empty.",
+      "verifiable": true,
+      "added": "2026-08-22T01:00:00Z"
+    }
+  ],
+
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "A publish that fails partway (a write error on one shard file) leaves current pointing at a generation directory with some files missing or half-written.",
+      "detection": "publish() writes all files for a generation BEFORE flipping current -- a failure before the flip leaves current at the prior (complete) generation, never the new (incomplete) one; a test simulating a mid-write failure asserts current is unchanged."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A generation count, retention window, or file-size number in this component's code comments or commit messages has no reproduction path.",
+      "detection": "grep the component's source and commit messages for numeric claims; each must name the command or test that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "The publisher assumes the snapshot root directory exists, rather than creating it or reporting a named failure.",
+      "detection": "publish() creates the snapshot root and its generation subdirectory if absent, with a real filesystem test asserting this against a root that does not yet exist."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A publish refusal (C4) is logged to a channel nobody reads instead of being raised to the caller.",
+      "detection": "Every refusal is a raised, named exception the caller/test directly asserts on."
+    }
+  ],
+
+  "out_of_scope": [
+    "The real live TESSERA read (tessera_to_snapshot interface) -- this component consumes an injected ticket_rollup dict of the same shape a real TESSERA read would produce, matching resolve's own established pattern of consuming injected registry data. Real end-to-end wiring against the live TESSERA store is foreman:integration-test's job.",
+    "hookclient, the reference reader of this artifact -- a separate component with its own GOALS.json, consuming exactly the format this component's tests already pin down in C5/C6.",
+    "The severity rubric content itself (still blocked) -- section 17's severity_rubric.status='absent' path is the only one this component builds, matching the architecture document's own stated blocker.",
+    "Concurrent-writer SQLite lock behavior (section 5's measured 59.9ms busy-timeout failure) -- that is about the warehouse read path under a concurrent writer, not this component's own publish mechanism."
+  ],
+
+  "constraints": [
+    "Zero third-party dependencies -- Python 3 stdlib only (json, pathlib, os for the atomic symlink flip), matching this environment's established convention.",
+    "The symlink flip uses os.symlink to a temp name plus os.replace (or an equivalent atomic rename), never a two-step unlink-then-symlink, matching ARCHITECTURE.md section 7's own recorded gap about needing this specified.",
+    "Tests use Python's stdlib unittest and an injectable clock (never real datetime.now() for retention timing), matching every other component's own convention plus this component's specific need for deterministic time-based tests."
+  ],
+
+  "results": [
+    {"criterion_id": "C1", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity.PublishAtomicityTests.test_each_publish_creates_a_new_generation_never_mutates_the_last -v\nok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C2", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity.PublishAtomicityTests.test_a_resolved_path_stays_valid_and_unchanged_after_a_later_publish -v\nok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C3", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_retention -v\ntest_a_4th_publish_removes_only_the_generation_that_is_both_old_and_not_newest_3 ... ok\ntest_a_recent_generation_outside_the_newest_3_still_survives ... ok\ntest_newest_3_survive_even_when_old ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C4", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_refusal -v\ntest_a_refusal_after_a_successful_publish_does_not_disturb_current ... ok\ntest_refuses_when_ticket_rollup_identity_fails ... ok\ntest_refuses_when_warehouse_is_not_clean ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C5", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_index_shape -v\ntest_every_project_has_every_documented_key ... ok\ntest_index_json_has_every_documented_top_level_key ... ok\ntest_max_age_seconds_is_derived_not_independent ... ok\ntest_ticket_identity_holds_for_every_published_project ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C6", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_shard_sharing -v\ntest_index_roots_map_reflects_the_same_sharing ... ok\ntest_non_shared_project_gets_its_own_prefix_as_rollup_scope ... ok\ntest_shared_root_projects_get_ambiguous_rollup_scope ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"}
+  ],
+  "amendments": [],
+
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:c724aa4b3bba225864eafee5e951c1d421054493c14c9ce00e20de1c61ee8417",
+    "criteria_hash_at_completion": "sha256:c724aa4b3bba225864eafee5e951c1d421054493c14c9ce00e20de1c61ee8417",
+    "match": true
+  },
+
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 3,
+    "test_criteria": 6,
+    "frozen_at": "2026-08-22T01:05:00Z"
+  }
+}

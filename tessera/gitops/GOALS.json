@@ -1,0 +1,147 @@
+{
+  "project": "tessera",
+  "component": "gitops",
+  "scope_version": 1,
+  "created": "2026-08-15T00:00:00Z",
+  "criteria_frozen_at": "2026-08-15T15:00:00Z",
+  "done_state": "tessera/gitops/ manages dev/integration/FT/prod stage repos on the operator's separate-repo-per-stage convention: promotion, tag-checkpointed rollback that never touches store's ticket data, on-read ancestry reconciliation (stale, un-flagged when restored, never latched), and a diff() call for api's discrepancy computation -- with a promote-break-rollback-assert cycle demonstrated end to end.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "init_stage() creates a stage as its own independent git repository (not a git-worktree-linked checkout), matching the operator's confirmed convention.",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_init_stage_is_independent_repo exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "init_stage() and promote_stage() refuse to operate on a stage repo path under an iCloud Drive / Dropbox / other sync-client-managed folder, per SCOPE.md premortem item 11.",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_sync_root_rejected exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "promote_stage(stage, commit_sha, actor) fast-forwards the stage repo to commit_sha, tags a checkpoint at the new HEAD, and records a StagePromoted event via store (never writing stage_heads directly).",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_promote_ff_tags_and_records_event exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "promote_stage() raises a clear error (does not silently no-op or force) when the target commit is not a fast-forward from the stage repo's current HEAD.",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_promote_non_fastforward_raises exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "rollback_stage(stage, target_tag, actor) resets the stage repo's HEAD to a prior tagged checkpoint, records a StageRolledBack event via store, and never modifies any ticket data in store.",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_rollback_resets_and_records_event exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "reconcile_stage(stage) flags a linked ticket stale when its linked commit is no longer an ancestor of the stage's real current HEAD (via git merge-base --is-ancestor), regardless of whether the HEAD move went through gitops or was a direct git operation on the stage repo.",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_reconcile_flags_stale_on_direct_git_reset exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "reconcile_stage(stage) un-flags a previously-stale ticket the moment its linked commit is an ancestor of HEAD again (e.g. after re-promotion) -- staleness is recomputed from ancestry, never a one-way latch.",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_reconcile_unflags_when_ancestry_restored exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "A full promote -> break (direct git reset bypassing gitops) -> rollback -> assert cycle is demonstrated end to end: code is reverted in the stage repo AND every ticket linked to the broken commit shows the stale flag, matching SCOPE.md's required evidence bar.",
+      "verification": "python3 tests/test_promotion_cycle.py exits 0 and reports code_reverted=true tickets_flagged_stale=true.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C9",
+      "statement": "diff(stage, commit_sha) returns the real git diff/show output for that commit in that stage's repo, usable by api for discrepancy computation against a claim's files_touched.",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_diff_returns_real_output exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C10",
+      "statement": "Ticket-to-commit links (via store.link_ticket_commit) record a commit SHA; a branch name may additionally be recorded as informational only and is never used by reconcile_stage()'s ancestry check (SCOPE.md distinguishes the two).",
+      "verification": "python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_branch_link_is_informational_only exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "promote_stage force-pushes/force-resets past a non-fast-forward instead of raising.",
+      "detection": "C4 explicitly tests the rejection path."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A promotion/rollback numeric or behavioral claim in a comment has no reproduction path.",
+      "detection": "grep the diff for numeric claims; each must name the command that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "Code assumes a stage repo directory exists without checking/creating it.",
+      "detection": "init_stage() is idempotent and required before any promote/rollback call touches a stage."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A git subprocess failure is swallowed (return code checked but not surfaced).",
+      "detection": "Every subprocess.run call in gitops uses check=True or explicitly inspects returncode and raises with the captured stderr."
+    },
+    {
+      "id": "F5",
+      "signature": 3,
+      "statement": "reconcile_stage() only fires when gitops itself performs a promotion/rollback, missing a direct git operation on the stage repo (the exact hole ARCHITECTURE.md's revision fixed).",
+      "detection": "C6 explicitly tests a direct 'git reset' bypassing gitops entirely."
+    }
+  ],
+  "out_of_scope": [
+    "Merge-conflict resolution (promote_stage requires a clean fast-forward; anything else is the operator's job via normal git).",
+    "Automatic code review / CI execution.",
+    "Managing the source repo that stages promote FROM -- gitops operates only on the stage repos themselves.",
+    "Non-git VCS support."
+  ],
+  "constraints": [
+    "Python 3.9+ stdlib only (subprocess, pathlib) plus tessera.common and tessera.store.",
+    "Uses the operator's confirmed convention: separate independent git repo per stage, ordered commits + tags -- never git worktree.",
+    "Every stage_heads write goes through store's StagePromoted/StageRolledBack events, never a direct store.stage_heads write."
+  ],
+  "results": [
+    {"criterion_id": "C1", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_init_stage_is_independent_repo -v\ntest_init_stage_is_independent_repo ... ok", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C2", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_sync_root_rejected -v\ntest_sync_root_rejected ... ok", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C3", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_promote_ff_tags_and_records_event -v\ntest_promote_ff_tags_and_records_event ... ok (required redesigning init_stage/promote_stage: a plain git-clone-based init checks out the source's tip, making 'promote to an earlier commit' a non-fast-forward by construction -- fixed by making stages start empty and fetch+merge on demand)", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C4", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_promote_non_fastforward_raises -v\ntest_promote_non_fastforward_raises ... ok", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C5", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_rollback_resets_and_records_event -v\ntest_rollback_resets_and_records_event ... ok", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C6", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_reconcile_flags_stale_on_direct_git_reset -v\ntest_reconcile_flags_stale_on_direct_git_reset ... ok", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C7", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_reconcile_unflags_when_ancestry_restored -v\ntest_reconcile_unflags_when_ancestry_restored ... ok", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C8", "status": "MET", "evidence": "$ /usr/bin/python3 tests/test_promotion_cycle.py\n{'ok': True, 'code_reverted': True, 'tickets_flagged_stale': True, 'stale_after_good_promotion': False, 'stale_after_break': True, 'stale_after_rollback': False}", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C9", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_diff_returns_real_output -v\ntest_diff_returns_real_output ... ok", "recorded": "2026-08-15T15:30:00Z"},
+    {"criterion_id": "C10", "status": "MET", "evidence": "$ /usr/bin/python3 -m unittest tessera.gitops.tests.test_stages.StageTests.test_branch_link_is_informational_only -v\ntest_branch_link_is_informational_only ... ok", "recorded": "2026-08-15T15:30:00Z"}
+  ],
+  "amendments": [],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:c7418448397677111315a4f4464c7aee4f2339a2911a7e9c9fc83ace890ccfd0",
+    "criteria_hash_at_completion": "sha256:c7418448397677111315a4f4464c7aee4f2339a2911a7e9c9fc83ace890ccfd0",
+    "match": true
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 2,
+    "test_criteria": 10,
+    "frozen_at": "2026-08-15T15:00:00Z"
+  }
+}

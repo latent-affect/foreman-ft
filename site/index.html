@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foreman</title>
+  <meta name="description" content="Foreman is a coding-agent harness that can deny a write.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="mast">
+    <a class="mark" href="./">Foreman</a>
+    <nav>
+        <a href="./" aria-current="page">Foreman</a>
+        <a href="install/">Install</a>
+        <a href="bollard/">Bollard</a>
+        <a href="tessera/">Tessera</a>
+        <a href="atlas/">Atlas</a>
+        <a href="quality-bar/">Quality Bar</a>
+        <a href="support/">Support</a>
+    </nav>
+    <a class="cta" href="install/">Install</a>
+    <details class="menu">
+      <summary>Menu</summary>
+      <div>
+        <a href="./" aria-current="page">Foreman</a>
+        <a href="install/">Install</a>
+        <a href="bollard/">Bollard</a>
+        <a href="tessera/">Tessera</a>
+        <a href="atlas/">Atlas</a>
+        <a href="quality-bar/">Quality Bar</a>
+        <a href="support/">Support</a>
+        <a class="cta" href="install/">Install</a>
+      </div>
+    </details>
+  </header>
+  <main class="wrap">
+    <section class="hero hero-row">
+      <div>
+        <p class="eyebrow">coding-agent harness</p>
+        <h1>Scaffolding that can refuse a write.</h1>
+        <p class="lede">Leave a coding agent overnight. Bollard is six PreToolUse hooks. All six have run. Five have denied a write on a registered project directory. ship_readiness has not; its three denies are one scratchpad. The Quality Bar scores a claim by what it costs to fake, and this tree does not clear it yet.</p>
+        <div class="actions">
+          <a class="cta" href="install/">Install Foreman</a>
+          <a class="cta cta-ghost" href="https://github.com/latent-affect/foreman-ft">Open the repo</a>
+        </div>
+      </div>
+      <div>
+        <p class="stamp">Deny</p>
+        <pre class="ledger" aria-label="hook ledger excerpt">
+<span class="dim">architecture_gate</span>     <span class="deny">DENY</span>  ARCHITECTURE.md missing
+<span class="dim">goals_freeze_gate</span>      <span class="deny">DENY</span>  criteria not frozen
+<span class="dim">preflight_blocking_gate</span>  <span class="ok">silent</span>
+<span class="dim">ship_readiness_gate</span>     <span class="ok">silent</span>
+        </pre>
+        <p class="mute">A hook that only warns is a suggestion. These can stop the write.</p>
+      </div>
+    </section>
+
+    <div class="proof">
+      <div><strong>5/6</strong><span>hooks with a deny on a registered project cwd. ship_readiness still has none.</span></div>
+      <div><strong>6/6</strong><span>hooks have run. Silent thousands of times. Fire is not the same as ran.</span></div>
+      <div><strong>0/11</strong><span>Quality Bar floors fully verified. Named on purpose.</span></div>
+      <div><strong>1</strong><span>hook still scratchpad-only: ship_readiness_gate</span></div>
+    </div>
+
+    <h2>What you actually get</h2>
+    <div class="split">
+      <article class="panel">
+        <h3>Bollard</h3>
+        <p>The enforcement layer. Six PreToolUse hooks that can deny a write. A later ledger pass found fire verdicts on all six, and a deny on a registered project directory for five of them. ship_readiness is the one that has not. The old 3-of-6 figure was a Quality Bar snapshot, not the current ledger.</p>
+        <p><a href="bollard/">Bollard, in full</a></p>
+      </article>
+      <article class="panel">
+        <h3>Foreman</h3>
+        <p>The stage map. Concept, architecture, design, build, integration, verification, validate, ship. A reviewer who did not write the code gives a real Go, Kill, Hold, or Recycle. Today only three of nine skills have a hard hook behind them. The rest are required process, not gated.</p>
+      </article>
+      <article class="panel">
+        <h3>Tessera</h3>
+        <p>Local tickets. Zero network. A closed claim is supposed to be checked against the real git diff. The function exists. Nothing calls it automatically yet, including Tessera's own tooling.</p>
+        <p><a href="tessera/">Tessera, in full</a></p>
+      </article>
+      <article class="panel">
+        <h3>Quality Bar</h3>
+        <p>Four evidence tiers, E0 through E3. The question is what it costs to fake the claim. Zero of eleven floors are fully verified today. That number is the point of publishing the bar, not something to bury under a feature list.</p>
+        <p><a href="quality-bar/">Read the bar</a></p>
+      </article>
+    </div>
+
+    <h2>Questions people actually ask</h2>
+    <div class="obj">
+      <h3>Is this a prompt library?</h3>
+      <p>No. Skills without a hard hook behind them fired 0 out of 3 times when measured. The deny is the mechanism. The skills are the map.</p>
+    </div>
+    <div class="obj">
+      <h3>Does it work without Claude Code?</h3>
+      <p>The hooks are Claude Code PreToolUse. Skills can be copied onto Grok or anything else that loads SKILL.md. If you are not on Claude Code, you get the map, not the wall.</p>
+    </div>
+    <div class="obj">
+      <h3>Is it finished?</h3>
+      <p>No. The Quality Bar says so with numbers. Three hooks are live. Five Foreman stages still have no gate. Tessera's diff check sits uncalled. Shipping anyway, with the gaps in the repo, is the honest move.</p>
+    </div>
+
+    <div class="actions">
+      <a class="cta" href="install/">Install Foreman</a>
+    </div>
+  </main>
+  <footer class="foot">
+    <a href="https://github.com/latent-affect/foreman-ft">GitHub</a>
+    <a href="https://github.com/latent-affect/hyphy">hyphy</a>
+    <a href="https://github.com/latent-affect/wat">wat</a>
+    <a href="https://github.com/latent-affect/gifsmith">GifSmith</a>
+    <span>latent-affect</span>
+  </footer>
+</body>
+</html>

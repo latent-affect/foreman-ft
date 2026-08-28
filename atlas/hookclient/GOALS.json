@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "atlas",
+  "component": "hookclient",
+  "scope_version": 1,
+  "created": "2026-08-22T01:40:00Z",
+  "criteria_frozen_at": "2026-08-22T01:45:00Z",
+
+  "done_state": "A zero-dependency read-side library implementing ARCHITECTURE.md section 7's exact consumer contract: resolve current, read index, validate schema_version, validate age, longest path-component match on roots (never picking a candidate on ambiguous), and reading a project detail shard under the SAME resolved generation. Every one of the five named failure modes (pointer missing, pointer dangling, index corrupt, shard corrupt, whole root removed) plus a sixth this component adds (schema_version mismatch) returns a reason and no data -- none raise, matching section 4's stated guarantee.",
+
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "Each of the five failure modes named in ARCHITECTURE.md section 7 (pointer missing, pointer dangling, index corrupt, shard corrupt, whole root removed) returns a result object carrying a reason and no data -- none raise an exception out of the public read function.",
+      "verification": "atlas/hookclient/tests/test_failure_modes.py: five separate fixtures, one per failure mode, each asserting read_index() returns ok=False with a reason string naming that specific mode, and never raises.",
+      "verifiable": true,
+      "added": "2026-08-22T01:40:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "Reading a valid, fresh snapshot returns the parsed index content and a correctly-computed staleness (age_seconds, is_stale) derived from generated_at and max_age_seconds, not a bare file mtime -- matching section 6's stated design ('cursors... so a reading hook can compute its own staleness instead of trusting a bare file mtime').",
+      "verification": "atlas/hookclient/tests/test_freshness.py: a fixture with generated_at set to a known offset from an injectable 'now', asserts age_seconds and is_stale are computed correctly both under and over max_age_seconds.",
+      "verifiable": true,
+      "added": "2026-08-22T01:40:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "Staleness is reported, not enforced -- read_index() returns the data AND is_stale=True for an aged-out snapshot; the caller decides fail-open policy, matching section 5's design that hookclient itself does not decide what a hook does about staleness.",
+      "verification": "atlas/hookclient/tests/test_freshness.py: asserts a stale fixture's read_index() result has ok=True (data present) with is_stale=True, not ok=False -- staleness alone is not a failure mode.",
+      "verifiable": true,
+      "added": "2026-08-22T01:40:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "A schema_version in the index that does not match this client's expected version is treated as a failure mode (reason returned, no data), not silently accepted or silently coerced.",
+      "verification": "atlas/hookclient/tests/test_failure_modes.py: a fixture index.json with schema_version='atlas-snapshot-1' (an old/wrong version) asserts read_index() returns ok=False naming a schema_version mismatch.",
+      "verifiable": true,
+      "added": "2026-08-22T01:40:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "resolve_project(cwd, index) reproduces section 7's exact consumer contract: longest path-component match against index['roots'], returning unique (one prefix)/ambiguous (the full candidate list, never picking one)/unregistered (proceed as if ATLAS absent) -- reusing atlas.resolve.matcher's own matching function rather than a second, potentially-drifting implementation.",
+      "verification": "atlas/hookclient/tests/test_project_resolution.py: fixtures covering unique, ambiguous (the real FORE/AREM shared-root shape), and unregistered cwds against a real index['roots'] map, asserting the returned resolution and candidate list match atlas.resolve.matcher.resolve_cwd's own output on the same input.",
+      "verifiable": true,
+      "added": "2026-08-22T01:40:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "read_project(cwd_or_prefix, index_result) reads the shard from the SAME resolved generation the index came from, never re-resolving current a second time -- the structural guarantee against a torn pair that section 7 states is the whole point of the generation-directory design.",
+      "verification": "atlas/hookclient/tests/test_project_resolution.py: reads an index, then (simulating a concurrent republish between calls) changes what current points to, then calls read_project() using the FIRST read's result; asserts it reads the shard from the original resolved generation directory, not the new one current now points to.",
+      "verifiable": true,
+      "added": "2026-08-22T01:40:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "This component imports nothing outside the Python 3 standard library -- section 4's explicit 'zero dependencies' requirement for hookclient specifically (stricter than every other component's own 'no third-party dependencies' constraint, which still allows importing from elsewhere in this same project; hookclient may not even import atlas.resolve directly for this reason -- see out_of_scope).",
+      "verification": "atlas/hookclient/tests/test_zero_deps.py: parses this component's own source files' import statements (ast module) and asserts every imported top-level module name is in the stdlib module list, with no import of any other atlas.* component.",
+      "verifiable": true,
+      "added": "2026-08-22T01:40:00Z"
+    }
+  ],
+
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "A failure mode this component cannot fully classify falls through to a generic exception instead of a named reason, or worse, returns ok=True with partial/garbage data.",
+      "detection": "Every filesystem/parse operation in the read path is wrapped so its specific failure produces a named reason string; a catch-all handler at the top of the public function converts any OTHER unexpected exception into a named 'unexpected-error' reason rather than letting it propagate, so the 'never raises' guarantee holds even for a failure mode not in the original five."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A failure-mode count or timing number in this component's code comments or commit messages has no reproduction path.",
+      "detection": "grep the component's source and commit messages for numeric claims; each must name the command or test that produced it."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "resolve_project assumes index['roots'] is well-formed (all string keys, all list-of-string prefixes) without defending against a corrupt or unexpected shape.",
+      "detection": "A fixture with a malformed roots entry (wrong type) is asserted to produce a named failure reason, not an unhandled exception."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A failure is written to a channel nobody reads (stderr print, a swallowed exception) instead of being returned in the result object.",
+      "detection": "Every failure path returns its reason in the result object's own field, which every test asserts on directly -- never a side-channel print."
+    }
+  ],
+
+  "out_of_scope": [
+    "Importing atlas.resolve.matcher directly, despite C5 calling for the 'same matching logic' -- hookclient's zero-dependency constraint (C7) means it cannot import another atlas.* component (which itself is not zero-dependency-guaranteed transitively). This component vendors the same matching ALGORITHM as a small, independently-tested pure function, verified to produce identical output to atlas.resolve.matcher on the same fixtures (C5's verification), not a shared import.",
+    "Actually writing the fail-open fallback behavior inside a real Foreman hook -- this component is the read-side library a hook WOULD import; wiring it into architecture_gate.py or any other real hook is that hook's own future change, not this component's.",
+    "The severity rubric's actual content (still absent) -- reading severity_rubric.status='absent' correctly is in scope; interpreting a present rubric is not, since none exists yet.",
+    "Real end-to-end reads against a live-published snapshot directory -- this component's tests use synthetic fixtures; end-to-end correctness is foreman:integration-test's job."
+  ],
+
+  "constraints": [
+    "Zero dependencies, stdlib only, and specifically no import of any other atlas.* module -- section 4's explicit requirement for this component, stricter than every sibling component's own constraint (C7).",
+    "No writes, no network, no subprocess -- read-only filesystem access exclusively.",
+    "Tests use Python's stdlib unittest, matching every other component's own convention (test code itself MAY import atlas.resolve.matcher for cross-checking in C5 -- the zero-dependency constraint applies to the shipped library, not its test suite)."
+  ],
+
+  "results": [
+    {"criterion_id": "C1", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_failure_modes -v (5 of 6 tests are the 5 named modes)\ntest_index_corrupt ... ok\ntest_pointer_dangling ... ok\ntest_pointer_missing ... ok\ntest_shard_corrupt_does_not_block_the_index_read ... ok\ntest_whole_root_removed ... ok\nOK", "recorded": "2026-08-22T02:00:00Z"},
+    {"criterion_id": "C2", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_freshness.FreshnessTests.test_fresh_snapshot_is_not_stale atlas.hookclient.tests.test_freshness.FreshnessTests.test_exactly_at_the_boundary_is_not_yet_stale -v\nok\nok\nOK", "recorded": "2026-08-22T02:00:00Z"},
+    {"criterion_id": "C3", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_freshness.FreshnessTests.test_aged_out_snapshot_is_stale_but_still_ok_with_data -v\nok\nOK", "recorded": "2026-08-22T02:00:00Z"},
+    {"criterion_id": "C4", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_failure_modes.FailureModeTests.test_schema_version_mismatch -v\nok\nOK", "recorded": "2026-08-22T02:00:00Z"},
+    {"criterion_id": "C5", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_project_resolution.ProjectResolutionCrossCheckTests -v\ntest_ambiguous_shared_root_matches_the_real_fore_arem_shape ... ok\ntest_unique_match ... ok\ntest_unregistered ... ok\nOK", "recorded": "2026-08-22T02:00:00Z"},
+    {"criterion_id": "C6", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_project_resolution.ReadProjectSameGenerationTests -v\ntest_read_project_uses_the_originally_resolved_generation ... ok\nOK", "recorded": "2026-08-22T02:00:00Z"},
+    {"criterion_id": "C7", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_zero_deps -v\ntest_no_import_of_any_sibling_atlas_component ... ok\ntest_no_import_outside_stdlib_or_this_component ... ok\nOK", "recorded": "2026-08-22T02:00:00Z"}
+  ],
+  "amendments": [],
+
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:d404ad5f598dbb691ef99c7f803ed364f019ad946b773d289f9d0c1feef3e944",
+    "criteria_hash_at_completion": "sha256:d404ad5f598dbb691ef99c7f803ed364f019ad946b773d289f9d0c1feef3e944",
+    "match": true
+  },
+
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 2,
+    "test_criteria": 7,
+    "frozen_at": "2026-08-22T01:45:00Z"
+  }
+}

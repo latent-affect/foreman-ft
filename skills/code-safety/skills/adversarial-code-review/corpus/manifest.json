@@ -1,0 +1,225 @@
+{
+ "corpus_version": "1.0",
+ "created": "2026-08-07",
+ "purpose": "Measure the false-negative rate of adversarial-code-review. Anecdotal 'it found real bugs' does not tell you what it MISSED, which is the number that matters for a merge gate.",
+ "tiers": {
+  "mechanical": "scan.py is expected to catch these. A miss is a tool bug, and is measurable automatically by run_corpus.py.",
+  "reasoning": "scan.py structurally CANNOT catch these (no marker word, cross-file, or judgment-based). They are the benchmark for the model-driven pass. run_corpus.py does NOT grade these; it prints them as a checklist for a human or a review run to score."
+ },
+ "seeds": [
+  {
+   "id": "S01",
+   "file": "seeded/sample_service.py",
+   "line": 14,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "except Exception -> return [] with no log/raise/flag"
+  },
+  {
+   "id": "S02",
+   "file": "seeded/sample_service.py",
+   "line": 39,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "handler calls logout_user(); regression guard for the substring-matching bug where 'logout' was read as logging"
+  },
+  {
+   "id": "S03",
+   "file": "seeded/sample_service.py",
+   "line": 32,
+   "check": 1,
+   "tier": "mechanical",
+   "defect": "call to missing_helper(), never defined or imported"
+  },
+  {
+   "id": "S04",
+   "file": "seeded/sample_worker.go",
+   "line": 17,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "blank-identifier discard of os.RemoveAll error"
+  },
+  {
+   "id": "S05",
+   "file": "seeded/sample_worker.go",
+   "line": 21,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "blank-identifier discard of os.RemoveAll error"
+  },
+  {
+   "id": "S06",
+   "file": "seeded/sample_worker.go",
+   "line": 48,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "if err != nil { return \"\" } with nothing logged"
+  },
+  {
+   "id": "S07",
+   "file": "seeded/dashboard.html",
+   "line": 5,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "empty catch block in inline script"
+  },
+  {
+   "id": "R01",
+   "file": "seeded/sample_service.py",
+   "line": 18,
+   "check": 3,
+   "tier": "reasoning",
+   "defect": "reads record['title'] where 'mbid' was intended; wrong-but-present field returns a confident wrong value with no marker word anywhere"
+  },
+  {
+   "id": "R02",
+   "file": "seeded/sample_service.py",
+   "line": 26,
+   "check": 3,
+   "tier": "reasoning",
+   "defect": "aggregate count does not break out fallback-sourced records; per-item disclosure exists, aggregate does not"
+  },
+  {
+   "id": "R03",
+   "file": "seeded/sample_service.py",
+   "line": 66,
+   "check": 4,
+   "tier": "reasoning",
+   "defect": "SQL built by f-string interpolation of user input"
+  },
+  {
+   "id": "R04",
+   "file": "seeded/sample_service.py",
+   "line": 72,
+   "check": 5,
+   "tier": "reasoning",
+   "defect": "O(n^2) duplicate scan where a dict/set pass is O(n)"
+  },
+  {
+   "id": "R05",
+   "file": "seeded/provision.sh",
+   "line": 11,
+   "check": 6,
+   "tier": "reasoning",
+   "defect": "CROSS-UNIT CONTRACT: comment and downstream scripts both assume .pod_id is written; the write never happens. Every unit is internally valid; the seam is broken. This is the class that three prior review passes missed."
+  },
+  {
+   "id": "R06",
+   "file": "seeded/provision.sh",
+   "line": 1,
+   "check": 2,
+   "tier": "reasoning",
+   "defect": "no set -euo pipefail, so a failed CLI call continues and downstream steps run on an empty POD_ID"
+  },
+  {
+   "id": "R07",
+   "file": "seeded/stop-session.sh",
+   "line": 1,
+   "check": 4,
+   "tier": "reasoning",
+   "defect": "cost blast radius: no verification the stop took effect; silent failure bills a GPU pod continuously"
+  },
+  {
+   "id": "S08",
+   "file": "seeded/sample_signals.go",
+   "line": 52,
+   "check": 3,
+   "tier": "mechanical",
+   "defect": "TODO marker inside a comment must stay in the MAIN proxy-marker stream; regression guard for the comment-prose split trading a false positive for a false negative"
+  },
+  {
+   "id": "S09",
+   "file": "seeded/sample_signals.go",
+   "line": 57,
+   "check": 3,
+   "tier": "mechanical",
+   "defect": "implementation marker on a line that also carries code is not comment-only and must stay a main-stream hit"
+  },
+  {
+   "id": "S10",
+   "file": "seeded/sample_signals.go",
+   "line": 65,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "silent err-check whose message merely mentions failure; regression guard for signal detection tokenising string-literal contents (the word failed inside the message scored it as handled)"
+  },
+  {
+   "id": "S11",
+   "file": "seeded/sample_signals.go",
+   "line": 92,
+   "check": 3,
+   "tier": "mechanical",
+   "defect": "TODOs plural must still match; guard that the leading-only word boundary added for C08 did not trade a false positive for a false negative"
+  },
+  {
+   "id": "S12",
+   "file": "seeded/sample_worker.go",
+   "line": 71,
+   "check": 2,
+   "tier": "mechanical",
+   "defect": "genuinely silent if-check spanning multiple lines, with the identifier 'err' appearing later only inside a comment -- regression guard that the multi-line propagation fix (DOTALL) does not over-reach and swallow a real silent failure just because 'err' appears anywhere later in the block"
+  }
+ ],
+ "controls": [
+  {
+   "id": "C01",
+   "file": "seeded/sample_service.py",
+   "line": 49,
+   "note": "except -> print + documented default. Flagging this is a FALSE POSITIVE."
+  },
+  {
+   "id": "C02",
+   "file": "seeded/sample_worker.go",
+   "line": 28,
+   "note": "error properly returned. Flagging this is a FALSE POSITIVE."
+  },
+  {
+   "id": "C03",
+   "file": "seeded/sample_worker.go",
+   "line": 40,
+   "note": "deliberate, documented discard with the real error already returned. scan.py WILL hit this by design; a REVIEWER who calls it a finding without reading the comment has failed check 2's documented-discard rule. Tracked as a reviewer-judgment control, not a tool control."
+  },
+  {
+   "id": "C04",
+   "file": "seeded/dashboard.html",
+   "line": 9,
+   "note": "catch body calls dbg(). Flagging this is a FALSE POSITIVE."
+  },
+  {
+   "id": "C05",
+   "file": "seeded/sample_signals.go",
+   "line": 17,
+   "note": "t.Fatalf logs AND aborts. Flagging this as \"body does not log or propagate\" is a FALSE POSITIVE; root cause was \"fatal\" missing from SIGNAL_TOKENS."
+  },
+  {
+   "id": "C05b",
+   "file": "seeded/sample_signals.go",
+   "line": 34,
+   "note": "non-test spelling: a fatal() helper that logs and exits is handling. Flagging this is a FALSE POSITIVE."
+  },
+  {
+   "id": "C06",
+   "file": "seeded/sample_signals.go",
+   "line": 42,
+   "note": "implementation markers appearing ONLY inside a comment, prose describing the opposite of what the code does. Belongs in the comment-prose stream; appearing in the MAIN list is a FALSE POSITIVE."
+  },
+  {
+   "id": "C07b",
+   "file": "seeded/sample_signals.go",
+   "line": 75,
+   "note": "real handling through an identifier (log.Printf). Flagging this is a FALSE POSITIVE; guards against the string-literal strip over-reaching."
+  },
+  {
+   "id": "C08",
+   "file": "seeded/sample_signals.go",
+   "line": 84,
+   "note": "the marker \"canned\" must not match inside the word SCANNED. Plain substring matching flagged disclosure strings like [NOT SCANNED] as proxy markers. Flagging this is a FALSE POSITIVE."
+  },
+  {
+   "id": "C09",
+   "file": "seeded/sample_worker.go",
+   "line": 56,
+   "note": "return fmt.Errorf(\"%w: ...\", err, path) wrapped across two lines by gofmt -- real propagation. Flagging this as \"does not log or propagate\" is a FALSE POSITIVE; root cause (4th class) was the propagation check being restricted to a single line via [^\\n]*, so return and err on different lines were invisible to it. Measured on a real corpus: 7 of 82 events, the highest-frequency false-positive class found in that pass."
+  }
+ ]
+}

@@ -1,0 +1,443 @@
+<meta charset="UTF-8">
+<title>Risk Register</title>
+<style>
+  :root {
+    --paper: #eef1ee; --panel: #ffffff; --ink: #1b2320; --muted: #5b6b66;
+    --line: #d6ddd8; --accent: #0e8f8a;
+    --stamp-green: #1f7a45; --stamp-amber: #96650f; --stamp-red: #9c3226;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#12181c; --panel:#171e23; --ink:#eef1ee; --muted:#7c8a90; --line:#283136;
+      --accent:#12b3ad; --stamp-green:#3fae6a; --stamp-amber:#c98a2e; --stamp-red:#c96155; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:14px/1.6 var(--font-serif); }
+  header { padding:22px 24px 14px; border-bottom:2px double var(--line); background:var(--panel); }
+  .eyebrow { font:11px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
+  h1 { font-family:var(--font-mono); font-weight:600; font-size:18px; margin:0 0 6px; letter-spacing:-.01em; }
+  .sub { font-family:var(--font-mono); color:var(--muted); font-size:11.5px; }
+  .wrap { max-width:1440px; margin:0 auto; padding:0 20px 60px; }
+  section.panel.wide { max-width:none; width:calc(100vw - 40px); margin-left:calc(50% - 50vw + 20px); margin-right:calc(50% - 50vw + 20px); }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:16px 0; font-family:var(--font-mono); }
+  button, .file-btn { background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:7px 12px; border-radius:3px; font:12px var(--font-mono); cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.danger { color:var(--stamp-red); }
+  button:hover { filter:brightness(1.08); }
+  button:disabled { opacity:.4; cursor:default; filter:none; }
+  .file-btn input { display:none; }
+  .summary { display:flex; gap:10px; flex-wrap:wrap; margin:6px 0 4px; font-family:var(--font-mono); }
+  .pill { border:1px solid var(--line); background:var(--panel); border-radius:3px; padding:5px 12px; font-size:11.5px; color:var(--muted); }
+  .pill b { color:var(--ink); }
+  section.panel { background:var(--panel); border:1px solid var(--line); border-radius:4px; margin:16px 0; overflow:hidden; }
+  .panel h2 { font:12px var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0; padding:12px 16px; border-bottom:1px solid var(--line); }
+  #report { padding:16px 18px; outline:none; font-family:var(--font-serif); font-size:14.5px; }
+  #report h3 { font-family:var(--font-mono); font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); margin:16px 0 6px; }
+  #report p, #report li { color:var(--ink); }
+  #report ul { padding-left:20px; }
+  .tablewrap { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; min-width:1560px; font:12px/1.5 var(--font-mono); }
+  th, td { border-bottom:1px solid var(--line); padding:7px 9px; vertical-align:top; text-align:left; }
+  th { position:sticky; top:0; background:var(--panel); color:var(--muted); font-weight:600; white-space:nowrap; z-index:1; border-bottom:2px solid var(--line); }
+  td textarea, td input, td select { width:100%; background:transparent; color:var(--ink); border:1px solid transparent; border-radius:3px; padding:3px 4px; font:inherit; }
+  td textarea { resize:vertical; min-height:34px; font-family:var(--font-serif); font-size:12.5px; }
+  td input:hover, td select:hover, td textarea:hover, td input:focus, td select:focus, td textarea:focus { border-color:var(--line); background:var(--paper); }
+  td.num { width:52px; }
+  td.computed { color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .stamp { display:inline-block; font:700 10.5px/1 var(--font-mono); letter-spacing:.08em; text-transform:uppercase;
+    padding:4px 8px; border:1.5px solid; border-radius:2px; transform:rotate(-3deg);
+    transition:transform .12s ease, opacity .12s ease; }
+  .stamp.yes { color:var(--stamp-green); border-color:var(--stamp-green); }
+  .stamp.no { color:var(--stamp-red); border-color:var(--stamp-red); }
+  .stamp.elevated { color:var(--stamp-amber); border-color:var(--stamp-amber); }
+  @media (prefers-reduced-motion: reduce) { .stamp { transition:none; } }
+  .rowdel { color:var(--stamp-red); background:none; border:none; cursor:pointer; font-size:14px; font-family:var(--font-mono); }
+  footer { color:var(--muted); font:11px var(--font-mono); text-align:center; padding:20px; }
+  .hint { color:var(--muted); font-size:11px; margin-left:2px; }
+  table.def { border-collapse:collapse; width:100%; font-size:12.5px; }
+  table.def th, table.def td { border-bottom:1px solid var(--line); padding:8px 10px; vertical-align:top; text-align:left; }
+  table.def th { font-family:var(--font-mono); color:var(--muted); font-weight:600; white-space:nowrap; }
+  table.def td.term { width:90px; font-family:var(--font-mono); font-weight:700; color:var(--accent); white-space:nowrap; }
+  table.def textarea { width:100%; background:transparent; color:var(--ink); border:1px solid transparent; border-radius:3px; padding:4px 5px; font:12.5px var(--font-serif); resize:vertical; min-height:38px; }
+  table.def textarea:hover, table.def textarea:focus { border-color:var(--line); background:var(--paper); }
+  td.verifiedcell textarea { font-family:var(--font-mono); font-size:11px; }
+  .empty { padding:30px 18px; color:var(--muted); text-align:center; font-family:var(--font-mono); font-size:12px; }
+</style>
+
+<header>
+  <div class="eyebrow"><!-- TEMPLATE:EYEBROW -->Case file · risk register<!-- /TEMPLATE:EYEBROW --></div>
+  <h1><!-- TEMPLATE:TITLE -->Risk Register<!-- /TEMPLATE:TITLE --></h1>
+  <div class="sub"><!-- TEMPLATE:SUBTITLE -->NIST CSF 2.0 + SP 800-30 Rev 1 + CIS RAM v2.1 · load a risk-register.csv or risk-assessment-export.json to begin<!-- /TEMPLATE:SUBTITLE --></div>
+</header>
+
+<div class="wrap">
+  <div class="bar">
+    <label class="file-btn">Load CSV<input type="file" accept=".csv" id="csvIn"></label>
+    <label class="file-btn">Load JSON<input type="file" accept=".json" id="jsonIn"></label>
+    <button id="addRow">+ Add row</button>
+    <button id="undoDelete" disabled>Undo delete</button>
+    <button id="expJson" class="primary">Export JSON</button>
+    <button id="expCsv">Export CSV</button>
+    <button id="reset" class="danger">Reset to shipped data</button>
+    <span class="hint">Edits autosave to this browser (localStorage) — Export JSON to keep a permanent copy.</span>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <section class="panel">
+    <h2>Report narrative (editable)</h2>
+    <div id="report" contenteditable="true"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Metric &amp; scoring definitions (editable)</h2>
+    <div class="tablewrap">
+      <table class="def">
+        <thead><tr><th style="width:90px">Term</th><th style="width:34%">What it means</th><th>How to score it</th></tr></thead>
+        <tbody id="defRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel wide">
+    <h2>Risk register</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th></th><th>ID</th><th>Variant</th><th>Threat source</th><th>Threat event</th><th>Vulnerability / predisposing condition</th>
+          <th>VStatus</th><th>Exp</th><th>Mis</th><th>Op</th><th>Fin</th><th>Obl</th><th>Row Impact</th><th>Risk</th><th>Band</th>
+          <th>Safeguard</th><th>Res.Exp</th><th>Res.Imp</th><th>Res.Risk</th><th>Burden</th><th>Reasonable?</th><th>Verified</th><th>Validation method</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Self-contained, offline, no external requests. Reusable — load any risk-register.csv exported by the risk-assessment skill.</footer>
+</div>
+
+<script>
+// TEMPLATE: replace STORAGE_KEY's suffix with a unique per-assessment slug (subject + date)
+// so autosave state from different assessments doesn't collide in the same browser.
+const STORAGE_KEY = "riskAssessmentViewer:template:v1";
+
+// TEMPLATE: replace with the assessment's actual narrative (as HTML). Leave empty to ship
+// the viewer with no pre-loaded report.
+const SHIPPED_REPORT_HTML = ``;
+
+// TEMPLATE: replace with the assessment's actual risk-register rows (same shape as the CSV
+// columns, including "vstatus" and "verified" — see references/scoring.md for the canonical
+// scales these must match). Leave empty ([]) to ship a ready-to-load viewer.
+const SHIPPED_ROWS = [];
+
+// Canonical scoring-methodology reference, verbatim from references/scoring.md — same for every
+// CIS RAM assessment, so this ships populated by default even when SHIPPED_ROWS is empty. Do NOT
+// restate these from memory in a future edit; copy from the reference file. A prior version of
+// this tool drifted from the canonical labels (wrong Expectancy words, a missing Elevated band,
+// no first-class Validation Status) — keep this block in sync with the real source.
+const SHIPPED_DEFS = [
+ {term:"VStatus", meaning:"Validation Status — whether the control this row relies on has actually been checked to work (the CIS Control 18 / penetration-testing discipline, folded into one field).",
+  scoring:"Tested = effectiveness empirically confirmed (exploit attempted and failed, config verified, log proven to fire). Partially tested = some evidence, not comprehensive. Assumed = believed to work, never verified. RULE (enforced live by this tool): \"Assumed\" floors Exp at 3 — you may not claim a low Expectancy for a control you haven't tested."},
+ {term:"Exp", meaning:"Expectancy — CIS RAM's term for likelihood: if an incident occurred, how likely it's due to this specific threat (the SP 800-30 likelihood analysis, weighed against any existing safeguard's real strength).",
+  scoring:"1 Rare (no known occurrence, a strong TESTED safeguard exists) · 2 Unlikely (uncommon, a credible safeguard is present) · 3 Possible (plausible, partial/weak/unverified safeguard) · 4 Likely (common threat event, safeguard weak or bypassable) · 5 Expected (actively occurring, trivially exploitable, or no effective safeguard at all)."},
+ {term:"Mis", meaning:"Impact — Mission. Harm to the core purpose this tool/system serves.",
+  scoring:"1 Negligible (absorbed without notice) · 2 Minor (noticeable, recoverable with little effort) · 3 Moderate (real disruption/loss, meaningful recovery effort) · 4 Major (serious harm, significant cost or exposure) · 5 Severe (critical, lasting, or irreversible harm)."},
+ {term:"Op", meaning:"Impact — Operational. Harm to day-to-day running or availability.",
+  scoring:"Same 1–5 scale as Mission."},
+ {term:"Fin", meaning:"Impact — Financial. Direct monetary cost (loss, remediation effort, etc).",
+  scoring:"Same 1–5 scale."},
+ {term:"Obl", meaning:"Impact — Obligations. Harm to third parties, or duties owed to others (the DoCRA requirement — don't collapse this into \"it's just my machine\").",
+  scoring:"Same 1–5 scale. HOUSE RULE (this tool's addition, not literally in CIS RAM v2.1's text): a score of 4+ here floors the row's Band at Elevated even if the raw Risk Score alone would read Acceptable."},
+ {term:"Row Impact", meaning:"The single Impact number actually used in scoring.",
+  scoring:"Always the HIGHEST of Mis/Op/Fin/Obl — CIS RAM scores worst-case, never an average."},
+ {term:"Risk", meaning:"Risk Score.", scoring:"Expectancy × Row Impact (range 1–25)."},
+ {term:"Band", meaning:"CIS RAM's acceptable-risk line — the actual decision the whole method exists to produce. THREE bands, not a yes/no.",
+  scoring:"Acceptable (Risk 1–6): within due care, no treatment required, monitor. Elevated (Risk 7–14, canonical text names 8–12 and leaves 7/13/14 as gaps — read as contiguous): treat when a reasonable safeguard exists, plan it. Unacceptable (Risk 15–25): treat now with a reasonable safeguard, or formally accept with documented rationale. Tune the line lower if Obligations impact is high — say where you put it and why."},
+ {term:"Safeguard", meaning:"The proposed fix or control.",
+  scoring:"Map to a specific CIS Controls v8.1 Control/Safeguard number and note its Implementation Group (IG1/IG2/IG3). For an individual/solo operator, prefer IG1 unless Obligations impact justifies more. Software/dependency subjects commonly map to Controls 2, 7, 16, 15, 10, 3."},
+ {term:"Res.Exp / Res.Imp", meaning:"Residual Expectancy / Impact — your estimate of the score AFTER the safeguard is applied.",
+  scoring:"Same 1–5 scales as Exp/Impact above."},
+ {term:"Res.Risk", meaning:"Residual Risk Score.", scoring:"Res.Exp × Res.Imp."},
+ {term:"Burden", meaning:"Cost, effort, and disruption of actually implementing the safeguard.",
+  scoring:"1 Trivial (a setting toggle) · 3 Moderate (a few hours plus some ongoing friction) · 5 Heavy (major rework, recurring cost, real productivity loss)."},
+ {term:"Reasonable?", meaning:"Whether the safeguard is actually worth doing — the CIS RAM due-care heart of the whole method.",
+  scoring:"Computed: (Risk − Res.Risk) ≥ Burden. If a safeguard costs more than the risk it removes, it fails this test — find a lighter fix or accept the risk with a written reason instead. A recommendation that ignores burden is a wish list, not a CIS RAM assessment."},
+ {term:"Verified", meaning:"When and how THIS ROW's underlying fact (a CVE, a version, a code claim) was last checked against a LIVE source — never trust a stored verdict alone.",
+  scoring:"Freeform: date + method (e.g. \"2026-07-05, live NVD search\" or \"NOT YET VERIFIED\"). A file on disk, including this one, can be wrong, stale, or tampered with — re-check before acting, don't just read the last answer."},
+];
+
+let state = { rows: JSON.parse(JSON.stringify(SHIPPED_ROWS)), reportHtml: SHIPPED_REPORT_HTML, defs: JSON.parse(JSON.stringify(SHIPPED_DEFS)), deletedStack: [] };
+
+function load() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) state = JSON.parse(saved);
+  } catch(e) {}
+}
+function persist() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function clampScore(v) { v = parseInt(v, 10); if (isNaN(v)) return 1; return Math.min(5, Math.max(1, v)); }
+function rowImpact(r) { return Math.max(r.mis, r.op, r.fin, r.obl); }
+function riskScore(r) { return r.exp * rowImpact(r); }
+function residualRisk(r) { return r.rexp * r.rimp; }
+function reasonable(r) { return (riskScore(r) - residualRisk(r)) >= r.burden; }
+
+// Canonical CIS RAM v2.1 three-band model (references/scoring.md): 1-6 Acceptable, 8-12 Elevated,
+// 15-25 Unacceptable. The source table leaves 7/13/14 as gaps between named bands; read as
+// contiguous (1-6 / 7-14 / 15-25) rather than undefined. The Obligations>=4 floor-to-Elevated rule
+// below is a house addition (not in the canonical text) reflecting DoCRA's "don't collapse
+// Obligations into 'it's just my machine'" instruction from scoring.md's Impact section.
+function band(r) {
+  const rs = riskScore(r);
+  let b = rs <= 6 ? "Acceptable" : (rs <= 14 ? "Elevated" : "Unacceptable");
+  if (r.obl >= 4 && b === "Acceptable") b = "Elevated";
+  return b;
+}
+function acceptable(r) { return band(r) === "Acceptable"; }
+
+// Validation-status floor (the Control 18 discipline, scoring.md): an "Assumed" control can never
+// earn an Expectancy below 3 (Possible). Enforced live, not just documented.
+function enforceFloor(r) {
+  if (r.vstatus === "Assumed" && r.exp < 3) r.exp = 3;
+}
+
+function scoreSelect(value, onChange) {
+  const sel = document.createElement("select");
+  for (let i=1;i<=5;i++){ const o=document.createElement("option"); o.value=i; o.textContent=i; if(i===value) o.selected=true; sel.appendChild(o); }
+  sel.addEventListener("change", e => onChange(clampScore(e.target.value)));
+  return sel;
+}
+function vstatusSelect(value, onChange) {
+  const sel = document.createElement("select");
+  ["Tested","Partially tested","Assumed"].forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; if(v===value) o.selected=true; sel.appendChild(o); });
+  sel.addEventListener("change", e => onChange(e.target.value));
+  return sel;
+}
+function textArea(value, onChange, rows=2) {
+  const ta = document.createElement("textarea");
+  ta.value = value; ta.rows = rows;
+  ta.addEventListener("input", e => onChange(e.target.value));
+  return ta;
+}
+function textInput(value, onChange) {
+  const inp = document.createElement("input"); inp.type="text"; inp.value = value;
+  inp.addEventListener("input", e => onChange(e.target.value));
+  return inp;
+}
+
+function render() {
+  const tbody = document.getElementById("rows");
+  tbody.innerHTML = "";
+  if (!state.rows.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td"); td.colSpan = 22; td.className = "empty";
+    td.textContent = "No rows loaded yet. Use \"Load CSV\" or \"Load JSON\", or \"+ Add row\" to start from scratch.";
+    tr.appendChild(td); tbody.appendChild(tr); renderSummary(); return;
+  }
+  state.rows.forEach((r, idx) => {
+    const tr = document.createElement("tr");
+
+    const del = document.createElement("td");
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "✕"; delBtn.className = "rowdel"; delBtn.title = "Delete row";
+    delBtn.addEventListener("click", () => {
+      state.deletedStack.push({ row: JSON.parse(JSON.stringify(r)), index: idx });
+      state.rows.splice(idx,1); persist(); render();
+    });
+    del.appendChild(delBtn); tr.appendChild(del);
+
+    const idTd = document.createElement("td"); idTd.appendChild(textInput(r.id, v => {r.id=v; persist();})); tr.appendChild(idTd);
+    const varTd = document.createElement("td"); varTd.style.minWidth="140px"; varTd.appendChild(textInput(r.variant, v => {r.variant=v; persist();})); tr.appendChild(varTd);
+    const srcTd = document.createElement("td"); srcTd.style.minWidth="180px"; srcTd.appendChild(textArea(r.source, v => {r.source=v; persist();})); tr.appendChild(srcTd);
+    const evTd = document.createElement("td"); evTd.style.minWidth="220px"; evTd.appendChild(textArea(r.event, v => {r.event=v; persist();},3)); tr.appendChild(evTd);
+    const vulnTd = document.createElement("td"); vulnTd.style.minWidth="200px"; vulnTd.appendChild(textArea(r.vuln, v => {r.vuln=v; persist();},3)); tr.appendChild(vulnTd);
+
+    const vstatTd = document.createElement("td"); vstatTd.style.minWidth="110px";
+    vstatTd.appendChild(vstatusSelect(r.vstatus || "Assumed", v => {r.vstatus=v; enforceFloor(r); persist(); render();}));
+    tr.appendChild(vstatTd);
+
+    const expTd = document.createElement("td"); expTd.className="num"; expTd.appendChild(scoreSelect(r.exp, v => {r.exp=v; enforceFloor(r); persist(); renderComputed(tr,r);})); tr.appendChild(expTd);
+    const misTd = document.createElement("td"); misTd.className="num"; misTd.appendChild(scoreSelect(r.mis, v => {r.mis=v; persist(); renderComputed(tr,r);})); tr.appendChild(misTd);
+    const opTd = document.createElement("td"); opTd.className="num"; opTd.appendChild(scoreSelect(r.op, v => {r.op=v; persist(); renderComputed(tr,r);})); tr.appendChild(opTd);
+    const finTd = document.createElement("td"); finTd.className="num"; finTd.appendChild(scoreSelect(r.fin, v => {r.fin=v; persist(); renderComputed(tr,r);})); tr.appendChild(finTd);
+    const oblTd = document.createElement("td"); oblTd.className="num"; oblTd.appendChild(scoreSelect(r.obl, v => {r.obl=v; persist(); renderComputed(tr,r);})); tr.appendChild(oblTd);
+
+    const impTd = document.createElement("td"); impTd.className="computed impact"; tr.appendChild(impTd);
+    const riskTd = document.createElement("td"); riskTd.className="computed risk"; tr.appendChild(riskTd);
+    const accTd = document.createElement("td"); accTd.className="acc"; tr.appendChild(accTd);
+
+    const sgTd = document.createElement("td"); sgTd.style.minWidth="220px"; sgTd.appendChild(textArea(r.safeguard, v => {r.safeguard=v; persist();},3)); tr.appendChild(sgTd);
+
+    const rexpTd = document.createElement("td"); rexpTd.className="num"; rexpTd.appendChild(scoreSelect(r.rexp, v => {r.rexp=v; persist(); renderComputed(tr,r);})); tr.appendChild(rexpTd);
+    const rimpTd = document.createElement("td"); rimpTd.className="num"; rimpTd.appendChild(scoreSelect(r.rimp, v => {r.rimp=v; persist(); renderComputed(tr,r);})); tr.appendChild(rimpTd);
+    const rriskTd = document.createElement("td"); rriskTd.className="computed rrisk"; tr.appendChild(rriskTd);
+    const burdenTd = document.createElement("td"); burdenTd.className="num"; burdenTd.appendChild(scoreSelect(r.burden, v => {r.burden=v; persist(); renderComputed(tr,r);})); tr.appendChild(burdenTd);
+    const reasTd = document.createElement("td"); reasTd.className="reas"; tr.appendChild(reasTd);
+
+    const verTd = document.createElement("td"); verTd.className="verifiedcell"; verTd.style.minWidth="200px"; verTd.appendChild(textArea(r.verified||"", v => {r.verified=v; persist();},3)); tr.appendChild(verTd);
+
+    const valTd = document.createElement("td"); valTd.style.minWidth="220px"; valTd.appendChild(textArea(r.validation, v => {r.validation=v; persist();},3)); tr.appendChild(valTd);
+
+    tbody.appendChild(tr);
+    renderComputed(tr, r);
+  });
+  renderSummary();
+}
+
+function renderDefs() {
+  const tbody = document.getElementById("defRows");
+  tbody.innerHTML = "";
+  state.defs.forEach((d, idx) => {
+    const tr = document.createElement("tr");
+    const termTd = document.createElement("td"); termTd.className="term";
+    termTd.appendChild(textInput(d.term, v => {d.term=v; persist();}));
+    const meanTd = document.createElement("td");
+    meanTd.appendChild(textArea(d.meaning, v => {d.meaning=v; persist();},2));
+    const scoreTd = document.createElement("td");
+    scoreTd.appendChild(textArea(d.scoring, v => {d.scoring=v; persist();},2));
+    tr.appendChild(termTd); tr.appendChild(meanTd); tr.appendChild(scoreTd);
+    tbody.appendChild(tr);
+  });
+}
+
+const BAND_CLASS = { "Acceptable":"yes", "Elevated":"elevated", "Unacceptable":"no" };
+function renderComputed(tr, r) {
+  tr.querySelector(".impact").textContent = rowImpact(r);
+  tr.querySelector(".risk").textContent = riskScore(r);
+  const b = band(r);
+  tr.querySelector(".acc").innerHTML = `<span class="stamp ${BAND_CLASS[b]}">${b}</span>`;
+  tr.querySelector(".rrisk").textContent = residualRisk(r);
+  const reas = reasonable(r);
+  tr.querySelector(".reas").innerHTML = `<span class="stamp ${reas?'yes':'no'}">${reas?'Yes':'No'}</span>`;
+  renderSummary();
+}
+
+function renderSummary() {
+  const total = state.rows.length;
+  const elevated = state.rows.filter(r => band(r) === "Elevated").length;
+  const unacceptable = state.rows.filter(r => band(r) === "Unacceptable").length;
+  const notReasonable = state.rows.filter(r => !reasonable(r)).length;
+  document.getElementById("summary").innerHTML = total ? `
+    <span class="pill"><b>${total}</b> risks</span>
+    <span class="pill"><b>${elevated}</b> Elevated</span>
+    <span class="pill"><b>${unacceptable}</b> Unacceptable</span>
+    <span class="pill"><b>${notReasonable}</b> safeguard(s) fail the reasonableness test</span>
+  ` : "";
+  renderUndoButton();
+}
+
+function renderUndoButton() {
+  const btn = document.getElementById("undoDelete");
+  const n = (state.deletedStack || []).length;
+  btn.disabled = n === 0;
+  btn.textContent = n > 1 ? `Undo delete (${n})` : "Undo delete";
+}
+
+function csvEscape(s) { s = String(s ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }
+function toCsv() {
+  const cols = ["id","variant","source","event","vuln","vstatus","exp","mis","op","fin","obl","safeguard","rexp","rimp","burden","verified","validation"];
+  const header = cols.join(",");
+  const lines = state.rows.map(r => cols.map(c => csvEscape(r[c])).join(","));
+  return [header, ...lines].join("\n");
+}
+function parseCsv(text) {
+  // minimal RFC4180-ish parser: handles quoted fields with , \n and ""
+  const rows = []; let field="", row=[], inQ=false;
+  for (let i=0;i<text.length;i++){
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i+1] === '"'){ field+='"'; i++; } else inQ=false; }
+      else field += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ',') { row.push(field); field=""; }
+      else if (c === '\n' || c === '\r') { if (c==='\r' && text[i+1]==='\n') i++; row.push(field); rows.push(row); row=[]; field=""; }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.length && r.some(x=>x!==""));
+}
+function download(filename, text, mime) {
+  const blob = new Blob([text], {type: mime});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+document.getElementById("addRow").addEventListener("click", () => {
+  state.rows.push({id:"R-new", variant:"", source:"", event:"", vuln:"", vstatus:"Assumed", exp:3, mis:1, op:1, fin:1, obl:1, safeguard:"", rexp:2, rimp:1, burden:1, verified:"NOT YET VERIFIED", validation:""});
+  persist(); render();
+});
+document.getElementById("undoDelete").addEventListener("click", () => {
+  const last = state.deletedStack.pop();
+  if (!last) return;
+  const at = Math.min(last.index, state.rows.length);
+  state.rows.splice(at, 0, last.row);
+  persist(); render();
+});
+document.getElementById("expJson").addEventListener("click", () => {
+  const payload = { meta: {title:"Risk Assessment Viewer export", exported: new Date().toISOString().slice(0,10)}, report_html: document.getElementById("report").innerHTML, rows: state.rows, defs: state.defs };
+  download("risk-assessment-export.json", JSON.stringify(payload, null, 2), "application/json");
+});
+document.getElementById("expCsv").addEventListener("click", () => download("risk-register-export.csv", toCsv(), "text/csv"));
+document.getElementById("reset").addEventListener("click", () => {
+  if (!confirm("Discard edits and reset to the originally shipped data?")) return;
+  state = { rows: JSON.parse(JSON.stringify(SHIPPED_ROWS)), reportHtml: SHIPPED_REPORT_HTML, defs: JSON.parse(JSON.stringify(SHIPPED_DEFS)), deletedStack: [] };
+  persist(); document.getElementById("report").innerHTML = state.reportHtml; render(); renderDefs();
+});
+document.getElementById("csvIn").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(text => {
+    const parsed = parseCsv(text);
+    const header = parsed[0].map(h=>h.trim().toLowerCase());
+    const idx = name => header.indexOf(name);
+    const newRows = parsed.slice(1).map(cols => ({
+      id: cols[idx("id")]||"", variant: cols[idx("variant")]||"",
+      source: cols[idx("threat source")]!==undefined?cols[idx("threat source")]:(cols[idx("source")]||""),
+      event: cols[idx("threat event")]!==undefined?cols[idx("threat event")]:(cols[idx("event")]||""),
+      vuln: cols[idx("vulnerability/predisposing condition")]!==undefined?cols[idx("vulnerability/predisposing condition")]:(cols[idx("vuln")]||""),
+      vstatus: cols[idx("vstatus")] || cols[idx("validation status")] || "Assumed",
+      exp: clampScore(cols[idx("expectancy")] ?? cols[idx("exp")] ?? 3),
+      mis: clampScore(cols[idx("impact-mission")] ?? cols[idx("mis")] ?? 1),
+      op: clampScore(cols[idx("impact-operational")] ?? cols[idx("op")] ?? 1),
+      fin: clampScore(cols[idx("impact-financial")] ?? cols[idx("fin")] ?? 1),
+      obl: clampScore(cols[idx("impact-obligations")] ?? cols[idx("obl")] ?? 1),
+      safeguard: cols[idx("safeguard")]||"",
+      rexp: clampScore(cols[idx("residual expectancy")] ?? cols[idx("rexp")] ?? 2),
+      rimp: clampScore(cols[idx("residual impact")] ?? cols[idx("rimp")] ?? 1),
+      burden: clampScore(cols[idx("burden")] ?? 1),
+      verified: cols[idx("verified")] || "NOT YET VERIFIED",
+      validation: cols[idx("validation method")]!==undefined?cols[idx("validation method")]:(cols[idx("validation")]||""),
+    }));
+    newRows.forEach(enforceFloor);
+    state.rows = newRows; state.deletedStack = []; persist(); render();
+  });
+  e.target.value = "";
+});
+document.getElementById("jsonIn").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(text => {
+    const parsed = JSON.parse(text);
+    if (parsed.rows) state.rows = parsed.rows;
+    if (parsed.report_html) state.reportHtml = parsed.report_html;
+    if (parsed.defs) state.defs = parsed.defs;
+    state.deletedStack = [];
+    persist();
+    document.getElementById("report").innerHTML = state.reportHtml || "";
+    render(); renderDefs();
+  });
+  e.target.value = "";
+});
+document.getElementById("report").addEventListener("input", e => { state.reportHtml = e.target.innerHTML; persist(); });
+
+load();
+if (!state.defs) state.defs = JSON.parse(JSON.stringify(SHIPPED_DEFS));
+if (!state.deletedStack) state.deletedStack = [];
+document.getElementById("report").innerHTML = state.reportHtml || "";
+renderDefs();
+render();
+</script>

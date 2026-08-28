@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TESSERA Review</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+  <h1>TESSERA</h1>
+  <span id="connection-status" class="status status-connecting">connecting&hellip;</span>
+</header>
+
+<nav>
+  <button id="nav-open" class="nav-btn active">Open bugs / todos</button>
+  <button id="nav-diff" class="nav-btn">Diff vs. claim</button>
+  <button id="nav-docs" class="nav-btn">Docs</button>
+  <button id="nav-sql" class="nav-btn">SQL</button>
+</nav>
+
+<main>
+  <section id="view-open" class="view">
+    <div id="ticket-list-toolbar">
+      <label>Project
+        <select id="ticket-project-filter">
+          <option value="">All projects</option>
+        </select>
+      </label>
+      <span id="ticket-count-badge"></span>
+      <button id="ticket-group-toggle" type="button">Group by project: On</button>
+      <button id="new-ticket-toggle" type="button">+ New ticket</button>
+    </div>
+    <div id="new-ticket-form" hidden>
+      <label>Project
+        <select id="new-ticket-project"></select>
+      </label>
+      <label>Type
+        <select id="new-ticket-type">
+          <option>Task</option><option>Bug</option><option>Story</option>
+          <option>Epic</option><option>Sub-task</option>
+        </select>
+      </label>
+      <label>Reporter <input type="text" id="new-ticket-reporter"></label>
+      <label>Actor <input type="text" id="new-ticket-actor"></label>
+      <label>Summary <input type="text" id="new-ticket-summary"></label>
+      <label>Description <textarea id="new-ticket-description" rows="3"></textarea></label>
+      <label>Priority
+        <select id="new-ticket-priority">
+          <option value="">(none)</option>
+          <option value="0">P0</option><option value="1">P1</option><option value="2">P2</option>
+          <option value="3">P3</option><option value="4">P4</option>
+        </select>
+      </label>
+      <label>Severity
+        <select id="new-ticket-severity">
+          <option value="">(none)</option>
+          <option value="0">S0</option><option value="1">S1</option><option value="2">S2</option>
+          <option value="3">S3</option><option value="4">S4</option>
+        </select>
+      </label>
+      <button id="new-ticket-create" type="button">Create</button>
+      <span id="new-ticket-status"></span>
+    </div>
+    <div id="open-layout">
+      <ul id="ticket-list"></ul>
+      <span id="ticket-detail-status"></span>
+      <div id="ticket-detail" hidden>
+        <h2 id="detail-id"></h2>
+        <label>Editing as
+          <input type="text" id="detail-actor" placeholder="your name">
+        </label>
+        <label>Summary
+          <input type="text" id="detail-summary-input">
+        </label>
+        <button id="detail-summary-save" type="button">Save summary</button>
+        <span id="detail-summary-status" class="field-save-status"></span>
+
+        <label>Description
+          <textarea id="detail-description-input" rows="4"></textarea>
+        </label>
+        <button id="detail-description-save" type="button">Save description</button>
+        <span id="detail-description-status" class="field-save-status"></span>
+
+        <dl id="detail-fields"></dl>
+
+        <div id="detail-reference-docs">
+          <strong>Reference docs:</strong>
+          <ul id="detail-reference-docs-list"></ul>
+          <input type="text" id="detail-reference-docs-input" placeholder="docs/example.md">
+          <button id="detail-reference-docs-add" type="button">Add</button>
+          <span id="detail-reference-docs-status" class="field-save-status"></span>
+        </div>
+
+        <div id="detail-repro-steps"></div>
+        <div id="detail-environment"></div>
+        <div id="detail-blocked-by"></div>
+        <div id="detail-blocks"></div>
+        <div id="detail-watchers"></div>
+        <div id="detail-criteria"></div>
+        <h3>Comments</h3>
+        <ul id="detail-comments"></ul>
+        <label>New comment
+          <textarea id="detail-comment-body" rows="4"></textarea>
+        </label>
+        <label>Actor <input id="detail-comment-actor" placeholder="your name"></label>
+        <button id="detail-comment-save">Save comment</button>
+        <span id="detail-comment-status"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-diff" class="view" hidden>
+    <label>Ticket ID <input id="diff-ticket-id" placeholder="DEMO-1"></label>
+    <label>Stage <input id="diff-stage" value="dev"></label>
+    <button id="diff-load">Load</button>
+    <div id="diff-result"></div>
+  </section>
+
+  <section id="view-docs" class="view" hidden>
+    <label>Doc path <input id="doc-path" placeholder="docs/notes.md"></label>
+    <button id="doc-load">Load</button>
+    <span id="doc-load-status"></span>
+    <textarea id="doc-content" rows="20"></textarea>
+    <button id="doc-save">Save</button>
+    <span id="doc-save-status"></span>
+  </section>
+
+  <section id="view-sql" class="view" hidden>
+    <p id="sql-disclosure" class="banner-warning">
+      Read-only. Runs against the WHOLE store, across every project -- there is no
+      per-project scoping on this query surface. <code>tickets</code>, <code>comments</code>,
+      <code>ticket_fields</code>, and every other table except <code>events</code> are a
+      <strong>derived projection</strong>, rebuilt from <code>events</code> -- they are not
+      the ledger. If you need the attested truth, not the cache, query <code>events</code>.
+    </p>
+    <div id="sql-layout">
+      <div id="sql-schema-panel">
+        <h3>Schema</h3>
+        <div id="sql-schema-mode-toggle" role="group" aria-label="Schema browsing mode">
+          <button type="button" id="sql-mode-discovery" class="mode-btn">Discovery</button>
+          <button type="button" id="sql-mode-write" class="mode-btn active">Write</button>
+        </div>
+        <p id="sql-schema-mode-hint" class="hint-text">
+          Write mode: click a field to insert it at the cursor; the list narrows to
+          tables already referenced in your query. Discovery mode: click a field to see
+          its value, type, and description without touching the query.
+        </p>
+        <label>Dataset
+          <select id="sql-dataset-select"></select>
+        </label>
+        <p id="sql-dataset-hint" class="hint-text"></p>
+        <div id="sql-schema-tree">Loading schema&hellip;</div>
+      </div>
+      <div id="sql-functions-panel">
+        <h3>SQL keywords / functions</h3>
+        <div id="sql-functions-tree"></div>
+      </div>
+      <div id="sql-editor-panel">
+        <label>Example queries
+          <select id="sql-examples"></select>
+        </label>
+        <textarea id="sql-query" rows="6" spellcheck="false"></textarea>
+        <button id="sql-run">Run</button>
+        <button id="sql-format" type="button">Format</button>
+        <span id="sql-status"></span>
+        <div id="sql-result-controls" class="hidden">
+          <label>View
+            <select id="sql-view-mode">
+              <option value="table">Table</option>
+              <option value="chart">Chart</option>
+            </select>
+          </label>
+          <span id="sql-chart-controls" class="hidden">
+            <label>X <select id="sql-chart-x"></select></label>
+            <label>Y <select id="sql-chart-y"></select></label>
+          </span>
+        </div>
+        <div id="sql-result"></div>
+        <canvas id="sql-chart" class="hidden" width="640" height="360"></canvas>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

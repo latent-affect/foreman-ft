@@ -1,0 +1,472 @@
+{
+  "project": "tessera",
+  "component": "store",
+  "scope_version": 1,
+  "created": "2026-08-15T00:00:00Z",
+  "criteria_frozen_at": "2026-08-19T10:39:07.714Z",
+  "done_state": "tessera/store/ provides the SQLite event-sourced storage engine specified in ARCHITECTURE.md: schema + hash chain + transaction discipline + workflow/hierarchy/cycle enforcement + rebuild/verify + backup, proven collision-free under real multi-process concurrency at SCOPE.md's 20x50 bar with realistic in-transaction work. Comments also carry an optional code_snippet field (C25-C30): backward-compatible event payload extension plus a genuine-event backfill path for historical comments, never a projection-only mutation.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "Schema creates an append-only events table: UPDATE and DELETE on events both raise via BEFORE triggers.",
+      "verification": "python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_events_append_only exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "events.prev_hash is TEXT NOT NULL UNIQUE; the first event uses a fixed non-NULL GENESIS sentinel; a second row cannot reuse it or any other prev_hash.",
+      "verification": "python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_prev_hash_not_null_unique_genesis exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "A BEFORE INSERT trigger rejects an event whose prev_hash is neither the GENESIS sentinel nor an existing event_hash (orphan chain link).",
+      "verification": "python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_orphan_prev_hash_rejected exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "store._write_txn() issues BEGIN IMMEDIATE, and always ROLLBACKs in a finally block (guarded by conn.in_transaction) unless the body reached COMMIT -- a rejected write never leaves the transaction open.",
+      "verification": "python3 -m unittest tessera.store.tests.test_transactions.TransactionTests.test_rejected_write_rolls_back_and_does_not_stall_next_writer exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "store._write_txn() is not re-entrant: a nested call raises, and the outer transaction still rolls back cleanly (no lock leak).",
+      "verification": "python3 -m unittest tessera.store.tests.test_transactions.TransactionTests.test_write_txn_not_reentrant_no_leak exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "Ticket creation assigns TESS-N ids atomically and collision-free under >=20 concurrent OS processes x >=50 creates each (>=1000 total), with realistic in-transaction work (workflow+hierarchy+cycle checks actually executing, not a no-op), using the 15-attempt/5000ms retry policy: zero duplicate ids, zero lost writes.",
+      "verification": "python3 tests/test_concurrency.py --processes 20 --per-process 50 exits 0 and reports duplicate_ids=0 lost_writes=0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "A writer process killed with SIGKILL mid-transaction leaves the database recoverable by the next process with no manual intervention: PRAGMA integrity_check reports ok, and no lock remains wedged.",
+      "verification": "python3 tests/test_kill_recovery.py exits 0 and reports integrity_check=ok wedged_lock=false.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "Idempotent create: N racing callers using the same idempotency_key produce exactly one ticket and the ticket-id counter advances by exactly one (not N) -- the conflict path rolls back rather than commits.",
+      "verification": "python3 -m unittest tessera.store.tests.test_idempotency.IdempotencyTests.test_concurrent_same_key_one_ticket_counter_not_burned exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C9",
+      "statement": "The idempotency-conflict catch site discriminates the SQLite constraint that fired: it swallows only the idempotency_key conflict and re-raises a prev_hash UNIQUE violation or an orphan-trigger rejection rather than treating either as a duplicate create.",
+      "verification": "python3 -m unittest tessera.store.tests.test_idempotency.IdempotencyTests.test_catch_site_does_not_swallow_chain_violations exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C10",
+      "statement": "An illegal workflow-status transition is rejected inside store's write transaction (not merely by a caller-side convention) and rolled back.",
+      "verification": "python3 -m unittest tessera.store.tests.test_workflow.WorkflowTests.test_illegal_transition_rejected_in_store exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C11",
+      "statement": "A Sub-task created without a parent Story/Task/Bug is rejected by store (hierarchy enforced at the store layer).",
+      "verification": "python3 -m unittest tessera.store.tests.test_workflow.WorkflowTests.test_subtask_requires_parent_enforced_in_store exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C12",
+      "statement": "A blocks/blocked-by link that would create a cycle is rejected by store inside the write transaction, including under concurrent link creation from two processes each adding one edge of the same cycle.",
+      "verification": "python3 -m unittest tessera.store.tests.test_workflow.WorkflowTests.test_link_cycle_rejected_including_concurrent exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C13",
+      "statement": "rebuild_projection() replays events from scratch and produces a projection (tickets, ticket_fields, comments, ticket_links, stage_heads) equal to the live projection after a representative sequence of creates/updates/comments/links/archival/stage-promotion events.",
+      "verification": "python3 -m unittest tessera.store.tests.test_projection.ProjectionTests.test_rebuild_equals_live_across_all_projection_tables exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C14",
+      "statement": "verify_chain() reports exactly one root, exactly one tip, zero orphans, and every event_hash matches a fresh recomputation, over a chain built by the normal write path.",
+      "verification": "python3 -m unittest tessera.store.tests.test_projection.ProjectionTests.test_verify_chain_one_root_one_tip_no_orphans exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C15",
+      "statement": "Each thread of a multi-threaded process gets its own SQLite connection (threading.local), and every connection sets journal_mode=WAL, busy_timeout, and foreign_keys=ON.",
+      "verification": "python3 -m unittest tessera.store.tests.test_transactions.TransactionTests.test_per_thread_connections_and_pragmas exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C16",
+      "statement": "Base ticket fields (type, status, reporter, assignee, priority, parent_id, links) and Bug-only fields (severity, repro_steps, environment) are first-class columns/queryable fields, not generic custom fields.",
+      "verification": "python3 -m unittest tessera.store.tests.test_fields.FieldTests.test_base_and_bug_fields_first_class exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C17",
+      "statement": "Custom fields (arbitrary key/value beyond the base+Bug set) can be set and read per ticket.",
+      "verification": "python3 -m unittest tessera.store.tests.test_fields.FieldTests.test_custom_fields_roundtrip exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C18",
+      "statement": "Setting reference_docs on a ticket writes a distinct, visible event (not folded silently into a generic field-update event) recording that the field was used.",
+      "verification": "python3 -m unittest tessera.store.tests.test_fields.FieldTests.test_reference_docs_write_is_visible_event exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C19",
+      "statement": "project_metadata (codename, prefix) is general, not hardcoded to TESSERA/TESS: a second store instance initialized with a different codename/prefix assigns ids using that prefix with no code change.",
+      "verification": "python3 -m unittest tessera.store.tests.test_project_metadata.ProjectMetadataTests.test_second_instance_different_prefix exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C20",
+      "statement": "Archival (TicketArchived/TicketUnarchived) is an event, not a projection-only mutation: a rebuild_projection() after an archival event reproduces the archived state, and a projection-only mutation (simulated by bypassing store to write the projection directly) is detectable as drift by the rebuild-equality check.",
+      "verification": "python3 -m unittest tessera.store.tests.test_projection.ProjectionTests.test_archival_is_event_not_projection_only exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C21",
+      "statement": "backup() uses VACUUM INTO and produces a valid, consistent snapshot file while concurrent writers are active against the live database.",
+      "verification": "python3 -m unittest tessera.store.tests.test_backup.BackupTests.test_vacuum_into_consistent_under_concurrent_writers exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C22",
+      "statement": "stage_heads is written only via StagePromoted/StageRolledBack events (never a bare projection write), and is included in rebuild_projection()'s scope.",
+      "verification": "python3 -m unittest tessera.store.tests.test_stage_heads.StageHeadsTests.test_stage_heads_only_written_via_events_and_rebuild_covers_it exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C23",
+      "statement": "store refuses to initialize with a clear, loud error if the host's SQLite version is below 3.35 (the UPDATE...RETURNING floor), rather than failing later with an obscure syntax error.",
+      "verification": "python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_sqlite_version_check_fails_loud exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C24",
+      "statement": "Attachment writes follow temp-write+fsync+rename-to-sha256-path ordering, then the referencing row insert in the same transaction as any other write; a transaction rollback after the rename leaves a collectable orphan blob, never a row pointing at a missing blob.",
+      "verification": "python3 -m unittest tessera.store.tests.test_attachments.AttachmentTests.test_rollback_leaves_orphan_not_dangling_reference exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C25",
+      "statement": "comments table has a nullable code_snippet TEXT column (schema.py DDL).",
+      "verification": "python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_schema_has_code_snippet_column exits 0.",
+      "verifiable": true,
+      "added": "2026-08-19T10:39:07.714Z"
+    },
+    {
+      "id": "C26",
+      "statement": "add_comment() accepts an optional code_snippet param; when given, it is written into the CommentAdded event payload AND the comments projection row in the same write transaction.",
+      "verification": "python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_add_comment_with_code_snippet_roundtrip exits 0.",
+      "verifiable": true,
+      "added": "2026-08-19T10:39:07.714Z"
+    },
+    {
+      "id": "C27",
+      "statement": "add_comment() with no code_snippet argument (the default) produces a CommentAdded event whose payload has no code_snippet key, and the projection row's code_snippet is NULL -- no behavior change for any existing caller.",
+      "verification": "python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_add_comment_without_code_snippet_unchanged exits 0.",
+      "verifiable": true,
+      "added": "2026-08-19T10:39:07.714Z"
+    },
+    {
+      "id": "C28",
+      "statement": "rebuild_projection()'s CommentAdded replay handler reads payload.get('code_snippet') (defaulting to None); replaying all pre-existing CommentAdded events (none of which carry the key) reproduces NULL, and rebuild-equals-live still holds across the comments table including the new column.",
+      "verification": "python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_rebuild_replays_historical_comments_as_null_snippet exits 0.",
+      "verifiable": true,
+      "added": "2026-08-19T10:39:07.714Z"
+    },
+    {
+      "id": "C29",
+      "statement": "A new store method, set_comment_code_snippet(ticket_id, comment_id, actor, code_snippet), backfills a historical comment's code_snippet by appending a genuine new CommentCodeSnippetSet event -- never by mutating the existing CommentAdded event or writing the projection directly, per the existing summary/description backfill precedent.",
+      "verification": "python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_backfill_appends_real_event_not_projection_mutation exits 0.",
+      "verifiable": true,
+      "added": "2026-08-19T10:39:07.714Z"
+    },
+    {
+      "id": "C30",
+      "statement": "verify_chain() still reports exactly one root, one tip, zero orphans after a backfill sequence of set_comment_code_snippet() calls -- the hash chain is unaffected by the new event type.",
+      "verification": "python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_chain_integrity_after_backfill exits 0.",
+      "verifiable": true,
+      "added": "2026-08-19T10:39:07.714Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "A guard (workflow/hierarchy/cycle/idempotency check) fails open on the path that matters.",
+      "detection": "Every guard (C8-C12) has both a rejects-the-bad-case test and a normal-case-still-works test."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A concurrency/performance number appears in code comments with no reproduction path.",
+      "detection": "Every numeric claim in store's source comments must name the exact command that produced it, matching ARCHITECTURE.md's own discipline."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "Code assumes a path, fixture, or the events/counters/project_metadata rows exist without checking.",
+      "detection": "store initializes its own schema (CREATE TABLE IF NOT EXISTS) rather than assuming a pre-existing file."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "An error inside a write transaction is written to a channel nobody reads (e.g. logged and swallowed instead of raised).",
+      "detection": "No store method catches a constraint violation or SQLite error and only logs it; every error path either raises to the caller or is an explicitly-modeled idempotency/staleness outcome."
+    },
+    {
+      "id": "F5",
+      "signature": 3,
+      "statement": "The 20x50 concurrency evidence run (C6) uses a trivial no-op create instead of exercising the real workflow/hierarchy/cycle checks, making the proof verify nothing (the exact trap ARCHITECTURE-REVIEW.md's pass-4 F3 finding named).",
+      "detection": "test_concurrency.py's harness ticket-create path goes through the same store.create_ticket() used by api, not a stripped-down stand-in."
+    }
+  ],
+  "out_of_scope": [
+    "The api CLI/HTTP layer (tessera/api/).",
+    "git operations themselves (tessera/gitops/) -- store only exposes stage_heads read/write via events; gitops decides when to call it.",
+    "The review UI (tessera/reviewui/).",
+    "Attachment size limits / retention policy (deferred in ARCHITECTURE.md).",
+    "Custom-field validation depth beyond typed-and-stored (deferred in ARCHITECTURE.md)."
+  ],
+  "constraints": [
+    "Python 3.9+ stdlib only (sqlite3, hashlib via tessera.common, threading, subprocess for git-adjacent path checks only).",
+    "SQLite >=3.35 (UPDATE...RETURNING) -- checked at startup, host confirmed at 3.51.0/3.53.4.",
+    "Every write transaction uses BEGIN IMMEDIATE, isolation_level=None -- never Python's implicit/deferred default.",
+    "Retry bound fixed at 15 attempts against busy_timeout=5000ms per ARCHITECTURE.md's measured tuning-trap finding -- do not shorten busy_timeout to retry faster without re-measuring against the full 20x50 bar."
+  ],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_events_append_only -v\ntest_events_append_only ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_prev_hash_not_null_unique_genesis -v\ntest_prev_hash_not_null_unique_genesis ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_orphan_prev_hash_rejected -v\ntest_orphan_prev_hash_rejected ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_transactions.TransactionTests.test_rejected_write_rolls_back_and_does_not_stall_next_writer -v\ntest_rejected_write_rolls_back_and_does_not_stall_next_writer ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_transactions.TransactionTests.test_write_txn_not_reentrant_no_leak -v\ntest_write_txn_not_reentrant_no_leak ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 tests/test_concurrency.py --processes 20 --per-process 50 --python /usr/bin/python3\n{'ok': True, 'expected': 1000, 'created': 1000, 'duplicate_ids': 0, 'lost_writes': 0, 'elapsed_s': 0.41, 'chain': {'roots': 1, 'tips': 1, 'orphans': 0, 'hash_mismatches': 0}, 'rebuild_matches_live': True}\nAlso re-run at 2x the bar (40 processes x 100 creates, 4000 total): {'ok': True, 'expected': 4000, 'created': 4000, 'duplicate_ids': 0, 'lost_writes': 0, 'elapsed_s': 1.53, 'chain': {'roots': 1, 'tips': 1, 'orphans': 0, 'hash_mismatches': 0}, 'rebuild_matches_live': True}. Each create is a real Sub-task (hierarchy check) plus a 'blocks' link to the previous ticket in the same worker (cycle-check CTE), not a no-op -- per failure criterion F5.",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 tests/test_kill_recovery.py --kills 5\n{'ok': True, 'integrity_check': 'ok', 'wedged_lock': False, 'acquire_time_s': 0.007, 'events_before': 0, 'events_after_recovery': 2319, 'chain': {'roots': 1, 'tips': 1, 'orphans': 0, 'hash_mismatches': 0}}",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C8",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_idempotency.IdempotencyTests.test_concurrent_same_key_one_ticket_counter_not_burned -v\ntest_concurrent_same_key_one_ticket_counter_not_burned ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C9",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_idempotency.IdempotencyTests.test_catch_site_does_not_swallow_chain_violations -v\ntest_catch_site_does_not_swallow_chain_violations ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C10",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_workflow.WorkflowTests.test_illegal_transition_rejected_in_store -v\ntest_illegal_transition_rejected_in_store ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C11",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_workflow.WorkflowTests.test_subtask_requires_parent_enforced_in_store -v\ntest_subtask_requires_parent_enforced_in_store ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C12",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_workflow.WorkflowTests.test_link_cycle_rejected_including_concurrent -v\ntest_link_cycle_rejected_including_concurrent ... ok (run 3x to check for flakiness in the barrier-released concurrent case, all 3 passed)",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C13",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_projection.ProjectionTests.test_rebuild_equals_live_across_all_projection_tables -v\ntest_rebuild_equals_live_across_all_projection_tables ... ok (caught and fixed two real bugs during development: duplicated utc_now_iso() calls causing live/rebuilt timestamp drift across 5 methods, and ClaimRecorded replay recomputing event_hash with a wrong placeholder prev_hash instead of reusing the stored hash)",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C14",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_projection.ProjectionTests.test_verify_chain_one_root_one_tip_no_orphans -v\ntest_verify_chain_one_root_one_tip_no_orphans ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C15",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_transactions.TransactionTests.test_per_thread_connections_and_pragmas -v\ntest_per_thread_connections_and_pragmas ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C16",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_fields.FieldTests.test_base_and_bug_fields_first_class -v\ntest_base_and_bug_fields_first_class ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C17",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_fields.FieldTests.test_custom_fields_roundtrip -v\ntest_custom_fields_roundtrip ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C18",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_fields.FieldTests.test_reference_docs_write_is_visible_event -v\ntest_reference_docs_write_is_visible_event ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C19",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_project_metadata.ProjectMetadataTests.test_second_instance_different_prefix -v\ntest_second_instance_different_prefix ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C20",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_projection.ProjectionTests.test_archival_is_event_not_projection_only -v\ntest_archival_is_event_not_projection_only ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C21",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_backup.BackupTests.test_vacuum_into_consistent_under_concurrent_writers -v\ntest_vacuum_into_consistent_under_concurrent_writers ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C22",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_stage_heads.StageHeadsTests.test_stage_heads_only_written_via_events_and_rebuild_covers_it -v\ntest_stage_heads_only_written_via_events_and_rebuild_covers_it ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C23",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_schema.SchemaTests.test_sqlite_version_check_fails_loud -v\ntest_sqlite_version_check_fails_loud ... ok (host SQLite 3.51.0, comfortably above the 3.35 floor; the fail-loud path exercised by temporarily raising MIN_SQLITE_VERSION)",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C24",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_attachments.AttachmentTests.test_rollback_leaves_orphan_not_dangling_reference -v\ntest_rollback_leaves_orphan_not_dangling_reference ... ok",
+      "recorded": "2026-08-15T14:00:00Z"
+    },
+    {
+      "criterion_id": "C25",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_schema_has_code_snippet_column -v\ntest_schema_has_code_snippet_column ... ok",
+      "recorded": "2026-08-19T10:45:00Z"
+    },
+    {
+      "criterion_id": "C26",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_add_comment_with_code_snippet_roundtrip -v\ntest_add_comment_with_code_snippet_roundtrip ... ok",
+      "recorded": "2026-08-19T10:45:00Z"
+    },
+    {
+      "criterion_id": "C27",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_add_comment_without_code_snippet_unchanged -v\ntest_add_comment_without_code_snippet_unchanged ... ok",
+      "recorded": "2026-08-19T10:45:00Z"
+    },
+    {
+      "criterion_id": "C28",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_rebuild_replays_historical_comments_as_null_snippet -v\ntest_rebuild_replays_historical_comments_as_null_snippet ... ok. Also re-verified directly against the real, live data/tessera.db after running tests/migrate_add_comment_code_snippet_column.py: live_projection() and rebuild_projection() produced zero mismatched tables across all 16 projection tables, and verify_chain() reported roots=1 tips=1 orphans=0 hash_mismatches=0.",
+      "recorded": "2026-08-19T10:45:00Z"
+    },
+    {
+      "criterion_id": "C29",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_backfill_appends_real_event_not_projection_mutation -v\ntest_backfill_appends_real_event_not_projection_mutation ... ok",
+      "recorded": "2026-08-19T10:45:00Z"
+    },
+    {
+      "criterion_id": "C30",
+      "status": "MET",
+      "evidence": "$ /usr/bin/python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_chain_integrity_after_backfill -v\ntest_chain_integrity_after_backfill ... ok",
+      "recorded": "2026-08-19T10:45:00Z"
+    }
+  ],
+  "amendments": [
+    {
+      "amended_at": "2026-08-19T10:39:07.714Z",
+      "reason": "Add a code_snippet field to comments, event-sourced. New criteria C25-C30 added; nothing in C1-C24 changed or was removed.",
+      "criteria_added": [
+        "C25",
+        "C26",
+        "C27",
+        "C28",
+        "C29",
+        "C30"
+      ]
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:d9cbb0f4fb9ed703a2fd616d7a965db1533f19adf5341eba85f1981e81e1d316",
+    "criteria_hash_at_completion": "sha256:d9cbb0f4fb9ed703a2fd616d7a965db1533f19adf5341eba85f1981e81e1d316",
+    "match": true
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 4,
+    "test_criteria": 30,
+    "frozen_at": "2026-08-19T10:39:07.714Z"
+  }
+}
