@@ -15,7 +15,7 @@ die() {
 
 echo "install-dev-harness: source=$ROOT"
 
-REQUIRED_HOOKS="architecture_gate.py concept_gate.py goals_freeze_gate.py preflight_blocking_gate.py ship_readiness_gate.py hook_common.py"
+REQUIRED_HOOKS="architecture_gate.py concept_gate.py goals_freeze_gate.py preflight_blocking_gate.py ship_readiness_gate.py pre_implementation_brief_gate.py hook_common.py audit_lib.py"
 for name in $REQUIRED_HOOKS; do
   src="$ROOT/bollard/$name"
   if [ ! -f "$src" ]; then
