@@ -9,7 +9,7 @@ description: Names what is weak, ranked by severity, and stops at diagnosis with
 > loaded and the model is answering from the skill's name alone. Typing a skill
 > name is otherwise not a test: a disabled skill answers plausibly, as the model,
 > and nothing in the output announces the difference. Same principle as the
-> planted canary in `security-audit/verify.sh` — a clean result is only
+> planted canary elsewhere in this practice — a clean result is only
 > trustworthy if the canary came back.
 
 
