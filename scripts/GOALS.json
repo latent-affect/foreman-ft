@@ -1,0 +1,86 @@
+{
+  "project": "dev-harness",
+  "component": "scripts",
+  "scope_version": 1,
+  "created": "2026-08-29T00:00:00Z",
+  "criteria_frozen_at": "2026-08-29T00:00:00Z",
+  "done_state": "install-dev-harness.sh installs a working hooks/skills/agents set into a fresh machine's ~/.claude/ tree, substitutes every /path/to/... token with the real local path, and fails closed (nonzero exit, no partial install left in place) if any required file is missing from the source tree -- including every real persona file in agents/, not a hardcoded subset of it.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "install-dev-harness.sh exits nonzero and prints a 'required hook missing' message when a required hook file is absent from the source tree, rather than installing a partial hooks directory silently.",
+      "verification": "python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_missing_hook_exits_nonzero exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "Every /path/to/... token in the installed hooks tree is replaced with the real local path (HOOKS_DST/SKILLS_DST/AGENTS_DST/TESSERA_ROOT/HOME-derived), with none of the literal tokens left in installed files.",
+      "verification": "python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_tokens_replaced_on_install exits 0.",
+      "verifiable": true,
+      "added": "2026-08-15T00:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "REQUIRED_AGENTS names every real file in agents/*.md, not a hardcoded subset -- so the install script's fail-closed guarantee actually covers the whole persona roster, including personas added after this list was first written.",
+      "verification": "python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_required_agents_covers_every_real_agent_file exits 0.",
+      "verifiable": true,
+      "added": "2026-08-29T00:00:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 8,
+      "statement": "REQUIRED_AGENTS (or any other hardcoded file-name list in this script) silently drifts out of sync with the real source directory as new files are added, so the script's own 'fail closed on missing files' guarantee stops covering the full set without anyone noticing.",
+      "detection": "C3: derive the expected set from agents/*.md directly in the test, not from a second hardcoded list that could drift the same way the first one did. Real instance found live 2026-08-29: nadia-osei.md and owen-reyes.md (landed 2026-08-27) were both uncovered."
+    },
+    {
+      "id": "F2",
+      "signature": 1,
+      "statement": "A partial install is left on disk after a fail-closed exit (files already copied before the check that fails are not cleaned up).",
+      "detection": "Not currently tested. Known gap: REQUIRED_HOOKS/REQUIRED_AGENTS checks run before any copy loop starts (source-tree validation), so today's fail-closed paths never leave a partial install -- but this isn't asserted by a test, it's true by the current code's ordering, which could regress silently."
+    }
+  ],
+  "out_of_scope": [
+    "The content of what gets installed (hooks/skills/agents themselves) -- this component only covers the install mechanism's own correctness.",
+    "Verifying the installed hooks actually fire correctly once registered in a real settings.json -- that's the hooks' own components' job.",
+    "A live TESSERA-ticket-existence check for anything this script installs -- matches this codebase's own standing rule against gates depending on another repo's live state."
+  ],
+  "constraints": [
+    "POSIX sh, not bash-specific syntax -- set -eu at the top commits to this.",
+    "Must never copy ~/.claude/CLAUDE.md (explicitly logged on every run)."
+  ],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_missing_hook_exits_nonzero -v\ntest_missing_hook_exits_nonzero ... ok\nOK",
+      "recorded": "2026-08-29T00:00:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_tokens_replaced_on_install -v\ntest_tokens_replaced_on_install ... ok\nOK",
+      "recorded": "2026-08-29T00:00:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_required_agents_covers_every_real_agent_file -v\ntest_required_agents_covers_every_real_agent_file ... ok\nOK\n\nNegative control run first, confirmed real: same test against the pre-fix REQUIRED_AGENTS (5 of 7 agents) failed with 'agents/ has real files REQUIRED_AGENTS never checks: {owen-reyes.md, nadia-osei.md}'.",
+      "recorded": "2026-08-29T00:00:00Z"
+    }
+  ],
+  "amendments": [],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:96bb0856f27c67b4aca0169c512b385cd2c5e0b8f6460f047f9aeade8c56b223",
+    "criteria_hash_at_completion": "sha256:96bb0856f27c67b4aca0169c512b385cd2c5e0b8f6460f047f9aeade8c56b223",
+    "match": true
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 3,
+    "frozen_at": "2026-08-29T00:00:00Z"
+  }
+}

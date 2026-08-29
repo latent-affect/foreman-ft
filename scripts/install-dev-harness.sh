@@ -28,7 +28,7 @@ fi
 if [ ! -f "$ROOT/skills/foreman/config/GOALS.template.json" ]; then
   die "GOALS.template.json missing from skills/foreman/config -- refusing"
 fi
-REQUIRED_AGENTS="clint-eastwood.md dana-okafor.md marcus-webb.md muse.md priya-desai.md"
+REQUIRED_AGENTS="clint-eastwood.md dana-okafor.md marcus-webb.md muse.md priya-desai.md nadia-osei.md owen-reyes.md"
 for name in $REQUIRED_AGENTS; do
   if [ ! -f "$ROOT/agents/$name" ]; then
     die "required agent missing at $ROOT/agents/$name -- refusing to install a partial agents dir"
