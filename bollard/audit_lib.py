@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Audit-plane writer + append-only flag integrity, for the misalignment-marker-search
-agent-config build.
+"""Audit-plane writer + append-only flag integrity, for whichever Foreman project this
+copy is installed into.
 
 Two-plane discipline (execution vs. audit): the execution plane is the project working
 tree; the audit plane is here, OUTSIDE the tree, under ~/.claude/audit-plane/. Hooks and
@@ -8,10 +8,13 @@ skills call this module to record router decisions, compaction firings, provenan
 findings, review verdicts, Layer-1 denials, and Stop-blocks -- as evidence, not
 self-attestation.
 
-Dataset hygiene (goal: a clean research dataset): only events from sessions running INSIDE
-the project tree land in the project ledger (misalignment-marker-search/audit.jsonl).
-Machine-wide safety-hook denials fired in some OTHER project are still recorded, but routed
-to a segregated global-safety ledger so they never pollute the research set.
+Dataset hygiene (goal: a clean per-project audit trail): only events from sessions running
+INSIDE this project's own tree land in this project's own ledger. Denials fired in some
+OTHER project on the same machine are still recorded, but routed to a segregated
+global-safety ledger so they never get attributed to a project they didn't happen in.
+Project identity is resolved the same way every other gate in this codebase resolves it --
+walking up from cwd for the nearest .foreman/ marker -- not a hardcoded path, so this file
+works unmodified in whichever project installs it.
 
 Append-only: each ledger file carries the macOS user append-only flag (UF_APPEND,
 `chflags uappnd`). This is TAMPER-EVIDENT, not tamper-proof -- the same user can clear the
@@ -29,11 +32,26 @@ from pathlib import Path
 
 SCHEMA_VERSION = "audit-1"
 
-PROJECT_ROOT = Path("/Users/m5/dev/misalignment-marker-search").resolve()
-# AUDIT_BASE is overridable via MMS_AUDIT_BASE so the self-tests can write to a throwaway
-# ledger and never pollute the real research dataset. Unset in normal operation.
-AUDIT_BASE = Path(os.environ.get("MMS_AUDIT_BASE") or (Path.home() / ".claude" / "audit-plane"))
-PROJECT_AUDIT_DIR = AUDIT_BASE / "misalignment-marker-search"
+
+def _resolve_project_root():
+    """Walk up from cwd for the nearest .foreman/ marker -- same convention
+    component_coupling.py's find_project_root() uses. No import of that module here on
+    purpose: this file stays dependency-free (stdlib only) so it can be imported before
+    any other hook module is guaranteed to be on sys.path."""
+    cwd = os.environ.get("AUDIT_LIB_CWD_OVERRIDE") or os.getcwd()
+    p = Path(cwd).resolve()
+    for candidate in (p, *p.parents):
+        if (candidate / ".foreman").is_dir():
+            return candidate
+    return p
+
+
+PROJECT_ROOT = _resolve_project_root()
+PROJECT_NAME = PROJECT_ROOT.name
+# AUDIT_BASE is overridable via AUDIT_LIB_BASE so the self-tests can write to a throwaway
+# ledger and never pollute a real audit trail. Unset in normal operation.
+AUDIT_BASE = Path(os.environ.get("AUDIT_LIB_BASE") or (Path.home() / ".claude" / "audit-plane"))
+PROJECT_AUDIT_DIR = AUDIT_BASE / PROJECT_NAME
 PROJECT_LEDGER = PROJECT_AUDIT_DIR / "audit.jsonl"
 TASK_ANCHOR_DIR = PROJECT_AUDIT_DIR / "task-anchors"
 GLOBAL_SAFETY_DIR = AUDIT_BASE / "global-safety"

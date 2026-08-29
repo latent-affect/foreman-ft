@@ -55,19 +55,19 @@
     {
       "criterion_id": "C1",
       "status": "MET",
-      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_missing_hook_exits_nonzero -v\ntest_missing_hook_exits_nonzero ... ok\nOK",
+      "evidence": "$ /usr/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_missing_hook_exits_nonzero -v\ntest_missing_hook_exits_nonzero ... ok\nOK",
       "recorded": "2026-08-29T00:00:00Z"
     },
     {
       "criterion_id": "C2",
       "status": "MET",
-      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_tokens_replaced_on_install -v\ntest_tokens_replaced_on_install ... ok\nOK",
+      "evidence": "$ /usr/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_tokens_replaced_on_install -v\ntest_tokens_replaced_on_install ... ok\nOK",
       "recorded": "2026-08-29T00:00:00Z"
     },
     {
       "criterion_id": "C3",
       "status": "MET",
-      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_required_agents_covers_every_real_agent_file -v\ntest_required_agents_covers_every_real_agent_file ... ok\nOK\n\nNegative control run first, confirmed real: same test against the pre-fix REQUIRED_AGENTS (5 of 7 agents) failed with 'agents/ has real files REQUIRED_AGENTS never checks: {owen-reyes.md, nadia-osei.md}'.",
+      "evidence": "$ /usr/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_required_agents_covers_every_real_agent_file -v\ntest_required_agents_covers_every_real_agent_file ... ok\nOK\n\nNegative control run first, confirmed real: same test against the pre-fix REQUIRED_AGENTS (5 of 7 agents) failed with 'agents/ has real files REQUIRED_AGENTS never checks: {owen-reyes.md, nadia-osei.md}'.",
       "recorded": "2026-08-29T00:00:00Z"
     }
   ],
