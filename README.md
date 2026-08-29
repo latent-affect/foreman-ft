@@ -51,3 +51,7 @@ Init fail-closes if the hooks are not already on disk. It writes `ARCHITECTURE.m
 ## Also here
 
 `ACKNOWLEDGEMENTS.md` names the tools that wrote this. `QUALITY-BAR.md` is the bar, including the gaps.
+
+## License
+
+Apache 2.0. See `LICENSE`.
