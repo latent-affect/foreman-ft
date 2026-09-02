@@ -62,19 +62,11 @@ def load_json_reports(paths):
 
 
 def hint_of(report):
-    """project_hint, from either report shape.
-
-    token_bloat_diagnostic.py emits TWO different schemas. When sessions match, the report
-    carries a `meta` object and project_hint lives inside it. When nothing matches, there is no
-    `meta` key at all and project_hint sits at the top level alongside `error`. A consumer
-    reading only meta.project_hint gets None on the zero-match path, which is how the C4
-    generated-hint pair first failed here. Read both, and see
-    test_zero_match_report_schema_diverges_from_the_populated_one, which pins the divergence so
-    it stays visible rather than being silently absorbed by this helper. Filed as DEVH-36.
-    """
-    if "meta" in report:
-        return report["meta"].get("project_hint")
-    return report.get("project_hint")
+    """project_hint, read from meta -- the same key on every report shape (DEVH-36). Before the
+    fix, the zero-match path had no `meta` key at all and put project_hint at the top level
+    instead, which is how the C4 generated-hint pair first failed here; this helper used to read
+    both shapes to work around that. Now there is only one shape to read."""
+    return report["meta"]["project_hint"]
 
 
 class R23ProvenanceTests(unittest.TestCase):
@@ -234,16 +226,16 @@ class R23ProvenanceTests(unittest.TestCase):
                                      f"{path} lost its original scope")
 
 
-    # ------------------------------------------------- schema divergence (DEVH-36)
+    # ------------------------------------------------- schema unity (DEVH-36)
 
-    def test_zero_match_report_schema_diverges_from_the_populated_one(self):
-        """Not a GOALS.json criterion. Pins a real defect this module found.
-
-        A report whose shape depends on whether it found anything is a trap for any automated
-        consumer, which is what R21's planned KPI series would be. Recorded as a test rather
-        than only a ticket so the divergence cannot regress unnoticed, and so that the day it
-        is fixed this test fails loudly and gets updated deliberately.
-        """
+    def test_zero_match_report_schema_matches_the_populated_one(self):
+        """DEVH-36 fix, pinned the other direction: the populated and zero-match reports must
+        carry the SAME top-level and meta shape, differing only in whether "error" is present
+        and in what meta's own fields say -- not in which fields exist at all. Before the fix,
+        the zero-match path had no meta key and put project_hint/days_scanned/parse_stats at
+        the top level instead; a consumer reading meta.project_hint unconditionally (hint_of(),
+        above) got None on that path with no way to tell "no scope given" from "scope given,
+        nothing found in it"."""
         populated = Path(self.tmp) / "pop"
         populated.mkdir()
         self.assertEqual(run_script("token_bloat_diagnostic.py", populated,
@@ -257,12 +249,25 @@ class R23ProvenanceTests(unittest.TestCase):
                                     "--project-hint", nomatch, "--days", "30").returncode, 0)
         zero = load_json_reports([str(p) for p in empty.glob("*.json")])[0][1]
 
-        self.assertIn("meta", pop, "the populated path nests project_hint under meta")
-        self.assertNotIn("meta", zero,
-                         "the zero-match path has no meta key -- if this now fails, the schemas "
-                         "were unified, which is the DEVH-36 fix; update hint_of and delete this")
-        self.assertEqual(zero.get("project_hint"), nomatch,
-                         "the zero-match path does echo the hint, just at the top level")
+        self.assertIn("meta", pop)
+        self.assertIn("meta", zero, "the zero-match path must carry meta too, same as populated")
+        self.assertNotIn("error", pop, "a populated run is not an error")
+        self.assertIn("error", zero, "the no-data condition lives inside the schema, as a field")
+
+        expected_meta_keys = {
+            "project_hint", "days_scanned", "session_files", "parse_stats",
+            "projects_seen", "scope_warning",
+        }
+        self.assertEqual(set(pop["meta"]), expected_meta_keys)
+        self.assertEqual(
+            set(zero["meta"]), expected_meta_keys,
+            "meta must carry the same fields on both paths, not a reduced set",
+        )
+        self.assertEqual(hint_of(zero), nomatch, "meta.project_hint must survive on this path")
+        self.assertNotIn(
+            "project_hint", zero, "project_hint must live in meta only, not also at top level"
+        )
+
         for key in ("tool_git_sha", "tree_git_sha", "formula_version"):
             self.assertTrue(zero.get(key), f"{key} must survive on the zero-match path too")
 

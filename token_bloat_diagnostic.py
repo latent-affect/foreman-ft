@@ -343,19 +343,25 @@ def build_report(project_hint: str, days: int) -> dict:
     records, parse_stats = parse_transcripts(files)
 
     if parse_stats["lines_with_usage"] == 0:
+        # DEVH-36: one schema, always. A hint matching zero real project directories (e.g. a
+        # test-generated probe string), or a real scope with genuinely no usage in the window,
+        # is a legitimate result -- "this scope had no sessions in this window" -- not a
+        # different-shaped error case. meta carries the same keys the populated path below
+        # does (project_hint, days_scanned, session_files, parse_stats, projects_seen,
+        # scope_warning) so a consumer can always read meta.project_hint unconditionally; the
+        # no-data condition is expressed as the "error" field within this one schema, not as a
+        # different top-level shape. This used to put project_hint/days_scanned/parse_stats at
+        # the top level instead of under meta -- fixed here, not worked around in a reader.
         return {
+            "meta": {
+                "project_hint": project_hint, "days_scanned": days,
+                "session_files": len(files), "parse_stats": parse_stats,
+                "projects_seen": [], "scope_warning": None,
+            },
             "error": "No usage records parsed. Either no sessions in range, or the JSONL "
                      "format has changed since this script was written -- do not trust a "
                      "silent zero here.",
-            "parse_stats": parse_stats,
             "searched_dir": str(CLAUDE_PROJECTS_DIR),
-            # A hint matching zero real project directories (e.g. a test-generated probe
-            # string) is a legitimate, expected input, not a malformed one -- GOALS.json C4
-            # requires the report still echo which hint produced it. Added alongside the
-            # existing keys, not in place of them, so write_txt_summary's error branch is
-            # untouched.
-            "project_hint": project_hint,
-            "days_scanned": days,
         }
 
     records = compute_cache_metrics(records)
@@ -421,7 +427,7 @@ def write_txt_summary(report: dict, out_path: Path):
     if "error" in report:
         lines.append(report["error"])
         lines.append(f"Searched: {report['searched_dir']}")
-        lines.append(json.dumps(report["parse_stats"], indent=2))
+        lines.append(json.dumps(report["meta"]["parse_stats"], indent=2))
         out_path.write_text("\n".join(lines))
         return
 

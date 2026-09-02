@@ -7,6 +7,7 @@
   "criteria_frozen_at": "2026-09-02T07:20:07Z",
   "done_state": "The three measurement scripts every quantitative claim in PRD.md traces to exist in this repository, are tracked by git, emit provenance (tool commit, tree commit, formula version) inside every report they write, and cannot destroy a prior run's output when re-run from the same working directory.",
   "requirement": "PRD.md R23 (R23a provenance, R23b evidence destruction). Sequenced first by concept-gate condition C3.",
+  "pre_implementation_brief": {"ticket_id": "DEVH-43", "persona": "dana-okafor", "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."},
   "criteria": [
     {
       "id": "C1",
