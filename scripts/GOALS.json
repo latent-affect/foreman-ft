@@ -143,6 +143,14 @@
       "recorded": "2026-09-02T13:10:00Z",
       "verified_by": "priya-desai, re-run and source-read in this session",
       "note": "Verified by reading the implementation, not only by the passing count. Each probe resolves self.home / 'hooks' / guard_*.py -- the installed artifact, not the repository source -- and asserts is_file() first so a silently missing install fails rather than skipping. The untrusted_web probe resolves its tool name from the INSTALLED template via declared_tool_name_from_installed_template rather than hardcoding it, which is the same resolve-from-the-declared-matcher property bollard C7 requires. The assertion pair is discriminating by construction: an always-silent guard fails the deny case on json.loads of empty stdout, and a deny-everything guard fails the silence case on non-empty stdout. Implemented by dev-harness-33 under DEVH-38 after this criterion was widened and recorded NOT MET."
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed -v\nRan 15 tests in 1.855s (later re-run: 15 tests, no regression after re-isolating test_tokens_replaced_on_install)\nOK\n\nCovering test: test_c6_marker_file_written_with_real_resolved_path -- runs the real installer against an isolated repo copy (_copy_repo/_run_installer), asserts <repo_copy>/.foreman/tessguard-db-path exists, contains no /path/to/... token, and equals <fake TESSERA_ROOT>/data/tessera.db exactly. Companion end-to-end proof in tessera/GOALS.json C10. Commit e03fb72 (DEVH-56) is itself a real git commit made with TESSGUARD_DB_PATH genuinely unset, resolved via this same marker-file mechanism in the real dev-harness-run2 worktree.",
+      "recorded": "2026-09-02T18:35:00Z",
+      "verified_by": "dev-harness-run2 (this session, self-scoped per DEVH-56's assignment)",
+      "note": "A real regression this same change introduced was caught and fixed before shipping: the pre-existing, non-isolated test_tokens_replaced_on_install ran the installer directly against this repo's own script (not a copy), so $ROOT resolved to the real dev-harness-run2 checkout and the new marker-file write clobbered this repo's REAL .foreman/tessguard-db-path with a fake /tmp/fake-tessera value on every test run. Re-isolated using the same _copy_repo/_run_installer pattern GuardPreflightFailClosedTests already established, removing the hazard at its source."
     }
   ],
   "amendments": [
