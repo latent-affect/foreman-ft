@@ -4,8 +4,8 @@
   "component": "docs",
   "scope_version": 1,
   "created": "2026-09-02T08:40:00Z",
-  "status": "citation-anchor, not a full component freeze",
-  "note": "The 'docs' component has no design-and-scope pass of its own yet -- it was only declared as a component during the Run 2 architecture backfill (ARCHITECTURE.md, 'docs was also never declared as a component at all -- added, because R16b and R22 both write into it'). This file exists only so pre_implementation_brief_gate.py has something to cite a brief ticket into for writes to docs/** made in service of another component's already-frozen GOALS.json. It is not a frozen set of criteria for the docs component itself, and should not be read as one. A real design-and-scope pass for 'docs' (if this component ever needs its own, rather than always being written to in service of another component's frozen criteria) is Priya Desai's call, not this implementer's.",
+  "status": "real design-and-scope freeze (promoted from citation anchor, DEVH-28)",
+  "note": "Superseded note, kept for the record: this file was created as a citation anchor so pre_implementation_brief_gate.py had something to cite for R8's writes into docs/**, and explicitly disclaimed being a component freeze. It is one now.",
   "briefs": [
     {
       "ticket_id": "DEVH-26",
@@ -26,18 +26,39 @@
       "statement": "audit_payload_credential_scan's seed row in the same section's dq_check INSERT carries severity='contract', not 'advisory', and no other row's check_name, source_table, scope, severity, threshold_kind, or implemented value changed.",
       "verification": "A fresh migrate.connect() against a temp db, then SELECT check_name, source_table, scope, severity, threshold_kind FROM dq_check yields exactly 19 rows (unchanged count) and matches atlas.warehouse.tests.test_schema.EXPECTED_CHECKS once that dict's audit_payload_credential_scan entry is updated to ('audit_event','source','contract','invariant') -- the only entry that changes. test_exactly_21_tables_and_18_views stays green (a column addition must not change table/view counts).",
       "verifiable": true
+    },
+    {
+      "id": "C3",
+      "statement": "DDL extraction is bounded to section 16, so a fenced SQL block added anywhere later in the document cannot change what is extracted.",
+      "verification": "Two cases, both required, and they behave differently today -- verified live in this session rather than predicted. CASE A, regression guard: copy the document, append a new section after section 17 containing a fenced ```sql block, point ddl.ARCHITECTURE_PATH at the copy, and require extract_schema_and_seed_sql() to return byte-identical schema_sql and seed_sql and ddl_sha256() to be unchanged. This PASSES today, because section 16's own two fences are still the first two after the heading; it guards against a future fix that breaks it. CASE B, the actual defect: remove section 16's SECOND fence (the seed block) and add a fenced ```sql block in a later section, then extract. This must raise DdlExtractionError. It does NOT today -- run live in this session, extraction returned the later section's block as seed_sql, literally 'SELECT 1 AS decoy;', with no error raised. len(matches) is still 2 so the fail-loud guard never fires, and wrong seed SQL would be executed against a real database. The cause is that extract_schema_and_seed_sql() scans text[heading_idx:] to end of file and takes matches[0] and matches[1], which is unbounded past section 16 -- and section 16 is not the last section, 17 begins at line 1280 with a Confidence section after it.",
+      "verifiable": true,
+      "added": "2026-09-02T13:40:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "The extracted schema is the schema a real database gets: applying it produces exactly the declared tables and views, with no drift between document and code.",
+      "verification": "Apply the extracted schema_sql to a fresh sqlite3 connection via atlas.warehouse.migrate, then read the resulting object names back from sqlite_master and compare as SETS against EXPECTED_TABLES and EXPECTED_VIEWS in atlas/warehouse/tests/test_schema.py. Set equality in both directions, not counts and not a subset check: a count matches while a table is renamed, and a subset passes while an extra object exists. Also apply the seed_sql and assert the dq_check row count and the (check_name, severity) pairs match what test_schema declares.",
+      "verifiable": true,
+      "added": "2026-09-02T13:40:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "An edit to docs/ that is not section 16 cannot perturb the extracted schema.",
+      "verification": "R16b and R22 both write into this component -- R22 lands docs/verbatim-persistence-inventory.md, R16b edits section 16 deliberately. Prove the two cases are distinguishable: record ddl_sha256() before, add a new file under docs/ and append prose to a section other than 16, and assert ddl_sha256() is unchanged. Then make a real one-character change inside section 16's schema fence and assert ddl_sha256() DOES change. Both directions are required; a hash that never changes would pass the first half while making drift undetectable, which is the opposite of what schema_migration records it for.",
+      "verifiable": true,
+      "added": "2026-09-02T13:40:00Z"
     }
   ],
-  "criteria_frozen_at": "2026-09-02T07:51:35.164516Z",
+  "criteria_frozen_at": "2026-09-02T12:15:30Z",
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:c783601573dd57267034c7ba3a712c1a4ed29f1d4bd6f636f203514525e465ba",
+    "criteria_hash_at_freeze": "sha256:4c2726fabe5565ce53e670b44549b62df681c53b1dd1c7b58ff3cbe97e388c3a",
     "match": null
   },
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 2,
-    "frozen_at": "2026-09-02T07:51:35.164516Z"
+    "test_criteria": 5,
+    "frozen_at": "2026-09-02T12:15:30Z"
   },
   "amendments": [
     {
@@ -48,6 +69,50 @@
       "reason": "Self-caught while verifying this same freeze's own criteria for real immediately after writing them, per this project's real-execution-only standard -- a wrong position number in a criterion marked verifiable:true is exactly the kind of unverified specific claim this project's own precedent (PRD.md section 0.1) warns against leaving uncorrected once caught.",
       "requested_by": "dev-harness-run2-1e (self-caught during verification, not by another pass)",
       "at": "2026-09-02T07:51:35.164516Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "promoted from citation anchor to a real design-and-scope freeze",
+      "from": "status 'citation-anchor, not a full component freeze', empty done_state, two criteria existing only so pre_implementation_brief_gate.py had something to cite for R8's writes into docs/.",
+      "to": "A real freeze with a stated done_state and three added criteria covering the extraction contract. C1 and C2 kept as written -- they were real and verified, and replacing them would have unmapped any results recorded against them.",
+      "reason": "DEVH-28. The stopgap's own note said a real pass was this stage's call, and the reason it is not optional is that docs/ is not documentation: docs/atlas-architecture.md section 16 is the warehouse schema's source of record, extracted and executed by atlas/warehouse/ddl.py at import time, so an edit there is a schema change. Writing the criteria surfaced a real fail-open, recorded as C3 and F1 and currently expected to fail: extract_schema_and_seed_sql() scans text[heading_idx:] to end of file and takes the first two sql fences, which is unbounded past section 16 -- and section 16 is not the last section, 17 and a Confidence section follow. It is correct today only because the document happens to hold exactly two sql fences in total. Fourth instance of the first-match family found tonight, after component_of's glob prefix, parse_component_map's first-fence break and verify_settings_shape's exact matcher -- this one in the schema source of record.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T13:40:00Z"
     }
-  ]
+  ],
+  "done_state": "docs/atlas-architecture.md section 16 is the warehouse schema's source of record, executed by extraction rather than read by people, and the extraction contract holds: the SQL that atlas/warehouse/ddl.py pulls out is bounded to section 16, matches the schema a freshly created database actually has, and cannot be silently changed by an edit elsewhere in the document.",
+  "requirement": "PRD.md R22 and R16b both write into this component; DEVH-28 for the component's own pass. C1/C2 originate from R8 (DEVH-13).",
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "Section 16 loses one of its two fences -- an edit consolidating the schema and seed blocks, say -- while any later section contains a fenced sql block. len(matches) is still 2, so the fail-loud guard does not fire, and a block from a different section is extracted as seed SQL and executed against a real database with no error. Demonstrated live 2026-09-02, not hypothesised: extraction returned 'SELECT 1 AS decoy;' as the seed SQL. Note that merely APPENDING a fence after section 16 is harmless, since section 16's own two still come first -- the defect needs section 16 to lose one, which is why a test that only appends would report the contract as sound.",
+      "detection": "C3 case B strips section 16's seed fence, adds one later, and requires DdlExtractionError. C3 case A separately pins the append-only case, which passes today."
+    },
+    {
+      "id": "F2",
+      "statement": "The extracted schema is compared against the test's expected object lists by COUNT, or by checking the expected names are present. A renamed table passes the count check; an extra unexpected view passes the subset check. The document and the live database drift while the test stays green.",
+      "detection": "C4 compares as sets in both directions."
+    },
+    {
+      "id": "F3",
+      "statement": "ddl_sha256() is computed over something stable that is not the schema text -- the section heading, the file's mtime, a cached value -- so it never changes. C5's first half passes trivially and schema_migration records a hash that cannot detect the drift it exists to detect.",
+      "detection": "C5 requires the hash to be unchanged for a non-section-16 edit AND to change for a one-character edit inside the schema fence."
+    },
+    {
+      "id": "F4",
+      "statement": "The component is treated as documentation because it is called docs. An edit is made to section 16 under a documentation-grade review, and it is a schema change executed by extraction at the next import.",
+      "detection": "The done_state names section 16 as the source of record executed by extraction; C3 through C5 are all about that contract rather than about prose quality."
+    }
+  ],
+  "out_of_scope": [
+    "Prose quality, structure or accuracy of the non-DDL sections of docs/atlas-architecture.md. This component's criteria are about the extraction contract, which is the part that executes.",
+    "The CONTENT of R22's verbatim-persistence inventory and R16b's model column. Those are their own requirements (DEVH-22, DEVH-17); this component guarantees only that writing them cannot perturb the extracted schema.",
+    "docs/ files other than atlas-architecture.md, none of which are executed by any code path found in this pass."
+  ],
+  "constraints": [
+    "Never maintain a second copy of the DDL in Python. ddl.py extracts from the document specifically so the two cannot drift, which its own docstring names as the failure it exists to prevent.",
+    "A change to section 16 is a schema change and is reviewed as one, not as a documentation edit.",
+    "Fixing C3 must not narrow extraction to hardcoded line numbers -- ddl.py's docstring rejects that explicitly, because an unrelated edit elsewhere would then silently point extraction at the wrong block. Bound the search to section 16's own extent instead, by locating the next heading of equal level."
+  ],
+  "results": []
 }
