@@ -441,11 +441,19 @@ above it was not, which is how the two came apart.
   warehouse. R17b, the view name appears in `EXPECTED_VIEWS` (`test_schema.py:20`), the schema
   test is green, and the view returns correct rows over known overlapping synthetic sessions —
   not merely "returns rows", per this document's own falsification note.
-- **Open question for the architecture stage:** whether `docs/atlas-architecture.md` describes
-  this repository's warehouse or another instance. If another, R17a may already be satisfied
-  somewhere this tree cannot see, and the answer changes who owns the blocker.
+- **Question answered 2026-09-02, and it closes the escape hatch.** This document asked whether
+  `docs/atlas-architecture.md` describes this repository's warehouse or another instance, since
+  its real measured figures (1,030 sessions, 98.2% ledger coverage) cannot have come from a tree
+  with no database in it. A separate ATLAS scoping pass checked the live `atlas-sonnet` warehouse
+  directly and reports `dim_session` **empty there too**, while other tables in that same
+  instance (`hook_verdict`) do carry real rows. So the document does describe a real, populated
+  warehouse, and `dim_session` is specifically unpopulated in it. R17a is not quietly satisfied
+  somewhere out of view; it is a live gap in every instance anyone has looked at.
 - **Confidence: High** that the columns are declared and that nothing in this tree populates
-  them, both read directly. **Low** on whether a populated warehouse exists elsewhere.
+  them, both read directly here. **Medium** on the live instance being empty as well — that is a
+  single check by one other session against a warehouse this tree cannot reach, credible and
+  consistent with everything else, but not something this document verified itself. It is
+  recorded as their finding, not promoted to mine.
 
 **R18 — Fix the hotspot signal, not ATLAS. The churn reading is correct.**
 
