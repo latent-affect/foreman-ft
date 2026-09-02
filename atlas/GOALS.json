@@ -4,7 +4,7 @@
   "component": "atlas",
   "scope_version": 1,
   "created": "2026-09-02T08:05:00Z",
-  "criteria_frozen_at": "2026-09-02T07:28:35Z",
+  "criteria_frozen_at": "2026-09-02T07:37:18Z",
   "done_state": "A credential pattern present in an audit-plane line is redacted before that line's row is persisted, verified by reading the row back from the database file itself; any failure in one line's scrub-verify-publish chain results in zero rows for that line and a run that exits non-zero rather than reporting success; and the independent read-time credential check remains live and is promoted from advisory to contract.",
   "requirement": "PRD.md R8 (DEVH-13). Architecture: ARCHITECTURE.md 'R8 \u2014 write-time credential scrub, fail-closed'.",
   "design_decision_reconciling_prd_and_architecture": "PRD.md R8 says a forced scrub failure means 'the ingest run shall exit non-zero and shall write no row'. The architecture, following muse, sets the unit of fail-closed atomicity at one audit line rather than one ingest run, so lines N-1 and N+1 still land when line N fails. These conflict and this freeze resolves them rather than inheriting both. Per-record atomicity is adopted, because it does not weaken the guarantee at all: the claim being protected is that no credential is persisted, and line N is never persisted either way, while lines N plus or minus one were independently verified clean on their own chains. Run-level abort would additionally have to decide what happens to rows already written, and either answer is worse -- rolling them back discards verified-clean audit data, and leaving them is the partial success the operator's fail-closed rule forbids by name. What does NOT survive from PRD.md R8 is the literal 'shall write no row', since other clean lines in the same run do get written; that clause is narrowed to the failing line. In exchange, and this is the half muse's note only gestured at, the run must not be allowed to report success: a dropped line is counted and the run exits non-zero at the end. Otherwise per-record atomicity converts a credential-leak failure into a silent record-loss failure, which is the same 'you only find out by looking' shape the rule exists to make impossible.",
@@ -26,14 +26,14 @@
     {
       "id": "C3",
       "statement": "A scrub that raises hard-fails its line, leaving zero rows and no partial state.",
-      "verification": "Force the scrub to raise. Assert the line's ingest reports failure, a fresh connection finds zero rows for it, and no temporary artifact from the write-temp step remains in the warehouse directory. An error that is logged while the row is written anyway fails this criterion, as does an error that leaves an orphaned temp row or file.",
+      "verification": "Force the scrub to raise. Assert the line's ingest reports failure and that a fresh connection to the database file finds zero rows for it. For temporary artifacts, do NOT scope the check to the warehouse directory: the reference implementation's write-temp step uses tempfile.mkstemp(), which without an explicit dir= argument resolves to the system temp directory, not the warehouse. A cleanup path that itself raises, or a process killed mid-cleanup, would leave a credential-bearing temp file in /tmp indefinitely and a warehouse-scoped check would never see it. Instead take an independent before/after snapshot of BOTH the warehouse directory AND the directory tempfile.gettempdir() actually resolves to at test time, and assert the two snapshots are identical after the forced failure. If the implementation passes an explicit dir= so temp files land beside the warehouse, the tempdir snapshot simply stays empty and the criterion still holds.",
       "verifiable": true,
       "added": "2026-09-02T08:05:00Z"
     },
     {
       "id": "C4",
       "statement": "The unit of atomicity is one line, and a dropped line cannot be silent: in a run where exactly one line fails, every other line still lands, the failing line writes nothing, the run reports a non-zero count of fail-closed drops, and the run exits non-zero.",
-      "verification": "Ingest a batch of five lines in which exactly one is rigged to fail its scrub. Assert, from a fresh connection to the database file: exactly four rows present, all four clean, the rigged line absent. Assert the run's own reported drop count equals 1 and its process exit status is non-zero. All four halves are required together. An implementation that aborts the whole run fails the four-rows-present half; one that drops the line and exits zero fails the non-silence half, which would convert this design's credential guarantee into undetected record loss.",
+      "verification": "Two scenarios, both required, because one is not enough to distinguish a tally from a boolean. Scenario one: ingest five lines with exactly one rigged to fail. Assert, from a fresh connection to the database file, exactly four rows present, all four clean, the rigged line absent; assert the run's reported drop count equals 1 and its process exit status is non-zero. Scenario two: ingest six lines with exactly TWO rigged to fail. Assert exactly four rows present, both rigged lines absent, and the reported drop count equals 2, not 1 and not True. A drop_count implemented as `1 if any_line_failed else 0` passes scenario one and fails scenario two, which is the point of running both. An implementation that aborts the whole run fails the surviving-rows half of either scenario; one that drops lines and exits zero fails the non-silence half, which would convert this design's credential guarantee into undetected record loss.",
       "verifiable": true,
       "added": "2026-09-02T08:05:00Z"
     },
@@ -47,7 +47,7 @@
     {
       "id": "C6",
       "statement": "A redacted row records that redaction occurred, stays wellformed, and an unredacted row is not marked as redacted.",
-      "verification": "Per PRD.md N3, the fact of redaction must be recorded on the row rather than being inferable only from the absence of a secret. Ingest one line containing a planted credential and one clean line. Assert the redacted row carries a positive redaction marker and the clean row does not, so an implementation that sets the marker unconditionally fails. Assert both rows still pass check_audit_envelope_wellformed. If the marker needs a schema column, it is added to the DDL block in docs/atlas-architecture.md section 16, which atlas/warehouse/ddl.py extracts at import time, not to a second copy of the DDL in code.",
+      "verification": "Per PRD.md N3, the fact of redaction must be recorded on the row rather than being inferable only from the absence of a secret. Ingest one line containing a planted credential and one clean line. Assert the redacted row carries a positive redaction marker and the clean row does not, so an implementation that sets the marker unconditionally fails. The wellformedness half must actually exercise the fields redaction touches, not merely run check_audit_envelope_wellformed and observe it pass: assert that the redacted row's payload_json still parses as JSON after substitution, that its payload_bytes still reflects the stored value rather than the pre-redaction length, and that the envelope check passes for both rows. If the marker needs a schema column, it is added to the DDL block in docs/atlas-architecture.md section 16, which atlas/warehouse/ddl.py extracts at import time, not to a second copy of the DDL in code.",
       "verifiable": true,
       "added": "2026-09-02T08:05:00Z"
     }
@@ -92,6 +92,16 @@
       "id": "F8",
       "statement": "A schema change for the marker is made by editing DDL in code. atlas/warehouse/ddl.py extracts the real DDL from docs/atlas-architecture.md section 16 at import time, so a second hand-maintained copy drifts silently from the source of record -- the exact failure ddl.py's own docstring says it exists to prevent.",
       "detection": "C6 names the document section as the only place a column may be added."
+    },
+    {
+      "id": "F9",
+      "statement": "A credential-bearing temporary file is left behind outside the warehouse directory. tempfile.mkstemp() with no dir= argument writes to the system temp directory, so a cleanup path that raises, or a process killed mid-cleanup, strands verbatim secrets in /tmp. A check scoped to the warehouse directory reports clean forever. Same shape as R23's self-reported-paths gap: check the disclosed location, miss the real one.",
+      "detection": "C3 snapshots both the warehouse directory and tempfile.gettempdir() as resolved at test time, before and after the forced failure."
+    },
+    {
+      "id": "F10",
+      "statement": "The drop count is a boolean wearing a number's clothes -- `1 if any_line_failed else 0`, or a flag coerced to int. A single-failure scenario passes, the operator sees a plausible '1', and every run that drops two or more lines silently under-reports. The counting mechanism meant to make record loss visible becomes the thing hiding it.",
+      "detection": "C4 runs a second scenario with two rigged failures among six lines and requires the reported count to equal 2."
     }
   ],
   "out_of_scope": [
@@ -115,12 +125,49 @@
     "components": 1,
     "interfaces": 0,
     "test_criteria": 6,
-    "frozen_at": "2026-09-02T07:28:35Z"
+    "frozen_at": "2026-09-02T07:37:18Z"
   },
   "results": [],
-  "amendments": [],
+  "amendments": [
+    {
+      "criterion_id": "C3",
+      "change": "verification",
+      "from": "Asserted 'no temporary artifact from the write-temp step remains in the warehouse directory' -- a location-scoped check.",
+      "to": "Independent before/after snapshot of the warehouse directory AND the directory tempfile.gettempdir() resolves to at test time.",
+      "reason": "dev-harness-32 blind falsification of the R8 criteria. The reference toy model calls tempfile.mkstemp() with no dir= argument, so its temp file lands in the system temp directory, which the original criterion never looked at. A stranded temp file there holds the unredacted payload.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T08:30:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "change": "verification",
+      "from": "One scenario: five lines, exactly one rigged to fail, assert drop count equals 1.",
+      "to": "Two scenarios; the second uses six lines with two rigged failures and requires the reported count to equal 2.",
+      "reason": "dev-harness-32 blind falsification of the R8 criteria. A single-failure scenario cannot distinguish a real tally from a boolean. Since C4's whole purpose is making dropped records non-silent, a miscounting count defeats the criterion from inside.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T08:30:00Z"
+    },
+    {
+      "criterion_id": "C6",
+      "change": "verification",
+      "from": "Asserted both rows pass check_audit_envelope_wellformed, which does not touch payload_json or the redaction marker and so added less coverage than it appeared to.",
+      "to": "The wellformedness half now exercises the fields redaction actually touches: payload_json still parses after substitution, and payload_bytes reflects the stored value rather than the pre-redaction length.",
+      "reason": "dev-harness-32 blind falsification of the R8 criteria. Raised as minor and explicitly non-blocking, since the load-bearing marker-differs assertion was already sound. Taken because the fix is small and a sub-check that looks like coverage and is not is worse than no sub-check at all.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T08:30:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "location (NOT performed -- recorded as a considered and declined change)",
+      "from": "Recommendation from ARCHITECTURE.md Addendum 2: relocate these six criteria onto atlas/ingest/GOALS.json, because declaring atlas subcomponents would make atlas/ingest/ resolve to a new atlas-ingest component and orphan this freeze.",
+      "to": "Not relocated. This file stays the R8 freeze until R8's criteria are MET.",
+      "reason": "The orphaning is real but conditional on the subcomponent declaration landing, and it has not landed: ARCHITECTURE.md still carries one yaml components block reading atlas: [\"atlas/**\"], confirmed by running parse_component_map rather than reading Addendum 2's prose. Relocating first would CAUSE the orphaning it is meant to prevent -- the gate would keep reading atlas/GOALS.json while R8's criteria sat in a file it never consults. Declaring first was also tried and reverted in this session after the resolver showed R8 spans three components once split (atlas-ingest for audit_scrub.py, atlas-warehouse for C5's contract promotion in test_schema.py, and docs for C6's possible DDL edit, whose docs/GOALS.json does not exist), which would mean amending two completed, all-MET, hash-attested records and creating a third. Under the current single atlas declaration, all three areas resolve to this one file, which matches R8 being one requirement. Recommendation to the orchestrator: defer the subcomponent split until R8 is MET, then declare and archive cleanly.",
+      "requested_by": "priya-desai (declining a recommendation from clint-eastwood via agent-remediation-af)",
+      "at": "2026-09-02T08:30:00Z"
+    }
+  ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:ca388a9c03c91f52a6b41730bbad4e54de271b9a991df786a1a482808233d97f",
+    "criteria_hash_at_freeze": "sha256:4778b62a19e10394d41880f069d67d3eb2223da27af0f2265557620764641976",
     "match": null
   }
 }
