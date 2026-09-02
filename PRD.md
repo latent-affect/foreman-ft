@@ -411,18 +411,41 @@ failure D5 was raised to avoid.
   cannot be evaluated without knowing which model produced a verdict.
 - **Confidence: High** on the blocker (read both the doc line and the DDL comment).
 
-**R17 — Concurrent-session view, buildable from existing columns.**
+**R17 — Concurrent-session view. Same blocked shape as R16, corrected 2026-09-02.**
 
-Confirmed. `dim_session` as declared at `docs/atlas-architecture.md:602` carries `session_id`,
-`started_ts`, `ended_ts`, `claude_version`, `git_branch`, `start_cwd`. Every column R17 needs is
-present. No new ingestion.
+An earlier revision of this requirement read "buildable from existing columns... no new
+ingestion", on the strength of the DDL declaring every column needed. The columns are declared,
+and that half stands: `dim_session` at `docs/atlas-architecture.md:602` carries `session_id`,
+`started_ts`, `ended_ts`, `claude_version`, `git_branch`, `start_cwd`. **But nothing populates
+the table.** Raised by a separate ATLAS scoping pass and confirmed independently here against
+this repository:
 
-- **Requirement:** a view reporting concurrent sessions per project per time window shall exist
-  as a permanent warehouse view, replacing the ad hoc computation in
+- No warehouse database exists in this tree at all.
+- `dim_session` appears in exactly one place in the whole of `atlas/`: the `EXPECTED_TABLES` set
+  in `atlas/warehouse/tests/test_schema.py:15`. No module reads it and no module writes it.
+- `sessions.jsonl`, the file `docs/atlas-architecture.md:63` names as the source for these
+  columns, is not referenced anywhere under `atlas/`.
+
+So R17 is blocked on exactly the shape R16 is: schema declared, data source absent. That is the
+same mistake this document catches R16's brief text making, reproduced here in my own
+requirement — I verified the columns were declared and treated that as verifying the requirement
+was buildable. The confidence annotation below was correctly scoped to the columns; the sentence
+above it was not, which is how the two came apart.
+
+- **R17a:** an ingest path shall populate `dim_session` from a real source, and at least one row
+  shall be shown present, before the view is designed. **Blocked.**
+- **R17b:** once R17a holds, a view reporting concurrent sessions per project per time window
+  shall exist as a permanent warehouse view, replacing the ad hoc computation in
   `token_bloat_diagnostic.py`'s launch-cluster mode.
-- **Verification:** the view name appears in `EXPECTED_VIEWS` in `test_schema.py:20`, the schema
-  test is green, and the view returns rows over the live warehouse.
-- **Confidence: High** (all four required columns read directly from the DDL block).
+- **Verification:** R17a, `SELECT count(*) FROM dim_session` returns non-zero against a real
+  warehouse. R17b, the view name appears in `EXPECTED_VIEWS` (`test_schema.py:20`), the schema
+  test is green, and the view returns correct rows over known overlapping synthetic sessions —
+  not merely "returns rows", per this document's own falsification note.
+- **Open question for the architecture stage:** whether `docs/atlas-architecture.md` describes
+  this repository's warehouse or another instance. If another, R17a may already be satisfied
+  somewhere this tree cannot see, and the answer changes who owns the blocker.
+- **Confidence: High** that the columns are declared and that nothing in this tree populates
+  them, both read directly. **Low** on whether a populated warehouse exists elsewhere.
 
 **R18 — Fix the hotspot signal, not ATLAS. The churn reading is correct.**
 
