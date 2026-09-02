@@ -45,9 +45,35 @@ its four named classes, exists anywhere on this machine.**
 Two sessions searched independently, with no shared context between them, across
 `/Users/m5` at full depth excluding `Library`, plus `/Users/m5/dev/grok` and every scratchpad
 location. Five distinct search terms: the filename, `OSSandboxGuard`, `SemanticResolutionGuard`,
-`AllowlistGuard`, `PatternFeedGuard`. Zero hits on any term in either search. A third pass over
-this repository, adding `su""do`, `layered_command`, `allowlist inversion` and `capability by
-construction`, matched only this document.
+`AllowlistGuard`, `PatternFeedGuard`. A third pass over this repository added `su""do`,
+`layered_command`, `allowlist inversion` and `capability by construction`.
+
+**Precise statement of the result, corrected after independent falsification
+(`ARCHITECTURE-REVIEW.md` finding 1, re-run and confirmed in this session):** zero hits in
+executable code anywhere in that scope. The terms do appear, in six files, every one of them a
+narrative document describing the guard rather than implementing it:
+
+```
+/Users/m5/Downloads/dev-harness-BUILD-BRIEF.md
+/Users/m5/Downloads/dev-harness-BUILD-BRIEF_1.md
+/Users/m5/Downloads/dev-harness-BUILD-BRIEF_2.md   <- this PRD's own cited input
+/Users/m5/dev/dev-harness-run2/PRD.md              <- this document
+/Users/m5/dev/dev-harness-run2/ARCHITECTURE.md     <- this pipeline's own architecture pass
+/Users/m5/agent-remediation/HANDOFF-20260901-OVERNIGHT-RUN2-PIPELINE.md
+```
+
+An earlier revision of this section said "zero hits on any term in either search" over that
+scope, which is not accurate: `/Users/m5/Downloads` and `/Users/m5/agent-remediation` are both
+inside the stated scope and both produced hits. The disposition does not change, and no working
+implementation exists anywhere. But this sentence is the sole evidentiary basis for the
+highest-severity operator escalation in this document, so it gets stated at the precision that
+weight demands. The distinction the earlier revision already drew correctly for its search of
+this repository — hits in prose describing a design are not hits on the design — is the one that
+needed extending to the machine-wide claim, and now does.
+
+One thing the corrected result adds rather than removes: the design is described in three
+successive revisions of the source brief, and no implementation appeared alongside any of them.
+That is consistent with both explanations below and settles neither.
 
 Two explanations fit. A scratchpad artifact was written and cleaned up before landing anywhere
 durable, which matches a real pattern from other sessions. Or the implementation was described

@@ -278,13 +278,20 @@ have the data to make that call today.
 ### R14/R15 — BLOCKED, three sequencing decisions made explicit rather than left implicit
 
 `layered_command_guard.py` and its four named classes (`OSSandboxGuard`, `SemanticResolutionGuard`,
-`AllowlistGuard`, `PatternFeedGuard`) do not exist anywhere under `/Users/m5` outside `Library`
-(PRD.md's own two-search, five-term, zero-hit result; not re-run in this pass, though the
-concept-stage gate pass ran a fourth independent search over `/Users/m5/dev` and again found only
-PRD.md itself). `[muse]` the search space itself was bounded — `Library` excluded, no
-casing/naming variants tried, and the negative was never verified beyond this one machine — so
-"High confidence" here is confidence in a specific negative search, not a settled fact about the
-artifact's existence anywhere. Three explicit calls, so this doesn't default into an indefinite
+`AllowlistGuard`, `PatternFeedGuard`) do not exist as executable code anywhere under `/Users/m5`
+outside `Library`. Corrected by the falsification pass (`ARCHITECTURE-REVIEW.md` Finding 1): a
+re-run of the same search over the same scope returns six hits, not zero —
+`/Users/m5/Downloads/dev-harness-BUILD-BRIEF.md` and its two revisions, `PRD.md`,
+`ARCHITECTURE.md` itself, and an overnight handoff file. All six are narrative documents
+describing or discussing the alleged guard, none are code. The substantive conclusion is
+unchanged — no working implementation exists anywhere searched — but "zero hits" as originally
+stated overclaimed; the accurate claim is **zero hits in executable code, hits only in prose that
+narrates or discusses the design**, and that distinction is now stated explicitly rather than
+implied by an absolute "zero." `[muse]` the search space itself was bounded — `Library` excluded,
+no casing/naming variants tried, and the negative was never verified beyond this one machine — so
+"High confidence" here is confidence in a specific negative search over executable code, not a
+settled fact about the artifact's existence anywhere. Three explicit calls, so this doesn't
+default into an indefinite
 hold by omission (matches concept-gate condition C1 exactly):
 
 1. **Owner and timeout on the operator-confirmation blocker.** Jon, asked directly, not implied
@@ -409,8 +416,8 @@ must confirm" items route back through her, and where concept-gate condition C2'
 correction is now also her open item) is a real structural repeat of the pattern this project
 exists to catch, one level up. Flagged for the orchestrator, not fixed by this document.
 
-**Component and interface blocks are not repeated here.** `load_components()`
-(`bollard/component_coupling.py:80-113`) scans top-to-bottom and `break`s out of its *entire*
+**Component and interface blocks are not repeated here.** `parse_component_map()`
+(`bollard/component_coupling.py:75`) scans top-to-bottom and `break`s out of its *entire*
 loop at the first closing fence of a `\`\`\`yaml components` block — a second such block later in
 the same file is silently never read, the same "looks declared, isn't" shape as the `bollard/`
 prefix bug above. Caught in this pass before it shipped as a second bug of the same kind inside
