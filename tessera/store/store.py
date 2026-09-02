@@ -475,6 +475,15 @@ class Store:
                 _, updated_at = self.append_event_internal(
                     conn, event_type, actor, {field_name: value}, ticket_id=ticket_id,
                 )
+                # nosec B608 -- field_name is rejected two lines above this function's start
+                # unless it is a KEY of PRIORITY_LIKE_FIELDS (line 457, a fixed two-entry dict
+                # literal: "priority"/"severity"). No caller-supplied string reaches this
+                # f-string; the only two values that can ever arrive here are the dict's own
+                # keys. DEVH-10/GOALS.json C6. Widening risk: PRIORITY_LIKE_FIELDS is 14-ish
+                # lines above the guard that reads it, itself 14-ish lines above this
+                # interpolation -- a future edit widening that dict widens this identifier
+                # source too, with no compiler link between the three. Risk-register row: see
+                # tessera/store/tests/test_sql_identifier_safety.py's module docstring.
                 conn.execute(
                     f"UPDATE tickets SET {field_name}=?, updated_at=? WHERE ticket_id=?",
                     (value, updated_at, ticket_id),
@@ -1302,6 +1311,12 @@ class Store:
                 (pid, count),
             )
         result = {}
+        # nosec B608 -- neither identifier is caller-supplied. `table` iterates
+        # schema.PROJECTION_TABLES, a fixed tuple constant; `col_list` comes from
+        # canonical_columns_internal(), itself a PRAGMA table_info() read over a scratch
+        # sqlite3 connection built fresh from schema.init_schema() (== schema.DDL) two calls
+        # up the stack -- never from a caller argument, a ticket field, or any external
+        # source. DEVH-10/GOALS.json C6.
         for table in schema.PROJECTION_TABLES:
             cols = canonical_cols[table]
             col_list = ", ".join(cols)
@@ -1314,6 +1329,9 @@ class Store:
         canonical_cols = self.canonical_columns_internal()
         result = {}
         conn = self.conn_internal()
+        # nosec B608 -- same identifier sources as rebuild_projection() above: table from
+        # schema.PROJECTION_TABLES, col_list from canonical_columns_internal()'s scratch-db
+        # PRAGMA read. DEVH-10/GOALS.json C6.
         for table in schema.PROJECTION_TABLES:
             cols = canonical_cols[table]
             col_list = ", ".join(cols)

@@ -151,6 +151,11 @@ def replay_priority_or_severity_set(shadow, event_type, ticket_id, actor, payloa
     # Column name comes from the event type, never from the payload key, so a
     # malformed payload cannot steer this into an arbitrary column.
     column = "priority" if event_type == "PrioritySet" else "severity"
+    # nosec B608 -- column is one of exactly two literal strings selected by the ternary
+    # directly above, keyed on event_type (itself store-controlled at append time, never
+    # read from payload). No payload-supplied value ever reaches this f-string; payload.get
+    # only supplies the bound parameter's VALUE, not the column name. DEVH-10/GOALS.json C6
+    # -- this is the site that moved out of store.py during the C1-C5 refactor.
     shadow.execute(
         f"UPDATE tickets SET {column}=?, updated_at=? WHERE ticket_id=?",
         (payload.get(column), created_at, ticket_id),

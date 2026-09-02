@@ -4,10 +4,26 @@
   "component": "tessera",
   "scope_version": 1,
   "created": "2026-09-02T11:00:00Z",
-  "criteria_frozen_at": "2026-09-02T11:38:14Z",
+  "criteria_frozen_at": "2026-09-02T13:14:11.440586Z",
   "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health rises by at least the amount that improvement mathematically produces, measured against a same-session before-report rather than a fixed historical number; and no test that existed before is missing after, checked by identity rather than count; and the after-measurement is produced by a context that did not perform the refactor.",
   "requirement": "PRD.md R1a (DEVH-7), R2 (DEVH-8), R3 (DEVH-9). R2 lives here as a pre-commit criterion rather than in ARCHITECTURE.md, per Addendum 3: none of R1/R2/R3 introduces a component or interface, so all three are design-and-scope work.",
-  "pre_implementation_brief": {"ticket_id": "DEVH-37", "persona": "dana-okafor", "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."},
+  "pre_implementation_brief": {
+    "ticket_id": "DEVH-37",
+    "persona": "dana-okafor",
+    "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."
+  },
+  "briefs": [
+    {
+      "ticket_id": "DEVH-37",
+      "persona": "dana-okafor",
+      "covers": "R1a/R2/R3 (C1-C5), original freeze"
+    },
+    {
+      "ticket_id": "DEVH-10",
+      "persona": "dana-okafor",
+      "covers": "R4 SQL-annotation work (C6-C7 amendment). Brief marker at .foreman/briefs/tessera.json updated to this ticket; both remain cited here so DEVH-37's original citation is not lost."
+    }
+  ],
   "target_number_decision": "PRD.md left R1's target unpinned and proposed 'store.py MI >= 20 AND SLOC-weighted >= 7.5' pending confirmation. Measured rather than confirmed by hunch, and the proposal does not survive it. From the baseline report's own per_file_detail: 149 files, 14,443 total SLOC, recomputed SLOC-weighted health 6.857 which reproduces the reported 6.86. store.py is 1,443 SLOC, 10.0% of the tree, health 2.24. The health formula (foreman_quality_baseline.py:364) is health = min(10, MI/10)*0.5 + cc_bucket*0.5, where cc_bucket is 10 at max_cc<=10, 7 at <=20, 4 at <=50, else 1; store.py's 4.78 MI and 32 max_cc give 0.239 + 2.0 = 2.24, confirming the formula. Simulating store.py alone at a PERFECT health of 10 moves the tree only to 7.633, so a 7.5 tree target would require store.py at health ~9, meaning MI >= 80 and max_cc <= 10. That is a rewrite, not a refactor, and the two halves of the original proposal were never consistent with each other. What the formula also shows is that MI is the weaker lever: MI 4.78 -> 20 buys 0.76 health, while max_cc 32 -> <=20 buys 1.5. Decision, and it is derived rather than round: store.py reaches MI >= 20 AND max_cc <= 20, giving health 4.5 and a tree score of 7.083; the tree target is therefore SLOC-weighted >= 7.05. Not escalated, per REQ-49.",
   "criteria": [
     {
@@ -44,6 +60,20 @@
       "verification": "PRD.md R3 and N6. Two dated baseline reports exist, each carrying tool_git_sha, tree_git_sha and formula_version per R23, and a diff between them is producible by command. The after-run is executed by a session that did not author the refactor, recorded in results[] by session name. R23 (DEVH-6) is shipped, so the provenance fields and non-clobbering filenames this depends on already exist.",
       "verifiable": true,
       "added": "2026-09-02T11:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "Each of store.py's f-string-built SQL sites (and the one that moved to replay_handlers.py during the C1-C5 refactor) carries an inline suppression naming the real source of the interpolated identifier, so a reader or a future bandit run does not have to re-derive the safety argument from scratch. DEVH-10's own text: line 799's field_name (now store.py:479, PRIORITY_LIKE_FIELDS-gated), the table/col_list pair now at store.py:1308 and store.py:1320 (schema.PROJECTION_TABLES and a PRAGMA over a scratch DB built from schema.DDL), and the literal ternary now at replay_handlers.py:155 (column derived from event_type only, never from payload).",
+      "verification": "grep for '# nosec' at store.py:479, 1308, 1320 and replay_handlers.py:155 (or their current lines if intervening edits shift them) and confirm each comment names its identifier's real source in prose, not just the suppression code. No actor-supplied or ticket-supplied string reaches any of the four interpolation points -- re-verified by direct read, not assumed from DEVH-10's own already-closed vulnerability question.",
+      "verifiable": true,
+      "added": "2026-09-02T16:00:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "A regression test asserts store.set_priority_like() raises ValueError for a field_name outside PRIORITY_LIKE_FIELDS, and the test genuinely depends on the guard at store.py:461-462 -- proven by a negative control that removes the guard and requires the test to fail.",
+      "verification": "python3 -m unittest against a new test calling set_priority_like(ticket_id, actor, 'not_a_real_field', value) and asserting ValueError. Negative control: with store.py's line 461-462 guard commented out or stubbed to a no-op in an isolated copy, the same test must fail (no ValueError raised, or a different exception), proving the test is not vacuous. One risk-register row records the widening risk DEVH-10 names: line 461's guard is fourteen-ish lines from the f-string interpolation it protects, and a future edit could widen PRIORITY_LIKE_FIELDS or move the guard without an obvious link back to the SQL site it defends.",
+      "verifiable": true,
+      "added": "2026-09-02T16:00:00Z"
     }
   ],
   "failure_criteria": [
@@ -86,6 +116,16 @@
       "id": "F8",
       "statement": "The tree score target is expressed as an absolute number. Unrelated work lands in the analyzed tree, the denominator grows, store.py's SLOC share shrinks, and the same successful refactor no longer reaches the threshold -- so a correct implementation fails a criterion it never had control over. This is not hypothetical: it happened to this file's own C3 within an hour of freezing, when R23 added 1,278 SLOC of measurement scripts to the tree and moved store.py's share from 10.00 percent to 8.81 percent.",
       "detection": "C3 is stated as a fraction of the gain predicted from a before-report generated in the same session, so it rescales with the tree instead of being pinned to a figure that decays."
+    },
+    {
+      "id": "F9",
+      "statement": "The nosec annotation is added but the justification is generic ('safe, see code') rather than naming the actual identifier source, so the next reader still has to re-derive the safety argument from scratch -- the annotation exists but does not do the job DEVH-10 wrote it to do.",
+      "detection": "C6 requires each comment to name its identifier's real source in prose."
+    },
+    {
+      "id": "F10",
+      "statement": "The regression test asserts ValueError is raised but does so vacuously -- for example by testing an unrelated code path, or by the test itself containing a bug that makes it pass regardless of the guard's presence.",
+      "detection": "C7's negative control removes the actual guard and requires the test to fail; a vacuous test passes both with and without the guard and is caught by this."
     }
   ],
   "out_of_scope": [
@@ -106,10 +146,51 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 5,
-    "frozen_at": "2026-09-02T11:38:14Z"
+    "test_criteria": 7,
+    "frozen_at": "2026-09-02T13:14:11.440586Z"
   },
-  "results": [],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "Independently re-run, not trusted from the commit log. Checked out commit 31c8ee2 (characterization test committed, refactor not yet applied) into an isolated git worktree. Mutated tessera/store/store.py:1738 in replay_event_internal's TicketCreated branch from `normalize_legacy_level_internal(payload.get(\"severity\"))` to `None`. $ python3 -m unittest tessera.store.tests.test_projection -v -> FAILED (failures=1): test_rebuild_equals_live_across_all_projection_tables failed with AssertionError, \"table 'tickets' diverged between live and rebuilt projections\", diff showing severity 1 vs None -- the exact reason and shape the commit message claims. Reverted the single line (git diff --stat afterward showed zero changes, confirming exact revert). Re-ran: Ran 5 tests in 0.030s, OK.",
+      "recorded": "2026-09-02T13:10:00Z",
+      "verified_by": "dev-harness-33, independent re-run in an isolated git worktree, did not author the refactor or the characterization test",
+      "note": "Reproduces the commit message's claim exactly, from a fresh mutation applied by this session, not by reading the historical run's output."
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 foreman_quality_baseline.py from /Users/m5/dev/dev-harness-run2 (current HEAD b00057d). per_file_detail for tessera/store/store.py: maintainability_index.score=21.79 (rank A), cyclomatic_complexity.max=8. Both thresholds met (MI >= 20, max_cc <= 20) with margin. Matches the implementer's self-reported pre-commit numbers exactly.",
+      "recorded": "2026-09-02T13:10:00Z",
+      "verified_by": "dev-harness-33, fresh tool run from repo root in this session",
+      "note": null
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "Before-report generated from an isolated worktree at 180cc01 (post-R2, pre-R1a): aggregate.sloc_weighted_average_health_1_to_10 = 6.85; independently recomputed from per_file_detail as sum(health*sloc)/sum(sloc) = 6.8472, agrees to 2 decimals. After-report from current HEAD: reported 7.2; recomputed 7.1954, agrees to 2 decimals (and matches the implementer's own self-reported 7.1954 exactly). Predicted gain per the frozen formula: (4.5 - 2.24) * 1443/16617 = 0.19626; 90% threshold = 0.17663. Observed rise (recomputed) = 7.1954 - 6.8472 = 0.3482, which is 177% of the predicted gain -- clears the 90% bar with a large margin.",
+      "recorded": "2026-09-02T13:10:00Z",
+      "verified_by": "dev-harness-33, before/after both generated in this session against isolated git worktrees so tree size was held constant per file, independent of concurrent unrelated work landing in the shared tree",
+      "note": null
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "Captured full test-id sets via `python3 -m unittest discover -s tessera -t . -v` in both the pre-refactor worktree (180cc01) and the current tree (HEAD b00057d): 209 unique fully-qualified test ids in each, both runs exit OK. Set comparison (not count): before-after and after-before are both empty -- the sets are byte-for-byte identical, not merely equal in size. Matches the claimed 209/209.",
+      "recorded": "2026-09-02T13:10:00Z",
+      "verified_by": "dev-harness-33, set extracted and diffed programmatically from both raw -v outputs in this session",
+      "note": null
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "Both reports carry tool_git_sha, tree_git_sha and formula_version at the top level of the JSON (not under meta -- caught and corrected before reporting). tool_git_sha identical across both runs (32527659e0ef185aa64c16d2dc424992d5fac4b4), confirming the tool itself was unchanged between the two tree states measured. tree_git_sha 180cc018968ffca0997bd1f25f073cda9a3a5e16 (before) and b00057d53e7022a984b74da286126c7955c84d51 (after). Both reports retained under scratchpad, diffable by command.",
+      "recorded": "2026-09-02T13:10:00Z",
+      "verified_by": "dev-harness-33 -- this session did not author commits 31c8ee2 or b00057d",
+      "note": "Report files: /private/tmp/claude-501/-Users-m5-dev-dev-harness/5c92ac28-071d-4518-a3a9-b8eae2ebb1ae/scratchpad/tessera_verify/{before_report.json,after_report.json} -- ephemeral scratch, not committed."
+    }
+  ],
   "amendments": [
     {
       "criterion_id": "C3",
@@ -215,10 +296,19 @@
       "reason": "dev-harness-9b falsification finding A4, documentation accuracy. The C3 fix is unaffected -- 7.008 is below 7.05 under either attribution -- but naming one requirement as the cause understated the effect and would have misled a reader about how fast the denominator moves. It is still moving: the R24 guard tests in that list landed after the C3 amendment was written, which is itself the argument for C3 being relative rather than re-pinned.",
       "requested_by": "dev-harness-9b (found), priya-desai (measured)",
       "at": "2026-09-02T12:20:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "scope extended to cover R4 (DEVH-10); C6, C7 and F9, F10 added",
+      "from": "constraints already named DEVH-10 as 'a separate ticket under a separate concern' touching the same file, but no criteria existed for it -- a write to store.py's SQL-annotation sites had no frozen criteria to be judged against beyond C1-C5's MI/complexity concern.",
+      "to": "C6 (inline nosec annotations naming each identifier's real source, across all four sites -- three still in store.py, one moved to replay_handlers.py during the C1-C5 refactor) and C7 (a regression test for set_priority_like's field_name guard, proven non-vacuous by a negative control) added. Nothing in C1-C5 changed, removed, or renumbered; the constraint at line ~102 keeping R4 and R1a/R2/R3 bisectable is unaffected since C6/C7 touch no behavior C1-C5 already covers.",
+      "reason": "agent-remediation-af routed DEVH-10 (R4) to this session with the ticket's own already-closed vulnerability question (all four sites parameterize values, interpolate identifiers only, no actor/ticket-supplied string reaches any of them) and its open ask: inline suppression with a written justification per site, plus a regression test proven non-vacuous. DEVH-10's own cited line numbers (799, 1651, 1663, 1806) are stale, from before this session's own C1-C5 refactor moved code between files and shrank store.py -- re-located here by direct read: store.py:479 (field_name), store.py:1308 and :1320 (table/col_list), and replay_handlers.py:155 (column, a new file this session's refactor extracted from store.py -- the ternary that used to be inline is now there).",
+      "requested_by": "dev-harness-run2 (this session, self-scoped per DEVH-10's assignment)",
+      "at": "2026-09-02T16:00:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:7cd0cdb9a3b94bd9ad6673ef32430ccdd6ecc55ab3095cea319df065ca4c4c77",
+    "criteria_hash_at_freeze": "sha256:76f420b8245230299ba53f5b80930c9c4c7919786eee7c0c9833d5b441b53d47",
     "match": null
   }
 }
