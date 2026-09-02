@@ -191,6 +191,27 @@
       "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_measurement_provenance\nRan 5 tests in 7.764s\nOK\nCommitted suite: tests/test_measurement_provenance.py (DEVH-30). One test per criterion, named for it, in the shape atlas/ingest/tests/test_audit_scrub.py establishes.\n\nCovering test:\ntest_c4_non_clobbering_generalizes_beyond_the_dev_harness_hint ... ok (three pairs: tessera/atlas, no-hint-first, and a hint generated at test time)",
       "recorded": "2026-09-02T12:00:00Z",
       "verified_by": "priya-desai, via committed suite (DEVH-30)"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_hotspot_signal_relabel -v\nRan 4 tests in 0.134s\nOK\n\nCovering tests:\ntest_c5_degenerate_churn_emits_complexity_only_field ... ok\n\nFixture-based: an isolated temp git repo whose Python files all share one churn value. Cannot be exercised against this repository any more -- see the note.",
+      "recorded": "2026-09-02T14:40:00Z",
+      "verified_by": "priya-desai, re-run in this session"
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_hotspot_signal_relabel -v\nRan 4 tests in 0.134s\nOK\n\nCovering tests:\ntest_c6_non_degenerate_churn_is_unchanged_pre_fix_behavior ... ok\n\nAlso confirmed against the live tree in this session, which is the stronger evidence: a real run of foreman_quality_baseline.py over this repository reports meta.hotspot_signal_degenerate_churn = False and emits hotspot_signal (not hotspot_signal_complexity_only) on every per_file_detail and hotspots_top15 entry, e.g. token_bloat_diagnostic.py hotspot_signal 60.",
+      "recorded": "2026-09-02T14:40:00Z",
+      "verified_by": "priya-desai, re-run in this session"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_hotspot_signal_relabel -v\nRan 4 tests in 0.134s\nOK\n\nCovering tests:\ntest_c7_degenerate_report_does_not_raise_and_populates_compound ... ok\ntest_c7_non_degenerate_report_still_works ... ok\n\nBoth directions covered: the downstream consumer reads whichever field is present and populates quality_compound correctly from a degenerate and a non-degenerate report.",
+      "recorded": "2026-09-02T14:40:00Z",
+      "verified_by": "priya-desai, re-run in this session"
     }
   ],
   "amendments": [
@@ -283,10 +304,25 @@
       "reason": "Self-caught immediately after freezing, before any implementation or verification ran, per this project's own real-execution-only standard (same discipline as docs/GOALS.json's C1 self-correction). Measured directly: git -C . log --pretty=format: --name-only -- '*.py' | sort | uniq -c shows this session's own commits since DEVH-19 was filed have spread real per-file churn from a uniform 1 to a real 1-4 range (scripts/test_install_fail_closed.py at 4, several files at 2-3). The live repo is no longer a stable fixture for this criterion and testing against it would make the test's pass/fail depend on how many commits have landed today rather than on the code under test. C7's statement corrected in the same pass for the same reason.",
       "requested_by": "dev-harness-run2 (this session, self-caught during scoping, before implementation)",
       "at": "2026-09-02T15:25:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "results recorded for C5-C7 (R18)",
+      "from": "results[] held C1-C4 only; R18's fix was built and tested hours earlier and never written back.",
+      "to": "C5, C6 and C7 recorded MET from a re-run in this session, each citing the test named for it.",
+      "reason": "Seventh instance tonight of verified-but-never-written-back, across bollard, atlas, root twice, monitoring and tessera twice. The work was real every time; the record was the thing that lapsed.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T14:40:00Z"
     }
   ],
   "integrity": {
     "criteria_hash_at_freeze": "sha256:20e251a9f347e4c9a02d7336f0c6d727ec360be6a43f892ffd3827508508359c",
     "match": null
-  }
+  },
+  "notes": [
+    {
+      "at": "2026-09-02T14:40:00Z",
+      "note": "R18's motivating condition no longer holds in THIS repository, which is worth recording so a future reader does not think the fix is inert. When R18 was written, every analyzed Python file in the tree carried exactly one commit, so hotspot_signal = max_cc * churn degenerated to max_cc while being labelled as a two-input product. Tonight's own commits gave files differing churn counts, so a live run now reports hotspot_signal_degenerate_churn = False and takes C6's path. C5 is therefore only exercisable against a fixture here. The fix still matters for the real deployment case -- a freshly imported or squashed distribution tree, which is what this repository was at the start of the night. Same moving-denominator effect that made tessera C3 relative rather than absolute."
+    }
+  ]
 }
