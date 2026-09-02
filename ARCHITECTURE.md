@@ -124,11 +124,41 @@ a glob of bare `"architecture_gate.py"`. `goals_freeze_gate.py`'s post-architect
 not recognized a single real file in `bollard/` as belonging to the `bollard` component since this
 document was backfilled. Found in this pass, not inherited from anywhere. `docs` is added as a
 declared component for the same reason — it existed on disk and had never been declared. See
-"Remediation architecture — Run 2" below for the new `bollard/guard_*.py`, `review_notify.py`, and
+"Remediation architecture — Run 2" below for the new `bollard/guard_`-prefixed and
 `root-docs-and-scratch` entries this same correction carries.
 
+Corrected again 2026-09-02, R14/R15 recycle (DEVH-72, Clint Eastwood persona), same defect class
+surfacing in a second form. Found by Priya at design-and-scope (`dev-harness-run2-6a`) and
+independently re-verified live against the real parser, not narrated — `component_of()`/
+`is_implementation_path()` run directly, with positive and negative controls, before and after
+this edit; script and raw output at
+`/private/tmp/claude-501/-Users-m5-dev-dev-harness-run2/711af95c-95ec-4af6-b28b-4d2bc76d6f8e/scratchpad/devh72_before_after.py`.
+Two gaps, both in this block: (1) the three individual bare `guard_*.py` filenames covered only
+guards that already existed when this document was backfilled — the four new R14/R15 guard files
+(`guard_allowlist.py`, `guard_semantic_resolution.py`, `guard_pattern_feed.py`,
+`guard_os_sandbox.py`) all resolved `component_of=None`, so `goals_freeze_gate.py` would gate none
+of them once implemented, silently. (2) `"bollard/test_*.py"` carries a mid-string wildcard;
+`_prefix_of()` (`component_coupling.py:135-137`) only strips *trailing* stars, so the literal
+string `"bollard/test_*.py"` was the prefix it produced, and nothing starts with a string
+containing a bare `*`. That entry has been inert since it was written — confirmed against all nine
+real `test_*.py` files under `bollard/`, not just `test_guard_destructive.py`, the one the design-
+and-scope pass happened to probe.
+
+Fix, in both cases: replace the individual/starred entries with a bare literal prefix and no
+wildcard character at all (`"bollard/guard_"`, `"bollard/test_"`) — `_prefix_of()` is a no-op on a
+string with no trailing star, so the entry already IS its own prefix, which sidesteps the
+mid-string-star bug entirely rather than triggering a third instance of it. This also
+future-proofs new `guard_*.py`/`test_*.py` files without another architecture-stage edit. Verified
+by rerunning the same script against the edited file: all four new guard paths and all nine test
+paths now resolve `component_of='bollard'`, `is_implementation_path=True`; the three existing
+positive controls and the two negative controls (an unrelated root file, an unrelated `tessera`
+path) are unchanged. `bollard/GOALS.json`'s C9-C16 freeze (Priya, design-and-scope) was blocked on
+this landing; it is not this pass's concern beyond unblocking it. `PRD-DELTA-R14-R15.md` §7.2 (the
+still-stale BLOCKED prose two sections below) is a separate, not-yet-triggered item — deliberately
+untouched here.
+
 ```yaml components
-bollard: ["bollard/architecture_gate.py", "bollard/concept_gate.py", "bollard/goals_freeze_gate.py", "bollard/preflight_blocking_gate.py", "bollard/ship_readiness_gate.py", "bollard/component_coupling.py", "bollard/hook_common.py", "bollard/foreman_evidence.py", "bollard/verdict_ledger.py", "bollard/stamp_ship_charter.py", "bollard/pre_implementation_brief_gate.py", "bollard/audit_lib.py", "bollard/guard_destructive.py", "bollard/guard_prodconfig.py", "bollard/guard_untrusted_web.py", "bollard/review_notify.py", "bollard/GOALS.json", "bollard/dependency_provenance_gate/**", "bollard/local_review/**", "bollard/cross_project_routing/**", "bollard/tessera_resolver/**", "bollard/lib/**", "bollard/test_*.py"]
+bollard: ["bollard/architecture_gate.py", "bollard/concept_gate.py", "bollard/goals_freeze_gate.py", "bollard/preflight_blocking_gate.py", "bollard/ship_readiness_gate.py", "bollard/component_coupling.py", "bollard/hook_common.py", "bollard/foreman_evidence.py", "bollard/verdict_ledger.py", "bollard/stamp_ship_charter.py", "bollard/pre_implementation_brief_gate.py", "bollard/audit_lib.py", "bollard/guard_", "bollard/review_notify.py", "bollard/GOALS.json", "bollard/dependency_provenance_gate/**", "bollard/local_review/**", "bollard/cross_project_routing/**", "bollard/tessera_resolver/**", "bollard/lib/**", "bollard/test_"]
 tessera: ["tessera/**"]
 atlas: ["atlas/**"]
 agents: ["agents/**"]
@@ -301,7 +331,47 @@ removal first, detection additive only," and it was never weighed against N2's s
 budget for the cheapest hooks. Worth a real comparison at design-and-scope; this document doesn't
 have the data to make that call today.
 
-### R14/R15 — BLOCKED, three sequencing decisions made explicit rather than left implicit
+### R14/R15 — architecture stage resolved via recycle (DEVH-61–DEVH-64); design-and-scope in progress
+
+Resolved 2026-09-02 (DEVH-73). The BLOCKED entry below was correct when written but is now stale:
+Clint Eastwood's Tier-3 gate decision on `DEVH-16` (RECYCLE — the entry was a deliberate deferral,
+not a component design, and Tier 3 needs one) sent R14/R15 back through real architecture
+origination. Four tickets, each closed with real, independently-verified content, not narrated and
+not assumed: `DEVH-61` (R13's capability-removal-first ordering is a real precondition on the guard
+chain's compositional structure, not on runtime invocation order — the two are separable and only
+the first is settled), `DEVH-62` (component decomposition — a two-layer split between the primary
+capability-removal guards (`OSSandboxGuard`, `AllowlistGuard`) and the additive-only detection
+guards (`SemanticResolutionGuard`, `PatternFeedGuard`), plus a real, toy-modeled conflict between
+that split and `hook_common.py`'s repo-wide fail-open default, tracked separately as `DEVH-70`
+rather than fixed inline), `DEVH-63` (interface contract and composition semantics — the four
+guards are not one homogeneous chain; toy-modeled confirmation that `OSSandboxGuard`'s denial is a
+live process failure, structurally unlike the other three guards' pre-execution refusal), and
+`DEVH-64` (independent falsification, no prior exposure to DEVH-62/63's own work before reading it
+fresh — verdict: the design holds on every claim re-derived from scratch, plus one real sharpening
+of `OSSandboxGuard`'s invocation seam via the harness's documented `updatedInput` contract, narrowing
+"unbuilt mechanism" to "an existing harness contract, not yet chosen or validated live"). Read those
+four tickets and `PRD-DELTA-R14-R15.md` (design-and-scope's own further resolution — the
+`OSSandboxGuard` registration choice, and requirements R14a/R14b/R14c/R15a/R15b) for the real
+content; not reproduced here.
+
+Status as of this edit: `bollard/GOALS.json`'s C9–C16 freeze for those requirements has not yet
+landed (`criteria_frozen_at` in that file still reflects the pre-existing C1–C8 freeze) — `DEVH-72`
+fixed the component-map bug that would have made such a freeze gate nothing, but the freeze write
+itself is still design-and-scope's (Priya's) pending next step, not yet exercised.
+
+Kept below for its real content, not superseded wholesale: the original existence question and its
+resolution (the C1 default firing), and the falsification correction to the "zero hits" search
+claim, both still stand as accurate history. Two of the original three "explicit calls" are now
+historical rather than live — call 1 (the operator-confirmation timeout) fired its own stated
+default and is closed; call 2 ("no placeholder interface space reserved") is now **literally
+false** as written — `DEVH-62`/`DEVH-63` did the real component/interface design that call was
+correctly refusing to do prematurely, before the existence question had an answer. Call 3 (the
+re-architecture trigger) still stands, sharpened by `DEVH-61`: it is R13's *compositional*
+precondition that would trigger re-architecture if contradicted, not a temporal one.
+
+---
+
+### R14/R15 — original architecture-stage record (superseded above; kept for its real content)
 
 `layered_command_guard.py` and its four named classes (`OSSandboxGuard`, `SemanticResolutionGuard`,
 `AllowlistGuard`, `PatternFeedGuard`) do not exist as executable code anywhere under `/Users/m5`
@@ -323,16 +393,25 @@ hold by omission (matches concept-gate condition C1 exactly):
 1. **Owner and timeout on the operator-confirmation blocker.** Jon, asked directly, not implied
    by silence. Default if unanswered by architecture freeze: treat as never written, size R14/R15
    as build-from-nothing at design-and-scope, and re-derive every R12-R15 claim resting only on
-   the brief's narration.
+   the brief's narration. **Historical — resolved.** The default fired at architecture freeze
+   (`DEVH-16` comment history); R14/R15 were sized build-from-nothing exactly as this call
+   specified.
 2. **No placeholder interface space reserved.** Designing scaffolding for a guard whose shape is
    unconfirmed risks building against a name, not a spec — the same trap R14/R15's own BLOCKED
    status exists to avoid. If it existed and was lost, R14/R15 become real, separately-scoped
    build requirements (per PRD.md's own two-outcome fork) sized from nothing, same as "never
    written" — the architecture cost is closer between the two outcomes than PRD.md's framing
-   suggests.
+   suggests. **Historical — now literally false as written.** The existence question resolved
+   (never written), and interface space was then reserved for real: `DEVH-62`/`DEVH-63` did the
+   component decomposition and interface contract this call was correctly refusing to do
+   prematurely, before there was an answer to build against.
 3. **Re-architecture trigger.** If `layered_command_guard.py` surfaces later with an ordering
    that contradicts R13's capability-removal-first design, that is a signal to re-open R13's
-   architecture, not to bolt the found file on top of a design built without it.
+   architecture, not to bolt the found file on top of a design built without it. **Still live**,
+   sharpened by `DEVH-61`: the precondition R13 imposes on R14/R15 is compositional (which guards
+   must be independent and fail-closed), not temporal (literal runtime invocation order) — a
+   surfaced file with a compositional ordering that contradicts that split is what would trigger
+   this, not one with a different runtime sequence.
 
 ### R16 — `dim_session.model`, data source still unresolved
 
