@@ -9,7 +9,7 @@ from pathlib import Path
 
 from ..common.hashing import canonical_json, event_hash as compute_event_hash, sha256_hex
 from ..common.timestamps import utc_now_iso
-from . import schema
+from . import project_reassignment, replay_handlers, schema, ticket_operations
 from .exceptions import (
     BlockedError, CriteriaNotFrozenError, CycleError, HierarchyError, SameProjectError,
     UnknownProjectError, UnsupportedSQLiteVersion, WorkflowError,
@@ -159,47 +159,9 @@ class Store:
     # ---- bootstrap / multi-project registration --------------------------
 
     def register_project(self, codename, prefix, source_root=None):
-        """Idempotent: if `prefix` is already registered, returns its existing project_id
-        (codename/source_root on the existing row are NOT overwritten by a second call --
-        re-registering is a no-op, not a silent rename). Otherwise creates the project and
-        its ticket_id counter in the same transaction, and returns the new project_id."""
-        existing = self.get_project(prefix)
-        if existing is not None:
-            return existing["id"]
-
-        if not codename or not prefix:
-            raise ValueError("register_project requires both a codename and a prefix")
-        if ".." in prefix or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,15}", prefix):
-            raise ValueError(
-                f"register_project prefix {prefix!r} must match "
-                f"[A-Za-z][A-Za-z0-9_-]{{0,15}} and must not contain '..'"
-            )
-
-        def attempt():
-            with self.write_txn_internal() as conn:
-                row = conn.execute(
-                    "INSERT INTO projects (codename, prefix, source_root, created_at)"
-                    " VALUES (?,?,?,?) RETURNING id",
-                    (codename, prefix, str(source_root) if source_root else None, utc_now_iso()),
-                ).fetchone()
-                project_id = row[0]
-                conn.execute(
-                    "INSERT OR IGNORE INTO counters (project_id, name, value) VALUES (?, 'ticket_id', 0)",
-                    (project_id,),
-                )
-                return project_id
-
-        try:
-            return self.retry_internal(attempt)
-        except sqlite3.IntegrityError:
-            # Two processes racing to register the same new prefix for the first time:
-            # the loser's INSERT hits projects.prefix's UNIQUE constraint. Not an error --
-            # re-read and return the winner's row, same discipline as the old
-            # project_metadata race fix this replaces.
-            existing = self.get_project(prefix)
-            if existing is not None:
-                return existing["id"]
-            raise
+        """Idempotent: if `prefix` is already registered, returns its existing project_id.
+        Implementation lives in ticket_operations.py."""
+        return ticket_operations.register_project(self, codename, prefix, source_root)
 
     def get_project(self, prefix):
         row = self.conn_internal().execute(
@@ -251,265 +213,23 @@ class Store:
                        parent_id=None, severity=None, repro_steps=None, environment=None,
                        custom_fields=None, idempotency_key=None, project=None, tier=None,
                        summary=None, description=None):
-        if ticket_type not in schema.TICKET_TYPES:
-            raise ValueError(f"unknown ticket type {ticket_type!r}")
-        if tier is not None and tier not in schema.TIERS:
-            raise ValueError(f"unknown tier {tier!r}; must be one of {schema.TIERS}")
-        # severity/priority are a real, ordered 0-4 int scale now (previously
-        # entirely unconstrained free text) -- validated the same way tier already is.
-        if severity is not None and severity not in schema.LEVELS:
-            raise ValueError(f"unknown severity {severity!r}; must be one of {schema.LEVELS}")
-        if priority is not None and priority not in schema.LEVELS:
-            raise ValueError(f"unknown priority {priority!r}; must be one of {schema.LEVELS}")
-        # create_ticket writes custom_fields straight into ticket_fields, so
-        # custom_fields={"priority": 1} at create is the same shadow-write as set-field is
-        # after it: the dedicated `priority=` argument sits right there and would have been
-        # ignored in favour of a value no triage view reads.
-        shadowed = sorted(set(custom_fields or {}) & set(self.FIRST_CLASS_TICKET_FIELDS))
-        if shadowed:
-            raise ValueError(
-                f"custom_fields may not shadow first-class ticket column(s) {shadowed} -- "
-                f"pass them as their own arguments instead"
-            )
-        project_id = self.resolve_project_id_internal(project)
-
-        def attempt():
-            try:
-                with self.write_txn_internal() as conn:
-                    self.check_hierarchy_internal(conn, ticket_type, parent_id)
-
-                    row = conn.execute(
-                        "UPDATE counters SET value = value + 1 WHERE project_id = ?"
-                        " AND name = 'ticket_id' RETURNING value",
-                        (project_id,),
-                    ).fetchone()
-                    prefix = conn.execute(
-                        "SELECT prefix FROM projects WHERE id=?", (project_id,)
-                    ).fetchone()[0]
-                    ticket_id = f"{prefix}-{row[0]}"
-
-                    payload = {
-                        "ticket_id": ticket_id, "project_id": project_id, "type": ticket_type,
-                        "reporter": reporter, "assignee": assignee, "priority": priority,
-                        "tier": tier, "summary": summary, "description": description,
-                        "parent_id": parent_id,
-                        "severity": severity, "repro_steps": repro_steps,
-                        "environment": environment, "custom_fields": custom_fields or {},
-                    }
-                    _, created_at = self.append_event_internal(
-                        conn, "TicketCreated", actor, payload,
-                        ticket_id=ticket_id, idempotency_key=idempotency_key,
-                        project_id=project_id,
-                    )
-                    conn.execute(
-                        "INSERT INTO tickets (ticket_id, project_id, type, status, reporter,"
-                        " assignee, priority, tier, summary, description, parent_id, severity,"
-                        " repro_steps, environment, reference_docs, archived, created_at,"
-                        " updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
-                        (ticket_id, project_id, ticket_type, "open", reporter, assignee,
-                         priority, tier, summary, description, parent_id, severity, repro_steps,
-                         environment, "[]", created_at, created_at),
-                    )
-                    for name, value in (custom_fields or {}).items():
-                        # canonical_json, not json.dumps -- same reasoning and same fix
-                        # shape as ticket_criteria's already-fixed sibling bug:
-                        # a dict-valued custom field's replay path reconstitutes it from
-                        # this event's own canonical_json payload (sorted keys), so a
-                        # plain json.dumps here on the live path preserves the caller's
-                        # original insertion order instead -- same data, different JSON
-                        # text, false rebuild/live divergence (found by Clint
-                        # Eastwood's adversarial review, confirmed by direct repro).
-                        conn.execute(
-                            "INSERT INTO ticket_fields (ticket_id, field_name, field_value)"
-                            " VALUES (?,?,?)",
-                            (ticket_id, name, canonical_json(value)),
-                        )
-                    return ticket_id
-            except sqlite3.IntegrityError as exc:
-                msg = str(exc)
-                if idempotency_key and "idempotency_key" in msg:
-                    # project_id scoped -- matches idx_events_idempotency's
-                    # (project_id, idempotency_key) constraint, so a duplicate-key hit in
-                    # ANOTHER project doesn't get mistaken for this project's own replay.
-                    existing = self.conn_internal().execute(
-                        "SELECT ticket_id FROM events WHERE idempotency_key = ? AND project_id = ?",
-                        (idempotency_key, project_id),
-                    ).fetchone()
-                    if existing:
-                        return existing[0]
-                raise
-
-        return self.retry_internal(attempt)
+        """Implementation lives in ticket_operations.py."""
+        return ticket_operations.create_ticket(
+            self, ticket_type=ticket_type, reporter=reporter, actor=actor, priority=priority,
+            assignee=assignee, parent_id=parent_id, severity=severity, repro_steps=repro_steps,
+            environment=environment, custom_fields=custom_fields,
+            idempotency_key=idempotency_key, project=project, tier=tier, summary=summary,
+            description=description,
+        )
 
     def check_hierarchy_internal(self, conn, ticket_type, parent_id):
-        if ticket_type == "Sub-task":
-            if not parent_id:
-                raise HierarchyError("Sub-task requires a parent_id")
-            parent = conn.execute(
-                "SELECT type FROM tickets WHERE ticket_id = ?", (parent_id,)
-            ).fetchone()
-            if not parent or parent[0] not in schema.SUBTASK_PARENT_TYPES:
-                raise HierarchyError(
-                    f"Sub-task's parent_id {parent_id!r} must be a "
-                    f"{'/'.join(schema.SUBTASK_PARENT_TYPES)}, got {parent[0] if parent else None!r}"
-                )
+        return ticket_operations.check_hierarchy_internal(self, conn, ticket_type, parent_id)
 
     def reassign_project(self, ticket_id, actor, new_project):
-        """Moves a ticket to a different registered project. ticket_ids are
-        minted from a per-project counter and their prefix names their project (see
-        create_ticket) -- there is no sensible way to keep the SAME ticket_id under a
-        different project's prefix, so this mints a new ticket_id in the target project
-        and copies the ticket's current type/reporter/assignee/priority/tier/summary/
-        description/severity/repro_steps/environment/custom_fields/reference_docs/
-        comments onto it, links the old ticket to the new one (relates-to), leaves a
-        forwarding comment on the old ticket, and closes the old ticket -- unless it's
-        still blocked, in which case the move still happens but the old ticket is left
-        open with the forwarding comment rather than raising (a blocked close is a
-        pre-existing, unrelated fact about the old ticket; failing the whole move over it
-        would be worse than leaving it for a human to close once unblocked).
-
-        Deliberately reuses only EXISTING event types (TicketCreated/FieldSet/
-        ReferenceDocsSet/CommentAdded/LinkAdded/StatusChanged) in the same shapes their
-        single-purpose counterparts already emit -- so rebuild_projection()'s replay
-        needs no new branch to stay correct for this method.
-
-        Does not copy ticket_criteria, watchers, claims, attachments, ticket_commit_links,
-        or hotlist membership -- out of this method's stated scope (history/comments/
-        reference_docs/events); a caller that needs those preserved too should file a
-        follow-up rather than assume this covers them."""
-
-        def attempt():
-            with self.write_txn_internal() as conn:
-                old = conn.execute(
-                    "SELECT project_id, type, status, reporter, assignee, priority, tier,"
-                    " summary, description, parent_id, severity, repro_steps, environment,"
-                    " reference_docs FROM tickets WHERE ticket_id=?",
-                    (ticket_id,),
-                ).fetchone()
-                if not old:
-                    raise ValueError(f"no such ticket {ticket_id!r}")
-                (from_project_id, ttype, status, reporter, assignee, priority, tier, summary,
-                 description, parent_id, severity, repro_steps, environment,
-                 reference_docs_json) = old
-
-                to_project_id = self.resolve_project_id_internal(new_project)
-                if to_project_id == from_project_id:
-                    raise SameProjectError(
-                        f"{ticket_id} is already in project {new_project!r}"
-                    )
-                to_prefix = conn.execute(
-                    "SELECT prefix FROM projects WHERE id=?", (to_project_id,)
-                ).fetchone()[0]
-
-                # Mint the new ticket_id -- same counter mechanism as create_ticket.
-                row = conn.execute(
-                    "UPDATE counters SET value = value + 1 WHERE project_id = ?"
-                    " AND name = 'ticket_id' RETURNING value",
-                    (to_project_id,),
-                ).fetchone()
-                new_ticket_id = f"{to_prefix}-{row[0]}"
-
-                create_payload = {
-                    "ticket_id": new_ticket_id, "project_id": to_project_id, "type": ttype,
-                    "reporter": reporter, "assignee": assignee, "priority": priority,
-                    "tier": tier, "summary": summary, "description": description,
-                    "parent_id": parent_id, "severity": severity, "repro_steps": repro_steps,
-                    "environment": environment, "custom_fields": {},
-                    "reassigned_from": ticket_id,
-                }
-                _, created_at = self.append_event_internal(
-                    conn, "TicketCreated", actor, create_payload,
-                    ticket_id=new_ticket_id, project_id=to_project_id,
-                )
-                conn.execute(
-                    "INSERT INTO tickets (ticket_id, project_id, type, status, reporter,"
-                    " assignee, priority, tier, summary, description, parent_id, severity,"
-                    " repro_steps, environment, reference_docs, archived, created_at,"
-                    " updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
-                    (new_ticket_id, to_project_id, ttype, "open", reporter, assignee, priority,
-                     tier, summary, description, parent_id, severity, repro_steps, environment,
-                     "[]", created_at, created_at),
-                )
-
-                for field_name, field_value_json in conn.execute(
-                    "SELECT field_name, field_value FROM ticket_fields WHERE ticket_id=?",
-                    (ticket_id,),
-                ).fetchall():
-                    self.append_event_internal(
-                        conn, "FieldSet", actor,
-                        {"field_name": field_name, "field_value": json.loads(field_value_json)},
-                        ticket_id=new_ticket_id,
-                    )
-                    conn.execute(
-                        "INSERT INTO ticket_fields (ticket_id, field_name, field_value)"
-                        " VALUES (?,?,?)",
-                        (new_ticket_id, field_name, field_value_json),
-                    )
-
-                reference_docs = json.loads(reference_docs_json or "[]")
-                if reference_docs:
-                    _, rd_updated_at = self.append_event_internal(
-                        conn, "ReferenceDocsSet", actor, {"paths": reference_docs},
-                        ticket_id=new_ticket_id,
-                    )
-                    conn.execute(
-                        "UPDATE tickets SET reference_docs=?, updated_at=? WHERE ticket_id=?",
-                        (json.dumps(reference_docs), rd_updated_at, new_ticket_id),
-                    )
-
-                for c_actor, body, c_snippet in conn.execute(
-                    "SELECT actor, body, code_snippet FROM comments WHERE ticket_id=?"
-                    " ORDER BY id",
-                    (ticket_id,),
-                ).fetchall():
-                    c_payload = {"body": body}
-                    if c_snippet is not None:
-                        c_payload["code_snippet"] = c_snippet
-                    _, c_created_at = self.append_event_internal(
-                        conn, "CommentAdded", c_actor, c_payload, ticket_id=new_ticket_id,
-                    )
-                    conn.execute(
-                        "INSERT INTO comments (ticket_id, actor, body, code_snippet, created_at)"
-                        " VALUES (?,?,?,?,?)",
-                        (new_ticket_id, c_actor, body, c_snippet, c_created_at),
-                    )
-
-                self.append_event_internal(
-                    conn, "LinkAdded", actor,
-                    {"from": ticket_id, "to": new_ticket_id, "link_type": "relates-to"},
-                    ticket_id=ticket_id,
-                )
-                conn.execute(
-                    "INSERT OR IGNORE INTO ticket_links (from_ticket, to_ticket, link_type)"
-                    " VALUES (?,?,?)",
-                    (ticket_id, new_ticket_id, "relates-to"),
-                )
-
-                forward_body = (
-                    f"Reassigned to {new_ticket_id} in project {to_prefix!r} "
-                    f"({self.get_project(to_prefix)['codename']})."
-                )
-                _, fc_created_at = self.append_event_internal(
-                    conn, "CommentAdded", actor, {"body": forward_body}, ticket_id=ticket_id,
-                )
-                conn.execute(
-                    "INSERT INTO comments (ticket_id, actor, body, created_at) VALUES (?,?,?,?)",
-                    (ticket_id, actor, forward_body, fc_created_at),
-                )
-
-                if status != "closed" and not self.open_blockers_internal(conn, ticket_id):
-                    _, sc_updated_at = self.append_event_internal(
-                        conn, "StatusChanged", actor,
-                        {"from": status, "to": "closed"}, ticket_id=ticket_id,
-                    )
-                    conn.execute(
-                        "UPDATE tickets SET status=?, updated_at=? WHERE ticket_id=?",
-                        ("closed", sc_updated_at, ticket_id),
-                    )
-
-                return new_ticket_id
-
-        return self.retry_internal(attempt)
+        """Moves a ticket to a different registered project. Implementation lives in
+        project_reassignment.py -- see that module's docstring for the full behavioral
+        contract (this was store.py's single largest method by line count)."""
+        return project_reassignment.reassign_project(self, ticket_id, actor, new_project)
 
     # ---- comments / links / workflow ------------------------------------
 
@@ -558,48 +278,8 @@ class Store:
         self.retry_internal(attempt)
 
     def transition_status(self, ticket_id, actor, new_status):
-        def attempt():
-            with self.write_txn_internal() as conn:
-                row = conn.execute(
-                    "SELECT status FROM tickets WHERE ticket_id = ?", (ticket_id,)
-                ).fetchone()
-                if not row:
-                    raise ValueError(f"no such ticket {ticket_id!r}")
-                current = row[0]
-                legal = schema.WORKFLOW_TRANSITIONS.get(current, set())
-                if new_status not in legal:
-                    raise WorkflowError(
-                        f"illegal transition for {ticket_id}: {current!r} -> {new_status!r} "
-                        f"(legal targets from {current!r}: {sorted(legal)})"
-                    )
-                if new_status == "closed":
-                    open_blockers = self.open_blockers_internal(conn, ticket_id)
-                    if open_blockers:
-                        raise BlockedError(
-                            f"{ticket_id} cannot close: blocked by "
-                            f"{', '.join(b['ticket_id'] for b in open_blockers)} "
-                            f"(not yet closed: {open_blockers})"
-                        )
-                if new_status == "in_progress":
-                    criteria_row = conn.execute(
-                        "SELECT criteria_frozen_at FROM ticket_criteria WHERE ticket_id=?",
-                        (ticket_id,),
-                    ).fetchone()
-                    if not criteria_row or not criteria_row[0]:
-                        raise CriteriaNotFrozenError(
-                            f"{ticket_id} cannot move to in_progress: no frozen criteria "
-                            f"(call freeze_ticket_criteria first -- document before building)"
-                        )
-                _, updated_at = self.append_event_internal(
-                    conn, "StatusChanged", actor,
-                    {"from": current, "to": new_status}, ticket_id=ticket_id,
-                )
-                conn.execute(
-                    "UPDATE tickets SET status=?, updated_at=? WHERE ticket_id=?",
-                    (new_status, updated_at, ticket_id),
-                )
-
-        self.retry_internal(attempt)
+        """Implementation lives in ticket_operations.py."""
+        ticket_operations.transition_status(self, ticket_id, actor, new_status)
 
     def record_diff_check(self, ticket_id, actor, result):
         """Logs the real result of a claim-vs-diff discrepancy check as its own typed event.
@@ -1464,37 +1144,12 @@ class Store:
     def list_tickets(self, status=None, assignee=None, ticket_type=None,
                       include_archived=False, project=None,
                       priority_max=None, severity_max=None):
-        """Requested by Foreman/ATLAS: priority_max/severity_max are threshold filters,
-        not exact-match, because the real need named was "all open S0/S1", a set, not a single
-        level -- 0 is the highest priority/severity, so *_max=1 means "P0 or P1"/"S0 or S1". A
-        ticket with a NULL priority/severity never matches a threshold filter (deliberate, same
-        as every other filter here: an unset value is not treated as satisfying a request for a
-        specific value)."""
-        query = ("SELECT t.ticket_id FROM tickets t JOIN projects p ON p.id = t.project_id"
-                  " WHERE 1=1")
-        params = []
-        if status:
-            query += " AND t.status=?"
-            params.append(status)
-        if assignee:
-            query += " AND t.assignee=?"
-            params.append(assignee)
-        if ticket_type:
-            query += " AND t.type=?"
-            params.append(ticket_type)
-        if project:
-            query += " AND p.prefix=?"
-            params.append(project)
-        if priority_max is not None:
-            query += " AND t.priority IS NOT NULL AND t.priority<=?"
-            params.append(priority_max)
-        if severity_max is not None:
-            query += " AND t.severity IS NOT NULL AND t.severity<=?"
-            params.append(severity_max)
-        if not include_archived:
-            query += " AND t.archived=0"
-        rows = self.conn_internal().execute(query, params).fetchall()
-        return [self.get_ticket(r[0], with_context=False) for r in rows]
+        """Implementation lives in ticket_operations.py."""
+        return ticket_operations.list_tickets(
+            self, status=status, assignee=assignee, ticket_type=ticket_type,
+            include_archived=include_archived, project=project,
+            priority_max=priority_max, severity_max=severity_max,
+        )
 
     def get_idempotent_ticket(self, idempotency_key, project=None):
         project_id = self.resolve_project_id_internal(project)
@@ -1638,7 +1293,9 @@ class Store:
             if event_type == "TicketCreated":
                 pid = payload.get("project_id", 1)
                 counters[pid] = counters.get(pid, 0) + 1
-            replay_event_internal(shadow, event_type, ticket_id, actor, payload, created_at, event_hash_value)
+            replay_handlers.replay_event_internal(
+                shadow, event_type, ticket_id, actor, payload, created_at, event_hash_value
+            )
         for pid, count in counters.items():
             shadow.execute(
                 "INSERT INTO counters (project_id, name, value) VALUES (?, 'ticket_id', ?)",
@@ -1665,258 +1322,6 @@ class Store:
         return result
 
     def verify_chain(self):
-        """Returns {'roots': n, 'tips': n, 'orphans': n, 'hash_mismatches': n}. A healthy
-        chain has exactly one root and one tip and zero of the other two."""
-        conn = self.conn_internal()
-        rows = conn.execute(
-            "SELECT id, event_type, ticket_id, actor, payload, idempotency_key,"
-            " prev_hash, event_hash, created_at FROM events ORDER BY id"
-        ).fetchall()
-        hashes = {r[7] for r in rows}
-        roots = sum(1 for r in rows if r[6] == schema.GENESIS)
-        parents_used = {r[6] for r in rows}
-        tips = sum(1 for r in rows if r[7] not in parents_used)
-        orphans = sum(1 for r in rows if r[6] != schema.GENESIS and r[6] not in hashes)
-        mismatches = 0
-        for r in rows:
-            (row_id, event_type, ticket_id, actor, payload_json, idempotency_key_unused,
-             prev_hash, stored_hash, created_at) = r
-            recomputed = compute_event_hash({
-                "event_type": event_type, "ticket_id": ticket_id, "actor": actor,
-                "payload": json.loads(payload_json), "prev_hash": prev_hash,
-                "created_at": created_at,
-            })
-            if recomputed != stored_hash:
-                mismatches += 1
-        return {"roots": roots, "tips": tips, "orphans": orphans, "hash_mismatches": mismatches}
+        """Implementation lives in ticket_operations.py."""
+        return ticket_operations.verify_chain(self)
 
-
-def normalize_legacy_level_internal(value):
-    """severity/priority became a real 0-4 int scale, replacing entirely
-    unconstrained free text. Events written before this migration carry the old text
-    ("high"/"medium"/"low") in their immutable, hash-chained payload -- that text cannot
-    be rewritten, so replay must translate it the same way the live migration did, or
-    rebuild_projection() would insert the raw legacy string into what's now an
-    INTEGER-affinity column while live_projection() has the migrated int, diverging on
-    identical data. New events (post-migration) already carry a real int (or None) in
-    this same field, so those pass through unchanged. schema.LEGACY_LEVEL_TEXT is the
-    exact, confirmed set of text values that ever existed in the real db before this
-    migration (queried directly, not assumed) -- an unrecognized string here means
-    genuinely unknown historical data, and raises rather than silently guessing."""
-    if value is None or isinstance(value, int):
-        return value
-    if value in schema.LEGACY_LEVEL_TEXT:
-        return schema.LEGACY_LEVEL_TEXT[value]
-    raise ValueError(f"unrecognized legacy severity/priority text {value!r} during replay")
-
-
-def replay_event_internal(shadow, event_type, ticket_id, actor, payload, created_at, event_hash_value):
-    if event_type == "TicketCreated":
-        shadow.execute(
-            "INSERT INTO tickets (ticket_id, project_id, type, status, reporter, assignee,"
-            " priority, tier, summary, description, parent_id, severity, repro_steps,"
-            " environment, reference_docs, archived, created_at, updated_at)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
-            # payload.get("project_id", 1): TicketCreated events written before multi-
-            # project support carry no project_id at all -- that payload is immutable,
-            # hash-chained history, it cannot be rewritten to add the field retroactively.
-            # The fallback of 1 is a documented, one-time migration fact, not a general
-            # default: every ticket created before this migration genuinely did belong to
-            # the single project that existed then, which the migration registers as the
-            # first (id=1) project. New events (post-migration) always carry a real
-            # project_id, so this fallback only ever applies to that one historical batch.
-            # summary/description: events written before this feature existed
-            # carry neither key at all -- payload.get() naturally returns None for them,
-            # same precedent as tier's own historical handling (no active backfill
-            # needed here; the real historical summary text for early tickets is instead
-            # promoted via genuine set_summary() calls, which DO append new, real
-            # SummarySet events -- see the migration script, not a payload fallback).
-            (ticket_id, payload.get("project_id", 1), payload["type"], "open",
-             payload["reporter"], payload.get("assignee"),
-             normalize_legacy_level_internal(payload.get("priority")),
-             payload.get("tier"), payload.get("summary"), payload.get("description"),
-             payload.get("parent_id"), normalize_legacy_level_internal(payload.get("severity")),
-             payload.get("repro_steps"), payload.get("environment"), "[]",
-             created_at, created_at),
-        )
-        for name, value in (payload.get("custom_fields") or {}).items():
-            shadow.execute(
-                "INSERT INTO ticket_fields (ticket_id, field_name, field_value) VALUES (?,?,?)",
-                (ticket_id, name, canonical_json(value)),
-            )
-    elif event_type == "CommentAdded":
-        shadow.execute(
-            "INSERT INTO comments (ticket_id, actor, body, code_snippet, created_at)"
-            " VALUES (?,?,?,?,?)",
-            (ticket_id, actor, payload["body"], payload.get("code_snippet"), created_at),
-        )
-    elif event_type == "CommentCodeSnippetSet":
-        shadow.execute(
-            "UPDATE comments SET code_snippet=? WHERE id=?",
-            (payload["code_snippet"], payload["comment_id"]),
-        )
-    elif event_type == "StatusChanged":
-        shadow.execute(
-            "UPDATE tickets SET status=?, updated_at=? WHERE ticket_id=?",
-            (payload["to"], created_at, ticket_id),
-        )
-    elif event_type == "LinkAdded":
-        shadow.execute(
-            "INSERT OR IGNORE INTO ticket_links (from_ticket, to_ticket, link_type) VALUES (?,?,?)",
-            (payload["from"], payload["to"], payload["link_type"]),
-        )
-        reciprocal = schema.RECIPROCAL_LINK_TYPE.get(payload["link_type"])
-        if reciprocal:
-            shadow.execute(
-                "INSERT OR IGNORE INTO ticket_links (from_ticket, to_ticket, link_type)"
-                " VALUES (?,?,?)",
-                (payload["to"], payload["from"], reciprocal),
-            )
-    elif event_type == "FieldSet":
-        shadow.execute(
-            "INSERT INTO ticket_fields (ticket_id, field_name, field_value) VALUES (?,?,?)"
-            " ON CONFLICT(ticket_id, field_name) DO UPDATE SET field_value=excluded.field_value",
-            (ticket_id, payload["field_name"], canonical_json(payload["field_value"])),
-        )
-    elif event_type == "ReferenceDocsSet":
-        shadow.execute(
-            "UPDATE tickets SET reference_docs=?, updated_at=? WHERE ticket_id=?",
-            (json.dumps(payload["paths"]), created_at, ticket_id),
-        )
-    elif event_type == "SummarySet":
-        shadow.execute(
-            "UPDATE tickets SET summary=?, updated_at=? WHERE ticket_id=?",
-            (payload["summary"], created_at, ticket_id),
-        )
-    elif event_type == "DescriptionSet":
-        shadow.execute(
-            "UPDATE tickets SET description=?, updated_at=? WHERE ticket_id=?",
-            (payload["description"], created_at, ticket_id),
-        )
-    elif event_type == "AssigneeSet":
-        shadow.execute(
-            "UPDATE tickets SET assignee=?, updated_at=? WHERE ticket_id=?",
-            (payload["assignee"], created_at, ticket_id),
-        )
-    # Column name comes from the event type, never from the payload key, so a
-    # malformed payload cannot steer this into an arbitrary column.
-    elif event_type in ("PrioritySet", "SeveritySet"):
-        column = "priority" if event_type == "PrioritySet" else "severity"
-        shadow.execute(
-            f"UPDATE tickets SET {column}=?, updated_at=? WHERE ticket_id=?",
-            (payload.get(column), created_at, ticket_id),
-        )
-    elif event_type in ("TicketArchived", "TicketUnarchived"):
-        shadow.execute(
-            "UPDATE tickets SET archived=?, updated_at=? WHERE ticket_id=?",
-            (1 if event_type == "TicketArchived" else 0, created_at, ticket_id),
-        )
-    elif event_type == "ClaimRecorded":
-        shadow.execute(
-            "INSERT INTO claims (ticket_id, actor, summary, files_touched, commit_sha,"
-            " event_hash, created_at) VALUES (?,?,?,?,?,?,?)",
-            (ticket_id, actor, payload["summary"], json.dumps(payload["files_touched"]),
-             payload["commit_sha"], event_hash_value, created_at),
-        )
-    elif event_type in ("StagePromoted", "StageRolledBack"):
-        # No pre-migration StagePromoted/StageRolledBack events exist in the live db
-        # (confirmed by querying it directly before writing this), so unlike TicketCreated
-        # above, this can require a real project_id with no historical fallback.
-        shadow.execute(
-            "INSERT INTO stage_heads (project_id, stage, commit_sha, updated_at)"
-            " VALUES (?,?,?,?)"
-            " ON CONFLICT(project_id, stage) DO UPDATE SET commit_sha=excluded.commit_sha,"
-            " updated_at=excluded.updated_at",
-            (payload["project_id"], payload["stage"], payload["commit_sha"], created_at),
-        )
-    elif event_type == "TicketCriteriaFrozen":
-        shadow.execute(
-            "INSERT INTO ticket_criteria (ticket_id, criteria, criteria_frozen_at,"
-            " criteria_hash_at_freeze) VALUES (?,?,?,?)"
-            " ON CONFLICT(ticket_id) DO UPDATE SET criteria=excluded.criteria,"
-            " criteria_frozen_at=excluded.criteria_frozen_at,"
-            " criteria_hash_at_freeze=excluded.criteria_hash_at_freeze",
-            (ticket_id, canonical_json(payload["criteria"]), created_at, payload["criteria_hash"]),
-        )
-    elif event_type == "TicketWatched":
-        shadow.execute(
-            "INSERT OR IGNORE INTO watchers (ticket_id, watcher, created_at) VALUES (?,?,?)",
-            (ticket_id, payload["watcher"], created_at),
-        )
-    elif event_type == "TicketUnwatched":
-        shadow.execute(
-            "DELETE FROM watchers WHERE ticket_id=? AND watcher=?",
-            (ticket_id, payload["watcher"]),
-        )
-    elif event_type == "TicketCommitLinked":
-        shadow.execute(
-            "INSERT INTO ticket_commit_links (ticket_id, stage, commit_sha, branch, stale)"
-            " VALUES (?,?,?,?,0)"
-            " ON CONFLICT(ticket_id, stage) DO UPDATE SET commit_sha=excluded.commit_sha,"
-            " branch=excluded.branch, stale=0",
-            (ticket_id, payload["stage"], payload.get("commit_sha"), payload.get("branch")),
-        )
-    elif event_type == "AttachmentAdded":
-        shadow.execute(
-            "INSERT INTO attachments (ticket_id, filename, sha256, size_bytes, created_at)"
-            " VALUES (?,?,?,?,?)",
-            (ticket_id, payload["filename"], payload["sha256"], payload["size_bytes"], created_at),
-        )
-    elif event_type == "HotlistCreated":
-        # hotlists.id is AUTOINCREMENT and hotlists are never deleted, so replaying
-        # HotlistCreated events in event order reproduces the exact same id sequence the
-        # live INSERT did -- same guarantee tickets' ticket_id counter already relies on.
-        shadow.execute(
-            "INSERT INTO hotlists (name, created_at, created_by) VALUES (?,?,?)",
-            (payload["name"], created_at, actor),
-        )
-    elif event_type == "TicketAddedToHotlist":
-        hotlist_id = shadow.execute(
-            "SELECT id FROM hotlists WHERE name=?", (payload["hotlist"],)
-        ).fetchone()[0]
-        shadow.execute(
-            "INSERT INTO hotlist_items (hotlist_id, ticket_id, added_at, added_by, note)"
-            " VALUES (?,?,?,?,?)"
-            " ON CONFLICT(hotlist_id, ticket_id) DO UPDATE SET note=excluded.note,"
-            " added_at=excluded.added_at, added_by=excluded.added_by",
-            (hotlist_id, ticket_id, created_at, actor, payload.get("note")),
-        )
-    elif event_type == "TicketRemovedFromHotlist":
-        hotlist_id = shadow.execute(
-            "SELECT id FROM hotlists WHERE name=?", (payload["hotlist"],)
-        ).fetchone()[0]
-        shadow.execute(
-            "DELETE FROM hotlist_items WHERE hotlist_id=? AND ticket_id=?",
-            (hotlist_id, ticket_id),
-        )
-    elif event_type == "DatasetCreated":
-        shadow.execute(
-            "INSERT INTO datasets (name, created_at, created_by) VALUES (?,?,?)",
-            (payload["name"], created_at, actor),
-        )
-    elif event_type == "ProjectAddedToDataset":
-        dataset_id = shadow.execute(
-            "SELECT id FROM datasets WHERE name=?", (payload["dataset"],)
-        ).fetchone()[0]
-        project_id = shadow.execute(
-            "SELECT id FROM projects WHERE prefix=?", (payload["project"],)
-        ).fetchone()[0]
-        shadow.execute(
-            "INSERT OR IGNORE INTO dataset_projects (dataset_id, project_id, added_at, added_by)"
-            " VALUES (?,?,?,?)",
-            (dataset_id, project_id, created_at, actor),
-        )
-    elif event_type == "ColumnDescriptionSet":
-        shadow.execute(
-            "INSERT INTO column_descriptions"
-            " (table_name, column_name, description, updated_at, updated_by)"
-            " VALUES (?,?,?,?,?)"
-            " ON CONFLICT(table_name, column_name) DO UPDATE SET"
-            " description=excluded.description, updated_at=excluded.updated_at,"
-            " updated_by=excluded.updated_by",
-            (payload["table"], payload["column"], payload["description"], created_at, actor),
-        )
-    elif event_type in ("ClaimDiscrepancyChecked", "ClosedWithNoClaim"):
-        return
-    else:
-        raise ValueError(f"rebuild_projection: unknown event_type {event_type!r}")
