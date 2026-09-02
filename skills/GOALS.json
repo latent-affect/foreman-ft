@@ -7,6 +7,7 @@
   "criteria_frozen_at": "2026-09-02T10:12:36Z",
   "done_state": "The configuration an installer actually receives from this repo registers every security guard this repo claims to ship, and every command path that configuration names resolves to a real, runnable hook after install-time token substitution. The install chain's own settings-shape check validates every registered hook command, not only those under one exact matcher string.",
   "requirement": "PRD.md R24 (DEVH-2), the skills-component share of it. First design-and-scope pass for this component; it had no GOALS.json at all, so every write under skills/ was denied by goals_freeze_gate.",
+  "pre_implementation_brief": {"ticket_id": "DEVH-34", "persona": "dana-okafor", "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."},
   "scope_note": "A real pass, not a citation anchor, but scoped to the configuration surface R24 concerns: skills/foreman/config/. The packaged skill subset itself (foreman/, code-safety/, research-lifecycle/ skill bodies) is deliberately out of scope here and named as such below -- it is a distribution copy of files whose source of record lives elsewhere, and inventing criteria for it to look thorough is the padding this stage's own guardrails forbid.",
   "criteria": [
     {

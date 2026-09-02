@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Install script fail-closes when a required hook is missing."""
+import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -75,3 +77,99 @@ class InstallFailClosedTests(unittest.TestCase):
             missing, set(),
             f"agents/ has real files REQUIRED_AGENTS never checks: {missing}",
         )
+
+
+def _copy_repo(dest):
+    """A full, otherwise-real copy of the repo -- not the scripts/+empty-stub-dirs fixture the
+    other tests here use, because C4/C5 need a tree the installer can actually run to
+    completion against, with exactly one thing wrong (or nothing wrong) in it."""
+    shutil.copytree(
+        REPO, dest,
+        ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc", ".pytest_cache"),
+    )
+
+
+def _run_installer(repo_copy, home):
+    home.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["HOOKS_DST"] = str(home / "hooks")
+    env["SKILLS_DST"] = str(home / "skills")
+    env["AGENTS_DST"] = str(home / "agents")
+    env["TESSERA_ROOT"] = str(home / "fake-tessera")
+    return subprocess.run(
+        ["sh", str(repo_copy / "scripts" / "install-dev-harness.sh")],
+        capture_output=True, text=True, env=env,
+    )
+
+
+class GuardPreflightFailClosedTests(unittest.TestCase):
+    """scripts/GOALS.json C4 (PRD.md R24 / DEVH-2). Three separate trials, one guard deleted at
+    a time -- not one trial deleting all three, which a preflight special-casing a single
+    filename could still pass."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="install-guard-preflight-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def _trial(self, guard_filename):
+        repo_copy = self.tmp / f"repo-{guard_filename}"
+        _copy_repo(repo_copy)
+        (repo_copy / "bollard" / guard_filename).unlink()
+        proc = _run_installer(repo_copy, self.tmp / f"home-{guard_filename}")
+        self.assertNotEqual(proc.returncode, 0, f"install succeeded with {guard_filename} missing")
+        self.assertIn(guard_filename, proc.stderr, proc.stderr)
+
+    def test_guard_destructive_missing_fails_closed(self):
+        self._trial("guard_destructive.py")
+
+    def test_guard_prodconfig_missing_fails_closed(self):
+        self._trial("guard_prodconfig.py")
+
+    def test_guard_untrusted_web_missing_fails_closed(self):
+        self._trial("guard_untrusted_web.py")
+
+    def test_unmodified_tree_installs_successfully(self):
+        """The other half of C4: an installer that refuses everything would pass the three
+        trials above trivially. This proves it isn't that."""
+        repo_copy = self.tmp / "repo-unmodified"
+        _copy_repo(repo_copy)
+        proc = _run_installer(repo_copy, self.tmp / "home-unmodified")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+
+class InstalledGuardDeniesFromItsRealLocationTests(unittest.TestCase):
+    """scripts/GOALS.json C5 (PRD.md R24 / DEVH-2), muse's fourth verification leg: proves the
+    INSTALLED artifact works, not the one in the build tree -- catches token substitution that
+    corrupts a guard's imports on the way in, which re-testing the repository source cannot."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = Path(tempfile.mkdtemp(prefix="install-guard-e2e-"))
+        cls.repo_copy = cls.tmp / "repo"
+        _copy_repo(cls.repo_copy)
+        cls.home = cls.tmp / "home"
+        cls.install_result = _run_installer(cls.repo_copy, cls.home)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def test_install_succeeds(self):
+        self.assertEqual(self.install_result.returncode, 0, self.install_result.stderr)
+
+    def test_installed_guard_destructive_denies_a_real_destructive_command(self):
+        installed_guard = self.home / "hooks" / "guard_destructive.py"
+        self.assertTrue(installed_guard.is_file(), installed_guard)
+        payload = {
+            "tool_name": "Bash",
+            "tool_input": {"command": "rm -rf /tmp/some/real/path"},
+            "session_id": "test", "cwd": "/tmp",
+        }
+        proc = subprocess.run(
+            [sys.executable, str(installed_guard)],
+            input=json.dumps(payload), capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        decision = json.loads(proc.stdout)
+        self.assertEqual(decision["hookSpecificOutput"]["permissionDecision"], "deny")

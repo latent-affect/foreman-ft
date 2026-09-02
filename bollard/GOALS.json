@@ -5,6 +5,7 @@
   "scope_version": 1,
   "created": "2026-08-24T05:58:00Z",
   "criteria_frozen_at": "2026-09-02T08:05:41Z",
+  "pre_implementation_brief": {"ticket_id": "DEVH-33", "persona": "dana-okafor", "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."},
   "done_state": "When preflight_blocking_gate.py would DENY because tessera_resolver.resolve returned ambiguous or unreachable, an Edit, Write, or Bash call whose sole write target resolves to {project_root}/.foreman/tessera-prefix is not denied; every other Edit, Write, or Bash call in that state is still denied. AND (R24, DEVH-2): bollard ships guard_destructive.py, guard_prodconfig.py and guard_untrusted_web.py, each of which, driven as a subprocess through its real hook entry point, emits a PreToolUse deny on the traffic it exists to block and emits nothing at all on everything else.",
   "criteria": [
     {

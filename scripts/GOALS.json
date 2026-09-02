@@ -4,6 +4,7 @@
   "scope_version": 1,
   "created": "2026-08-29T00:00:00Z",
   "criteria_frozen_at": "2026-09-02T08:05:41Z",
+  "pre_implementation_brief": {"ticket_id": "DEVH-35", "persona": "dana-okafor", "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."},
   "done_state": "install-dev-harness.sh installs a working hooks/skills/agents set into a fresh machine's ~/.claude/ tree, substitutes every /path/to/... token with the real local path, and fails closed (nonzero exit, no partial install left in place) if any required file is missing from the source tree -- including every real persona file in agents/, not a hardcoded subset of it. AND (R24, DEVH-2): the preflight refuses to install a tree missing any one of the three security guards, and a guard installed by that installer denies a destructive command from its installed location, not merely from the build tree.",
   "criteria": [
     {
