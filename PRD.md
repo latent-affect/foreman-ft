@@ -30,7 +30,7 @@ claims and a second session re-checked the artifact behind it.
 | R16 | Un-defer ATLAS D5 (model column) | D5's stated reason is *no data source*: `sessions.jsonl` carries no model field (`docs/atlas-architecture.md:63`, DDL comment at line 600) | Two-part requirement; the data source is the blocking half |
 | R18 | Churn reads 1 almost everywhere; probably an ATLAS gap | No analyzed source file has more than one commit touching it. `get_git_churn` counts all history with no window, so churn of 1 is arithmetically correct | Not an ATLAS gap. The real defect is downstream: see R18 |
 | — | not in the brief | The three report scripts every number here rests on are untracked (`??`) in git, and one of them overwrites its own prior output on reuse | New requirement R23, sequenced first |
-| R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` read `open` in TESSERA when checked; closed 2026-09-02, after this correction. Two scoped numbers still disagree, 0.96x and 1.16x, neither with surviving raw output | Corrected in 8.1 after the concept gate challenged it |
+| R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` read `open` in TESSERA when checked; closed 2026-09-02, after this correction. Four readings of one unstable metric (0.96x, 1.1x, 1.16x, 0.64x), not two disagreeing measurements | Corrected in 8.1 after the concept gate challenged it |
 
 Confidence notation follows the operator's standing rule: **High** = verified against an
 independent artifact; **Medium** = internally consistent, not independently confirmed;
@@ -715,17 +715,36 @@ measurement. A closed ticket and a settled number are different things here.
 The honest status is not "closed" and not "no data exists." It is unsettled across two
 incomplete framings.
 
-**Framing one, single-project, incomplete, and two scoped numbers that disagree.** The brief
-requires a `--project-hint dev-harness` scoped run to exist as an actual file before R0 can be
-resolved. Two dev-harness-scoped results are claimed, and they do not agree:
+**Framing one, single-project, and the reason no reading of it settles anything.** An earlier
+revision of this subsection described "two scoped numbers that disagree", which framed them as
+two competing measurements of one stable quantity. That framing was wrong, and it came from an
+attribution another session later retracted as an unstated inference. Corrected:
 
-| Result | Source | Raw output |
+| Reading | Source | Raw output |
 |---|---|---|
-| **0.96x**, under the 1.1x target | An independently-run session, reported in the brief's own R0 correction | None. The brief states plainly the raw output "was never shown here, only summarized" |
-| **1.16x**, over the 1.1x target | `/Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt`, 297 bytes. Also 95.0% cache hit rate, 32 invalidation spikes | Console summary only. The full JSON it names no longer contains this run |
+| **0.96x**, under target | Reported in the brief's own R0 correction | None. The brief says plainly it "was never shown here, only summarized" |
+| **1.1x**, at target | A second Run 1 terminal run, same session, ~22:44 | Not retained |
+| **1.16x**, over target | `/Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt`, 297 bytes | Console summary only; its JSON was overwritten |
+| **0.64x**, far under target | The current `token_bloat_diagnostic.json`, verified by reading it in this session | Present, but **not dev-harness-scoped** — `project_hint` is `m5-dev-`, 149 session files |
 
-One says at parity, one says over target, and neither has complete surviving raw output. That is
-the actual state of the evidence.
+Four readings, not two, and they are not disagreeing measurements. They are one unstable metric
+sampled at four different moments, which is what DEVH-5 already says about it: the day-over-day
+ratio compares a fixed historical day against an in-progress one.
+
+**The decisive evidence is inside the surviving JSON, and it settles this without needing any of
+the four readings.** That file's own per-day series, every entry computed against the same
+`day_one`, runs: 1.0, 2.5, 0.25, 1.34, 2.09, 2.11, 1.75, 0.5, 1.82, 1.25, 1.93, 2.14, 1.24,
+1.96, 1.78, 1.78, 0.64. A tenfold spread, against a target of 1.1. A quantity that ranges from
+0.25 to 2.5 across consecutive days is not being measured; any single reading is a draw from a
+noisy series, and choosing one is arbitrary rather than evidential.
+
+That same file also carries `day_one: 2026-08-06`. dev-harness's own transcripts do not begin
+until 2026-08-23, a point the brief's own R0 correction makes independently. So the baseline day
+every one of those ratios is computed against belongs to a different project's data.
+
+Put plainly, and this is the sentence worth keeping: **R0 was closed on a single favorable
+reading of a metric whose own open ticket says it is not stable enough to close anything on.**
+DEVH-4 and DEVH-5 are both still `open`, verified in this session.
 
 **Why the second one's raw output is gone, and why that is a finding rather than an accident.**
 `token_bloat_diagnostic.py` writes its results to a fixed filename in the current working
