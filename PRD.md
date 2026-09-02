@@ -22,7 +22,7 @@ tree at `/Users/m5/dev/dev-harness-run2` and against the report artifacts in
 | R4 | Four SQL sites, "unconfirmed" whether safe | All four parameterize values with `?` and interpolate only identifiers from a module constant or a validated allowlist | Closed on the vulnerability question; R4 becomes annotation plus a regression test |
 | R5 | Hex high-entropy string, real secret or not | Lines 44-48 are `EXPECTED_SHIM_SHAS`, SHA-256 digests of git hook shims, used for tamper detection | Closed; R5 becomes a suppression with recorded justification |
 | R13(4) | OS sandboxing is "deepest fix, most cost" | `bollard/lib/deny_keychain.sb` plus `neutralize_credentials.sh` already implement a working, empirically verified Seatbelt deny-profile on this machine | Cost estimate is too high; a reference implementation exists |
-| R14/R15 | Validate `layered_command_guard.py` | That file does not exist anywhere under `/Users/m5` outside `Library` | Both requirements are unverifiable as written; see R14 |
+| R14/R15 | Validate `layered_command_guard.py` | Neither the file nor any of its four named classes exists anywhere on this machine, across two independent searches | Both requirements blocked on an existence question, not a path question. See 0.1 |
 | R16 | Un-defer ATLAS D5 (model column) | D5's stated reason is *no data source*: `sessions.jsonl` carries no model field (`docs/atlas-architecture.md:63`, DDL comment at line 600) | Two-part requirement; the data source is the blocking half |
 | R18 | Churn reads 1 almost everywhere; probably an ATLAS gap | The repo has 7 commits total. `get_git_churn` counts all history with no window. Churn of 1 is arithmetically correct | Not an ATLAS gap. The real defect is downstream: see R18 |
 | — | not in the brief | The three report scripts every number here rests on are untracked (`??`) in git | New requirement R23 |
@@ -30,6 +30,42 @@ tree at `/Users/m5/dev/dev-harness-run2` and against the report artifacts in
 Confidence notation follows the operator's standing rule: **High** = verified against an
 independent artifact; **Medium** = internally consistent, not independently confirmed;
 **Low** = single observation or assumption.
+
+## 0.1 Provenance risk, high severity — read before scoping R12 through R15
+
+The brief describes `layered_command_guard.py` as existing code, in specific detail, down to a
+named AST-folding limitation disclosed "in the file itself" and a four-guard layered design in
+which three guards independently caught a case the fourth missed. **No such file, and none of
+its four named classes, exists anywhere on this machine.**
+
+Two sessions searched independently, with no shared context between them, across
+`/Users/m5` at full depth excluding `Library`, plus `/Users/m5/dev/grok` and every scratchpad
+location. Five distinct search terms: the filename, `OSSandboxGuard`, `SemanticResolutionGuard`,
+`AllowlistGuard`, `PatternFeedGuard`. Zero hits on any term in either search. A third pass over
+this repository, adding `su""do`, `layered_command`, `allowlist inversion` and `capability by
+construction`, matched only this document.
+
+Two explanations fit. A scratchpad artifact was written and cleaned up before landing anywhere
+durable, which matches a real pattern from other sessions. Or the implementation was described
+rather than built. **This document takes no position on which**, and the question is the
+operator's to settle, not a reviewer's to assume. What matters for scoping is that both
+explanations have the same consequence right now: there is no code to validate, so R14 and R15
+cannot be validation requirements, and nothing in R12-R15 that rests only on the brief's
+narration can be relied on while planning.
+
+The precedent is on the record and is the reason this is flagged at severity rather than noted
+in passing. R0's original 2.3x-3.1x context-growth claim came from the same source, was stated
+with the same specificity, and was retracted after independent verification. That is one
+confirmed instance of a confidently stated quantitative claim from this brief's lineage not
+surviving a check. This would be a second, of a different kind.
+
+**What survives in that section regardless.** Exactly one claim, and it was found in the repo
+rather than taken from the brief: `bollard/lib/deny_keychain.sb` and
+`bollard/lib/neutralize_credentials.sh` are real, present, and carry a recorded empirical
+trial. R13's *judgment* also stands on its own merits, since capability removal beating text
+matching is an argument, not a measurement. The scored-candidate pass behind R13's ordering
+("12 candidates, six-way tie at the top") has no locatable artifact and should be treated as an
+unverified input to Clint's re-ranking, not a result to inherit.
 
 ---
 
@@ -273,9 +309,12 @@ Absorbs R12, which is a premise rather than a checkable requirement.
 - **Requirement:** given a command-string evasion of the `su""do` class, when every
   detection-layer guard is disabled, then the action shall still be denied by a
   capability-scoping or allowlist layer.
-- **Ordering, from the brief's scored pass, retained:** scoped capability by construction;
+- **Ordering, carried forward but not inherited as settled:** scoped capability by construction;
   allowlist inversion; friction and confirmation; OS-level sandboxing. Detection candidates
-  (semantic resolution, anomaly detection, LLM judge, pattern feed) are additive only.
+  (semantic resolution, anomaly detection, LLM judge, pattern feed) are additive only. The
+  scored pass this ordering came from ("12 candidates, six-way tie at the top") has no locatable
+  artifact, per section 0.1. The ordering is defensible on its own argument and Clint should
+  re-derive it rather than adopt the numbers.
 - **Cost correction:** the brief treats OS-level sandboxing as the most expensive layer on the
   assumption that Seatbelt tooling would be built from nothing. This repo already ships
   `bollard/lib/deny_keychain.sb`, a working `sandbox-exec` deny-profile with recorded empirical
@@ -288,28 +327,31 @@ Absorbs R12, which is a premise rather than a checkable requirement.
   its recorded 2026-08-23 trial results). **Medium** on how far that pattern transfers from
   credential denial to command-capability scoping; the mechanism is the same, the policy is not.
 
-**R14 — `layered_command_guard.py` cannot be validated because it cannot be found. Resolve the
-artifact before this requirement is actionable.**
+**R14 — BLOCKED. `layered_command_guard.py`'s existence is unconfirmed. Do not treat it as
+code that exists.**
 
-Absorbs R15. A full-depth search of `/Users/m5` excluding `Library` returned no file, directory
-or reference matching `layered_command_guard*`. `OSSandboxGuard`, `SemanticResolutionGuard`,
-`AllowlistGuard` and `PatternFeedGuard` are named in the brief as classes in that file, including
-a disclosure R15 describes as "stated in the file itself." Neither the file nor the disclosure is
-locatable.
+Absorbs R15. This is not a missing path. It is a missing artifact, and the distinction changes
+what the requirement can say.
 
-- **Requirement:** before R14 or R15 enters a backlog, the artifact shall be located and its path
-  recorded, or the requirements shall be rewritten as build requirements rather than validation
-  requirements.
-- **Verification:** a stated absolute path that exists, or a rewritten pair of requirements.
-- **What R15 becomes if the file is found:** `SemanticResolutionGuard` shall fold
+Two independent searches ran. This session searched `/Users/m5` at full depth excluding
+`Library` for the filename. A second session, with no shared context, searched the same tree
+plus `/Users/m5/dev/grok` and every scratchpad location, for the filename **and** for each of
+the four class names separately (`OSSandboxGuard`, `SemanticResolutionGuard`, `AllowlistGuard`,
+`PatternFeedGuard`). Five search terms, two contexts, zero hits. A third search over this
+repository for those terms plus `su""do`, `layered_command`, `allowlist inversion` and
+`capability by construction` returns only this file.
+
+- **Requirement:** R14 and R15 shall not enter a backlog, and shall not be sized, until the
+  operator confirms whether this code was ever written. The two outcomes need different
+  requirements, not a different path.
+- **If it existed and was lost:** R15 becomes `SemanticResolutionGuard` shall fold
   `chr(a)+chr(b)` addition, verified by the chr-built `rm` case being caught by that guard alone
-  with the other three disabled.
-- **What R14 becomes if the file is found:** `OSSandboxGuard` shall deny the `su""do`
-  reproduction on this machine, using the verification method `deny_keychain.sb` already
-  documents.
-- **Confidence: High** that it is not present under the searched path. **Low** on why; it may
-  live in `agent-remediation` or another checkout not searched. This is a hand-off question for
-  the orchestrator, not a finding of fabrication.
+  with the other three disabled. R14 becomes `OSSandboxGuard` shall deny the `su""do`
+  reproduction, using the verification method `deny_keychain.sb` already documents.
+- **If it was never written:** both are build requirements, sized from nothing, and the R12-R15
+  section's other technical claims inherit the same doubt. See section 0.1.
+- **Confidence: High** that no such file or class exists on this machine, from two independent
+  searches over five terms. **Not assessed** on why, and this document takes no position on it.
 
 ### ATLAS and TESSERA
 
@@ -580,12 +622,15 @@ implementation still satisfy the stated verification? Findings, and what was cha
 
 ## 9. Open decisions carried into architecture
 
-Four, three of which block something.
+Four, three of which block something. The first is for the operator, not the architecture stage,
+and it is the highest-severity open item in this document.
 
-1. **R1's target number.** Blocks R1 implementation. Coupled to R21's static-versus-per-category
+1. **HIGH — Was `layered_command_guard.py` ever written?** Blocks R14 and R15 entirely, and
+   sets how much of R12-R15 can be trusted while planning. Not answerable by search; two
+   independent passes over five terms already returned nothing. Needs the operator's own recall
+   or a pointer to a machine that was not searched. Full statement in section 0.1.
+2. **R1's target number.** Blocks R1 implementation. Coupled to R21's static-versus-per-category
    choice; the same decision made once.
-2. **Where `layered_command_guard.py` lives.** Blocks R14 and R15. A hand-off question for the
-   orchestrator, resolvable by naming a path.
 3. **A current measured count for R9.** Blocks sizing. The 477 figure is unverified here.
 4. **Docker and Postgres on the FCLB build machine.** Carried from the brief. Not blocking
    anything in this document's scope, since nothing here depends on FCLB. Recorded so it is not
