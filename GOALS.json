@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "DEVH",
+  "component": "root-docs-and-scratch",
+  "scope_version": 1,
+  "created": "2026-09-02T07:20:00Z",
+  "criteria_frozen_at": "2026-09-02T07:05:32Z",
+  "done_state": "The three measurement scripts every quantitative claim in PRD.md traces to exist in this repository, are tracked by git, emit provenance (tool commit, tree commit, formula version) inside every report they write, and cannot destroy a prior run's output when re-run from the same working directory.",
+  "requirement": "PRD.md R23 (R23a provenance, R23b evidence destruction). Sequenced first by concept-gate condition C3.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "foreman_quality_baseline.py, token_bloat_diagnostic.py and security_privacy_convergence.py exist at the root of this repository, are tracked by git, and each one actually runs to completion and produces a parseable report.",
+      "verification": "git -C /Users/m5/dev/dev-harness-run2 ls-files -- foreman_quality_baseline.py token_bloat_diagnostic.py security_privacy_convergence.py prints exactly those three paths and nothing else. Then each script is executed with /Users/m5/.venv/bin/python3 from a fresh empty directory, exits 0, and the JSON report it writes parses with json.load and contains a non-empty top-level object. A tracked file that does not run does not satisfy this criterion.",
+      "verifiable": true,
+      "added": "2026-09-02T07:20:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "Every report written by each of the three scripts carries tool_git_sha, tree_git_sha and formula_version, and the first two match the live repository state at the time of the run rather than a stored or placeholder value.",
+      "verification": "Run each script, load its JSON report, and assert all three keys are present and non-empty. Assert report['tool_git_sha'] equals the independently computed output of git log -1 --format=%H -- <that script's path>, and report['tree_git_sha'] equals git rev-parse HEAD, both computed by the test itself and not read from the report. Then commit an unrelated change and re-run: tree_git_sha must differ from the previous run's value. A hardcoded, cached, or 'unknown' value fails on the second half.",
+      "verifiable": true,
+      "added": "2026-09-02T07:20:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "Two consecutive runs with different arguments, executed from one single working directory, leave the first run's own report readable and unchanged.",
+      "verification": "From one directory: run token_bloat_diagnostic.py --project-hint dev-harness --days 30, record the absolute path and sha256 of every file it wrote. Then, from that same directory with no cd, run token_bloat_diagnostic.py --days 30 with no --project-hint. Re-read every path recorded from the first run: each must still exist, still parse as JSON, still hash to its recorded sha256, and still carry project_hint == 'dev-harness'. Both a run-scoped-filename fix and a refuse-to-overwrite fix satisfy this; overwriting in place, and writing a run-scoped file while still clobbering a fixed-name latest copy that the first run's recorded path points at, both fail it.",
+      "verifiable": true,
+      "added": "2026-09-02T07:20:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "A dev-harness-scoped token_bloat_diagnostic run produces a durable artifact that survives a subsequent broader run, closing the specific evidence loss recorded in PRD.md section 8.1.",
+      "verification": "Reproduce section 8.1's exact sequence: a --project-hint dev-harness run followed by a wider run from the same directory. Afterwards a file whose parsed project_hint == 'dev-harness' still exists and contains the full report body, not only a console summary. This criterion asserts persistence only. It makes no claim about whether the ratio in that report is correct, which DEVH-4 and DEVH-5 govern and which this freeze explicitly does not touch.",
+      "verifiable": true,
+      "added": "2026-09-02T07:20:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "The three scripts are copied in and committed, provenance fields are added, and the reports still write to one fixed filename. C1 and C2 both go green, git history looks complete, and the tool goes on destroying prior evidence exactly as it did to the only dev-harness-scoped run anyone can point at.",
+      "detection": "C3 runs two invocations from a single directory and re-reads the first run's recorded paths by sha256. Passing C1 and C2 alone is not done."
+    },
+    {
+      "id": "F2",
+      "statement": "Provenance keys are present but carry a literal, a stale cached value, or the string 'unknown'. A schema check that only tests key presence passes, and a report can no longer be traced to the code that produced it, which is the entire point of R23a.",
+      "detection": "C2 compares both SHAs against values the test computes itself from git, then forces a change and requires tree_git_sha to move."
+    },
+    {
+      "id": "F3",
+      "statement": "Truncated, stubbed, or import-broken copies are committed. git ls-files returns all three paths and the requirement looks satisfied, but no report can actually be regenerated, so R3's before/after comparison is no more reproducible than it was before.",
+      "detection": "C1 requires each script to execute to exit 0 from a fresh directory and emit a parseable report, not merely to be tracked."
+    },
+    {
+      "id": "F4",
+      "statement": "The fix is documented rather than enforced: a README line or a docstring tells the operator to run each invocation from a separate directory. Every criterion phrased around correct usage passes, and the next person who runs two scopes from one directory loses the first result again.",
+      "detection": "C3 deliberately runs both invocations from ONE directory with no cd between them. A convention that lives only in prose cannot pass it."
+    },
+    {
+      "id": "F5",
+      "statement": "Provenance is backfilled onto the report files already sitting in /Users/m5/dev/dev-harness, making historical reports look traceable when the tool state that produced them was never recorded. This would manufacture exactly the false confidence PRD.md section 0.1 exists to warn about.",
+      "detection": "Backfilling historical reports is named in out_of_scope. C2 verifies provenance only on reports generated by a run the test itself performs."
+    }
+  ],
+  "out_of_scope": [
+    "The correctness of any number these scripts produce. DEVH-4 (UTC day bucketing) and DEVH-5 (day-over-day ratio against an in-progress today) are open bugs in token_bloat_diagnostic.py and are separate tickets. R23 is provenance and persistence only.",
+    "Changing any metric formula. A formula change under this freeze would invalidate the 6.86 baseline that R3's before/after comparison is measured against.",
+    "Backfilling provenance onto reports already generated. The tool state that produced them was not recorded and cannot be honestly reconstructed.",
+    "R21's KPI retention path under monitoring/quality-history/. Separate requirement, and blocked on DEVH-4 and DEVH-5 closing per concept-gate condition C3.",
+    "Committing report outputs to git. R23 makes a report reproducible; it does not make every run an archived artifact.",
+    "R18's hotspot-signal relabelling. Adjacent, touches the same file, separate requirement and separate freeze."
+  ],
+  "constraints": [
+    "The three scripts do not exist in this worktree. They exist only in /Users/m5/dev/dev-harness and are untracked there. Untracked files are worktree-local and a shared .git directory does not carry them across, so git add alone cannot satisfy C1 -- the files must be copied into this tree first.",
+    "Copy the files as they are. Do not refactor, reformat, or fix DEVH-4 or DEVH-5 in the same change; a copy that also edits behaviour makes the committed baseline something other than the code that produced the existing reports.",
+    "formula_version must be a real version string covering the radon version used for the maintainability index and an explicit tag for the hotspot formula, so that a dependency bump changing every number in a report is visible without a tool SHA change or a tree diff.",
+    "Provenance is computed at run time from the repository the script is analyzing, not read from a config file or an environment variable that a caller could set.",
+    "This file sits at the repository root because component_root('root-docs-and-scratch') resolves to the project root -- its first declared glob is a bare filename, so the empty prefix is correct. Criteria here cover R23 only. Do not land other root-level work under this freeze."
+  ],
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 4,
+    "frozen_at": "2026-09-02T07:05:32Z"
+  },
+  "results": [],
+  "amendments": [],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:db6db08c0fe3afb697732a6049b4631da794656800514fc15ae150bcddaf739a",
+    "match": null
+  }
+}
