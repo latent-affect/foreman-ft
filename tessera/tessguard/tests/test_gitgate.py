@@ -284,5 +284,121 @@ class GitgateTests(unittest.TestCase):
             self.assertEqual(proc2.returncode, 0)
 
 
+class TessguardDbPathFallbackTests(unittest.TestCase):
+    """tessera/GOALS.json C10 (DEVH-56). Proves resolve_db_path()'s marker-file fallback with
+    TESSGUARD_DB_PATH genuinely STRIPPED from the subprocess environment (not merely absent
+    from this test's own shell) -- the actual "fresh shell" failure mode Marcus Webb's
+    ship-readiness re-verification reproduced. Real .githooks/commit-msg invocation, real git
+    repo, real (throwaway, self-contained) tessera.db -- config.py's own
+    Path(__file__).resolve().parents[2] means the marker file it reads is THIS repository's
+    real .foreman/tessguard-db-path, so this test backs that file up and restores it, rather
+    than depending on whatever it happens to already contain."""
+
+    MARKER_PATH = Path(__file__).resolve().parents[3] / ".foreman" / "tessguard-db-path"
+
+    def setUp(self):
+        self.original_marker = (
+            self.MARKER_PATH.read_text() if self.MARKER_PATH.is_file() else None
+        )
+        self.addCleanup(self._restore_marker)
+
+    def _restore_marker(self):
+        if self.original_marker is None:
+            self.MARKER_PATH.unlink(missing_ok=True)
+        else:
+            self.MARKER_PATH.write_text(self.original_marker)
+
+    def _stripped_env(self, pythonpath):
+        """A real, minimal environment with TESSGUARD_DB_PATH deliberately ABSENT -- built
+        from scratch rather than dict(os.environ) with a key deleted, so there is no chance
+        this test's own process happening to have the var set (e.g. from a prior manual
+        export in this session) leaks through."""
+        return {
+            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+            "PYTHONPATH": pythonpath,
+            "HOME": os.environ.get("HOME", "/tmp"),
+        }
+
+    def test_c10_marker_file_fallback_discriminates_with_env_var_genuinely_unset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            init_repo_internal(repo)
+            store, db_path = make_store(tmp, prefix="C10X", source_root=str(repo))
+
+            self.MARKER_PATH.parent.mkdir(parents=True, exist_ok=True)
+            self.MARKER_PATH.write_text(str(db_path) + "\n")
+
+            ticket_system_root = str(Path(__file__).resolve().parents[3])
+            env = self._stripped_env(ticket_system_root)
+            self.assertNotIn("TESSGUARD_DB_PATH", env)
+
+            msg_file = Path(tmp) / "MSG"
+            msg_file.write_text("no real ticket referenced")
+            proc = subprocess.run(
+                ["python3", "-m", "tessera.tessguard.gitgate", "--commit-msg", str(msg_file)],
+                cwd=repo, env=env, capture_output=True, text=True,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("doesn't name a real, existing ticket", proc.stderr)
+            self.assertNotIn("no TESSERA db at", proc.stderr,
+                              "fell through to the unresolved placeholder -- marker file fallback did not fire")
+
+            tid = make_ticket(store, "C10X")
+            msg_file.write_text(f"{tid}: real, checkable fix")
+            proc2 = subprocess.run(
+                ["python3", "-m", "tessera.tessguard.gitgate", "--commit-msg", str(msg_file)],
+                cwd=repo, env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(proc2.returncode, 0, proc2.stderr)
+
+    def test_c10_env_var_still_wins_over_the_marker_file(self):
+        """Regression: setting TESSGUARD_DB_PATH must still take priority over the marker
+        file, e.g. for local testing against a different db than the installed one."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            init_repo_internal(repo)
+            store, db_path = make_store(tmp, prefix="C10E", source_root=str(repo))
+            tid = make_ticket(store, "C10E")
+
+            self.MARKER_PATH.parent.mkdir(parents=True, exist_ok=True)
+            self.MARKER_PATH.write_text("/path/to/ticket-system/data/tessera.db\n")
+
+            ticket_system_root = str(Path(__file__).resolve().parents[3])
+            env = self._stripped_env(ticket_system_root)
+            env["TESSGUARD_DB_PATH"] = str(db_path)
+
+            msg_file = Path(tmp) / "MSG"
+            msg_file.write_text(f"{tid}: real, checkable fix")
+            proc = subprocess.run(
+                ["python3", "-m", "tessera.tessguard.gitgate", "--commit-msg", str(msg_file)],
+                cwd=repo, env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+
+    def test_c10_neither_env_var_nor_valid_marker_still_fails_closed(self):
+        """Regression: with no env var AND no (or an invalid) marker file, resolve_db_path()
+        must still raise -- the fallback must not manufacture success."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            init_repo_internal(repo)
+
+            self.MARKER_PATH.unlink(missing_ok=True)
+
+            ticket_system_root = str(Path(__file__).resolve().parents[3])
+            env = self._stripped_env(ticket_system_root)
+
+            msg_file = Path(tmp) / "MSG"
+            msg_file.write_text("anything")
+            proc = subprocess.run(
+                ["python3", "-m", "tessera.tessguard.gitgate", "--commit-msg", str(msg_file)],
+                cwd=repo, env=env, capture_output=True, text=True,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("no TESSERA db at", proc.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

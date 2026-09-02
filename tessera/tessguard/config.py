@@ -17,6 +17,33 @@ HARD_GATE_WINDOW_HOURS = int(os.environ.get("TESSGUARD_HARD_GATE_HOURS", "24"))
 
 DEFAULT_DB_PATH_INTERNAL = "/path/to/ticket-system/data/tessera.db"
 
+# DEVH-56: nothing ever persisted TESSGUARD_DB_PATH -- no shell profile, no install-time
+# export -- so a genuinely fresh shell's git hook invocation always fell through to the
+# unresolved placeholder above and failed closed unconditionally, regardless of ticket
+# citation (Marcus Webb's ship-readiness re-verification reproduced this directly). Fixed
+# with a per-clone marker file scripts/install-dev-harness.sh writes at install time
+# (scripts/GOALS.json C6), read here as a fallback -- same convention
+# bollard/tessera_resolver.py's own .foreman/tessera-prefix override file already
+# establishes, not a new mechanism, and not an edit to the user's shell profile.
+DB_PATH_MARKER_FILENAME = "tessguard-db-path"
+
+
+def _installed_db_path_internal():
+    """Real db path written into <repo_root>/.foreman/tessguard-db-path by the installer,
+    or None if that file doesn't exist or is empty -- same "absent means fall through"
+    contract tessera_resolver.py's own read_override() already establishes for its file.
+    repo_root is derived from this module's own on-disk location (parents[2]: config.py ->
+    tessguard/ -> tessera/ -> repo root), which resolves correctly no matter which
+    worktree's checked-out copy of this file is actually running -- unlike an env var, a
+    module's own __file__ is never ambiguous about which clone it belongs to."""
+    repo_root = Path(__file__).resolve().parents[2]
+    marker_path = repo_root / ".foreman" / DB_PATH_MARKER_FILENAME
+    try:
+        text = marker_path.read_text().strip()
+    except OSError:
+        return None
+    return text or None
+
 
 class DbPathError(Exception):
     """Raised when the configured TESSERA db path can't be resolved to a real, existing
@@ -26,8 +53,16 @@ class DbPathError(Exception):
 
 def resolve_db_path():
     """Absolute, existence-checked path to the TESSERA db. Raises DbPathError rather than
-    returning a path Store() would happily create fresh and empty."""
-    raw = os.environ.get("TESSGUARD_DB_PATH", DEFAULT_DB_PATH_INTERNAL)
+    returning a path Store() would happily create fresh and empty.
+
+    Resolution order: TESSGUARD_DB_PATH env var (still wins if set, e.g. for local
+    testing) -> the installer-written marker file (DEVH-56) -> the unresolved placeholder
+    (which then correctly raises DbPathError, unchanged from before this fix)."""
+    raw = (
+        os.environ.get("TESSGUARD_DB_PATH")
+        or _installed_db_path_internal()
+        or DEFAULT_DB_PATH_INTERNAL
+    )
     path = Path(raw).expanduser()
     if not path.is_absolute():
         raise DbPathError(

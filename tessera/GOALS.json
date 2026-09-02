@@ -4,7 +4,7 @@
   "component": "tessera",
   "scope_version": 1,
   "created": "2026-09-02T11:00:00Z",
-  "criteria_frozen_at": "2026-09-02T17:23:25.687305Z",
+  "criteria_frozen_at": "2026-09-02T17:41:30.292684Z",
   "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health rises by at least the amount that improvement mathematically produces, measured against a same-session before-report rather than a fixed historical number; and no test that existed before is missing after, checked by identity rather than count; and the after-measurement is produced by a context that did not perform the refactor.",
   "requirement": "PRD.md R1a (DEVH-7), R2 (DEVH-8), R3 (DEVH-9). R2 lives here as a pre-commit criterion rather than in ARCHITECTURE.md, per Addendum 3: none of R1/R2/R3 introduces a component or interface, so all three are design-and-scope work.",
   "pre_implementation_brief": {
@@ -98,6 +98,13 @@
       "verification": "Real git commit attempts (not calling the resolver function directly), from a repository with at least two worktrees where only the FIRST (main) worktree's path is registered as a TESSERA project's source_root: (a) from the main worktree, a commit citing a real recently-active ticket for that project passes, and a commit naming no ticket blocks -- unchanged regression, both directions proven. (b) from a SECOND worktree of the same repository, the identical two cases (ticket-citing passes, no-ticket blocks) now ALSO hold -- this is the actual fix, proven by a real git commit, not a direct call to resolve_projects_for_repo(). (c) audit.py's layer-1 flow (resolve_projects_for_cwd, which resolve_projects_for_repo also serves) picks up the same fix: a coverage audit run from the second worktree now correctly finds the registered project instead of reading as zero registered projects. (d) A repo with NO registered project at all (in any worktree) still resolves to zero projects -- the fallback must not manufacture a match that doesn't exist.",
       "verifiable": true,
       "added": "2026-09-02T17:50:00Z"
+    },
+    {
+      "id": "C10",
+      "statement": "TESSGUARD_DB_PATH is resolved without requiring a manually-exported environment variable, so a genuinely fresh shell (no prior session's export inherited) can make a real, discriminating commit through tessguard's git hooks -- DEVH-56. resolve_db_path() falls back, in order, to: the TESSGUARD_DB_PATH env var (still wins if set) -> a per-clone marker file at <repo_root>/.foreman/tessguard-db-path (written by scripts/install-dev-harness.sh at install time, same convention bollard/tessera_resolver.py's own .foreman/tessera-prefix override file already establishes) -> the unresolved DEFAULT_DB_PATH_INTERNAL placeholder (which then correctly raises DbPathError, unchanged from today).",
+      "verification": "A subprocess invocation of .githooks/commit-msg (or the gitgate module directly) with an environment that has TESSGUARD_DB_PATH deliberately UNSET (not just absent from the current shell -- explicitly stripped, e.g. env -u TESSGUARD_DB_PATH or a constructed minimal env dict), from a repo whose .foreman/tessguard-db-path marker file has been written with the real db path: a no-ticket message BLOCKS with the real, specific ticket-citation reason (not the generic 'no TESSERA db at /path/to/ticket-system/data/tessera.db' failure DEVH-56 reproduced), and a real-ticket-citing message PASSES. Both directions, proven with the env var genuinely absent throughout, not merely unset in the test's own shell while still inherited from a parent. Regression: the SAME two cases still hold when TESSGUARD_DB_PATH IS set (env var still wins over the marker file), and DbPathError is still raised when NEITHER the env var nor the marker file resolves to a real, existing db file (the placeholder path, unchanged fail-closed behavior).",
+      "verifiable": true,
+      "added": "2026-09-02T18:20:00Z"
     }
   ],
   "failure_criteria": [
@@ -160,6 +167,16 @@
       "id": "F12",
       "statement": "The fallback manufactures a match that doesn't really exist -- for example by relaxing root_matches_internal itself, or by treating ANY sibling worktree as automatically belonging to whatever project is registered anywhere, rather than requiring the SAME exact-or-nested path match the direct case already requires.",
       "detection": "C9's case (d) requires a repo with no registered project in ANY worktree to still resolve to zero -- the fallback must only try more candidate paths through the unchanged matching function, never loosen the match itself."
+    },
+    {
+      "id": "F13",
+      "statement": "The verification sets TESSGUARD_DB_PATH to empty string ('') rather than genuinely unsetting it, or runs the test in a shell that still inherits the variable from the outer session -- either way the fix looks proven while the actual failure mode (a truly fresh shell that never had the variable) is never exercised.",
+      "detection": "C10 requires the env var to be explicitly stripped from the subprocess environment, not merely unset in the calling shell, and requires the marker-file fallback specifically to be what makes the discriminating (not generic-placeholder) failure/pass happen."
+    },
+    {
+      "id": "F14",
+      "statement": "The marker file is written with a relative path, an unexpanded ~, or a path that doesn't actually exist on disk -- resolve_db_path()'s own is_file() check would still correctly raise DbPathError, but with a confusing reason that doesn't name the marker file as the source, making the real cause harder to diagnose than the env-var case already is.",
+      "detection": "C10's regression clause requires DbPathError to still fire correctly when neither the env var nor a valid marker file resolves to a real file -- if the marker file itself is malformed, this must not silently look like success."
     }
   ],
   "out_of_scope": [
@@ -180,8 +197,8 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 9,
-    "frozen_at": "2026-09-02T17:23:25.687305Z"
+    "test_criteria": 10,
+    "frozen_at": "2026-09-02T17:41:30.292684Z"
   },
   "results": [
     {
@@ -389,7 +406,7 @@
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:918af320410079b7f6c560bf48f30458b19d12246ae567bf6b3795da3fc181c8",
+    "criteria_hash_at_freeze": "sha256:694d533e243c9be107b791c3fd106f55d016b83c9e2952612a8232e106edfbd6",
     "match": null
   }
 }

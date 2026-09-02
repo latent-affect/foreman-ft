@@ -29,32 +29,31 @@ class InstallFailClosedTests(unittest.TestCase):
         self.assertIn("required hook missing", proc.stderr)
 
     def test_tokens_replaced_on_install(self):
+        """DEVH-56 note: this now runs against an isolated repo COPY (_copy_repo/_run_installer,
+        the same pattern GuardPreflightFailClosedTests already uses below), not the real
+        REPO directly. install-dev-harness.sh's $ROOT is derived from the invoked script's
+        own on-disk location, not an env var -- running it straight against
+        REPO/scripts/install-dev-harness.sh (the ORIGINAL form of this test) made $ROOT the
+        real dev-harness-run2 checkout, so the C6 marker-file write this test's own token
+        substitution exercises was clobbering this actual worktree's real
+        .foreman/tessguard-db-path with a fake /tmp/fake-tessera value on every test run --
+        found live while adding C6, not hypothesised."""
         tmp = Path(tempfile.mkdtemp(prefix="install-tok-"))
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
-        hooks = tmp / "hooks"
-        skills = tmp / "skills"
+        repo_copy = tmp / "repo"
+        _copy_repo(repo_copy)
         home = tmp / "home"
-        home.mkdir()
-        env = os.environ.copy()
-        env["HOOKS_DST"] = str(hooks)
-        env["SKILLS_DST"] = str(skills)
-        env["AGENTS_DST"] = str(tmp / "agents")
-        env["TESSERA_ROOT"] = "/tmp/fake-tessera"
-        env["HOME"] = str(home)
-        proc = subprocess.run(
-            ["sh", str(REPO / "scripts" / "install-dev-harness.sh")],
-            capture_output=True,
-            text=True,
-            env=env,
-        )
+        proc = _run_installer(repo_copy, home)
         self.assertEqual(proc.returncode, 0, proc.stderr)
+        hooks = home / "hooks"
+        fake_tessera_root = str(home / "fake-tessera")
         resolver = (hooks / "tessera_resolver" / "tessera_resolver.py").read_text()
         self.assertNotIn("/path/to/ticket-system", resolver)
-        self.assertIn("/tmp/fake-tessera", resolver)
+        self.assertIn(fake_tessera_root, resolver)
         routing = (hooks / "cross_project_routing" / "routing_table.py").read_text()
         self.assertNotIn("/path/to/home", routing)
         self.assertIn(str(home), routing)
-        self.assertTrue((tmp / "agents" / "clint-eastwood.md").is_file())
+        self.assertTrue((home / "agents" / "clint-eastwood.md").is_file())
 
     def test_required_agents_covers_every_real_agent_file(self):
         """REQUIRED_AGENTS is a hardcoded list, not derived from agents/*.md -- nothing forces it
@@ -136,6 +135,32 @@ class GuardPreflightFailClosedTests(unittest.TestCase):
         _copy_repo(repo_copy)
         proc = _run_installer(repo_copy, self.tmp / "home-unmodified")
         self.assertEqual(proc.returncode, 0, proc.stderr)
+
+
+class TessguardDbPathMarkerTests(unittest.TestCase):
+    """scripts/GOALS.json C6 (DEVH-56). Runs against an isolated repo COPY (_copy_repo), same
+    discipline as GuardPreflightFailClosedTests -- $ROOT in install-dev-harness.sh is derived
+    from the script's own on-disk location, not an env var, so this is the only way to test
+    the marker-file write without touching the real clone's own .foreman/ directory."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="install-tessguard-db-"))
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def test_c6_marker_file_written_with_real_resolved_path(self):
+        repo_copy = self.tmp / "repo"
+        _copy_repo(repo_copy)
+        home = self.tmp / "home"
+        proc = _run_installer(repo_copy, home)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+        marker = repo_copy / ".foreman" / "tessguard-db-path"
+        self.assertTrue(marker.is_file(), f"{marker} was not written")
+        content = marker.read_text().strip()
+        self.assertNotIn("/path/to/", content, "unresolved template token survived in the marker file")
+        expected = str(home / "fake-tessera" / "data" / "tessera.db")
+        self.assertEqual(content, expected)
+        self.assertTrue(Path(content).is_absolute())
 
 
 def run_installed_hook(installed_guard, tool_name, tool_input):

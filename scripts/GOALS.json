@@ -3,12 +3,24 @@
   "component": "scripts",
   "scope_version": 1,
   "created": "2026-08-29T00:00:00Z",
-  "criteria_frozen_at": "2026-09-02T11:43:12Z",
+  "criteria_frozen_at": "2026-09-02T17:41:30.271289Z",
   "pre_implementation_brief": {
     "ticket_id": "DEVH-35",
     "persona": "dana-okafor",
     "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."
   },
+  "briefs": [
+    {
+      "ticket_id": "DEVH-35",
+      "persona": "dana-okafor",
+      "covers": "C1-C5, original freeze plus R24 widening"
+    },
+    {
+      "ticket_id": "DEVH-56",
+      "persona": "dana-okafor",
+      "covers": "TESSGUARD_DB_PATH marker-file write (C6 amendment). Brief marker updated to this ticket; DEVH-35 remains cited here."
+    }
+  ],
   "done_state": "install-dev-harness.sh installs a working hooks/skills/agents set into a fresh machine's ~/.claude/ tree, substitutes every /path/to/... token with the real local path, and fails closed (nonzero exit, no partial install left in place) if any required file is missing from the source tree -- including every real persona file in agents/, not a hardcoded subset of it. AND (R24, DEVH-2): the preflight refuses to install a tree missing any one of the three security guards, and a guard installed by that installer denies a destructive command from its installed location, not merely from the build tree.",
   "criteria": [
     {
@@ -45,6 +57,13 @@
       "verification": "muse's fourth verification leg, and the one that separates this from a file-existence check. Run a full install into a temp HOME. Then drive the INSTALLED copy of EACH of guard_destructive.py, guard_prodconfig.py and guard_untrusted_web.py -- the files under the temp HOOKS_DST, not the repository sources -- as subprocesses with a PreToolUse payload on stdin, and assert permissionDecision == 'deny' for each. All three are required. Token substitution rewrites files individually, so a substitution that corrupts one guard's imports leaves the others working; exercising only guard_destructive.py proves that one file survived installation and says nothing about the other two. Each guard must also be shown silent on a payload outside its own surface from the installed location, so the installed copy is not merely denying everything.",
       "verifiable": true,
       "added": "2026-09-02T09:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "install-dev-harness.sh writes a per-clone TESSGUARD_DB_PATH marker file (<ROOT>/.foreman/tessguard-db-path, containing the real, resolved TESSERA_ROOT/data/tessera.db path) as part of a normal install run, so tessguard's git hooks resolve the db without requiring a manually-exported environment variable -- DEVH-56. Does not touch the user's shell profile; matches bollard/tessera_resolver.py's own existing .foreman/tessera-prefix override-file convention rather than inventing a new mechanism.",
+      "verification": "python3 -m unittest scripts.test_install_fail_closed against a new test: run the real installer into a temp ROOT/HOME, assert <temp ROOT>/.foreman/tessguard-db-path exists, is a real absolute path (no /path/to/... token survives), and names a file that actually exists on disk at TESSERA_ROOT/data/tessera.db for the temp install's own TESSERA_ROOT. Companion end-to-end proof lives in tessera/GOALS.json C10 (a real git-hooks invocation with TESSGUARD_DB_PATH genuinely unset succeeding via this marker file) -- this criterion covers the install script's own half: that the file is written correctly, not the consuming side.",
+      "verifiable": true,
+      "added": "2026-09-02T18:20:00Z"
     }
   ],
   "failure_criteria": [
@@ -74,6 +93,11 @@
       "id": "F5",
       "statement": "The installed-guard probe covers one guard and the criterion is read as covering installation of all three. A substitution bug specific to guard_prodconfig.py or guard_untrusted_web.py -- a token appearing in only those files, say -- ships a guard that raises on every invocation, while every test passes and the install reports success.",
       "detection": "C5 requires all three installed copies to be driven from the temp HOME and to deny their own traffic, plus a silence control for each."
+    },
+    {
+      "id": "F6",
+      "statement": "The marker file is written but still carries a literal /path/to/... token (the same class of bug F1's own git history already reproduced once for REQUIRED_AGENTS/token substitution generally), or is written to the wrong location (HOOKS_DST instead of this clone's own ROOT, where tessguard's config.py actually looks for it).",
+      "detection": "C6 asserts the marker file both names a real, existing file on disk and contains no /path/to/... token, at the specific path <ROOT>/.foreman/tessguard-db-path -- not merely that some file got written somewhere."
     }
   ],
   "out_of_scope": [
@@ -157,17 +181,26 @@
       "reason": "DEVH-38, implemented by dev-harness-33. Re-run here (14 tests, 1.452s, OK) rather than recorded from its report, and the implementation read directly to confirm the probes drive the installed copies rather than the repository sources, which is the whole property C5 exists to establish.",
       "requested_by": "priya-desai",
       "at": "2026-09-02T13:10:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "scope extended to cover DEVH-56 (TESSGUARD_DB_PATH persistence); C6 and F6 added",
+      "from": "No criteria existed for the installer writing any TESSGUARD_DB_PATH-resolution artifact -- this gap was found and fixed under DEVH-52/54's own thread, not by this component's own freeze.",
+      "to": "C6 requires install-dev-harness.sh to write a per-clone marker file (.foreman/tessguard-db-path) carrying the real, resolved db path -- the install-side half of the DEVH-56 fix. The consuming side (tessera/tessguard/config.py's resolve_db_path() fallback) is tessera/GOALS.json C10, a separate component's own freeze.",
+      "reason": "Marcus Webb's fresh ship-readiness re-verification (dev-harness-7f) found TESSGUARD_DB_PATH unset anywhere persistent -- not in any shell profile, not exported by this script -- so a genuinely fresh shell fails every tessguard git-hook invocation unconditionally, ticket-citing or not, regardless of DEVH-54's own real-commit verification (which had the var manually exported in that testing session). Chosen fix shape: a per-clone marker file this script writes, read as a fallback by config.py, matching bollard/tessera_resolver.py's own .foreman/tessera-prefix override-file convention -- not an edit to the operator's shell profile, which was the other option DEVH-56 itself named but did not decide between.",
+      "requested_by": "dev-harness-run2 (this session, self-scoped per DEVH-56's assignment)",
+      "at": "2026-09-02T18:20:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:6d4b57f84c2c08662d271fafaba6def8c9cb1865b3a30a87611ffa3bdba61234",
+    "criteria_hash_at_freeze": "sha256:4fee4f45b776e179645eb944cdc151c18aab9266fe539c10724890e6048dc591",
     "criteria_hash_at_completion": "sha256:96bb0856f27c67b4aca0169c512b385cd2c5e0b8f6460f047f9aeade8c56b223",
     "match": null
   },
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 5,
-    "frozen_at": "2026-09-02T11:43:12Z"
+    "test_criteria": 6,
+    "frozen_at": "2026-09-02T17:41:30.271289Z"
   }
 }

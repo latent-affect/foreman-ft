@@ -135,6 +135,18 @@ if /usr/bin/grep -q '/path/to/home' "$HOOKS_DST/cross_project_routing/routing_ta
   die "token /path/to/home still present in installed routing_table.py -- refusing"
 fi
 
+# DEVH-56: tessguard's git hooks (.githooks/ + tessera/tessguard/config.py) live in THIS
+# clone's own tracked source tree, not a copied-and-substituted destination like
+# HOOKS_DST above -- and this clone's source tree is deliberately never rewritten (see the
+# README.agents.md note on that). TESSGUARD_DB_PATH therefore had nothing persistent to
+# resolve from in a fresh shell. Write the real, resolved db path into a per-clone marker
+# file instead, matching bollard/tessera_resolver.py's own .foreman/tessera-prefix
+# override-file convention -- config.py's resolve_db_path() reads this as a fallback when
+# the env var isn't set, so no shell profile needs editing.
+mkdir -p "$ROOT/.foreman"
+printf '%s\n' "$TESSERA_ROOT/data/tessera.db" > "$ROOT/.foreman/tessguard-db-path"
+echo "install-dev-harness: tessguard db path -> $ROOT/.foreman/tessguard-db-path"
+
 echo "install-dev-harness: hooks -> $HOOKS_DST"
 echo "install-dev-harness: skills -> $SKILLS_DST"
 echo "install-dev-harness: agents -> $AGENTS_DST"
