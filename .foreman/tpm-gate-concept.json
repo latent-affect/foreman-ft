@@ -1,0 +1,66 @@
+{
+  "stage": "concept",
+  "decision": "go",
+  "gate_owner_persona": "Priya Desai",
+  "tessera_ticket_ids": [
+    "DEVH-1",
+    "DEVH-2",
+    "DEVH-3",
+    "DEVH-4",
+    "DEVH-5"
+  ],
+  "decided_at": "2026-09-02T06:47:25Z",
+  "graded_content_sha": {
+    "PRD.md": {
+      "sha256": "643e6cdf9d56a51fcc5597bcd1e2f97864509612596ff9cba5d6b6c83c1aa12e",
+      "lines": 653
+    }
+  },
+  "summary": "Concept-stage gate over PRD.md (653 lines, commit 808558c, branch build-brief-run2), reviewed against its own source brief at /Users/m5/Downloads/dev-harness-BUILD-BRIEF_2.md. Decision is GO. The three things a concept gate exists to judge are all real here: the done-state is stated as seven metrics with thresholds and a named measuring command, with M5's threshold left explicitly open rather than faked; the out-of-scope list carries nine items each with its reason; and the falsification pass in section 7 changed four requirements and accepted two as weak on the record instead of gesturing at risk. I did not take the document's evidence on trust. Six load-bearing claims were re-derived in this context from the tree directly and every one held: the three named guards are absent from bollard/; store.py reads MI 4.78 grade C, max_cc 32, SLOC 1443; store.py churn is 1 against a 9-commit tree, so hotspot_signal reduces to max_cc exactly as R18 states; atlas/ingest/audit.py writes payload_json verbatim with no scrub; git ls-files returns zero for all three measurement scripts; and an independent fourth search over /Users/m5/dev for layered_command_guard.py and its four class names returns only PRD.md itself. GO rather than HOLD on the R14/R15 provenance question, deliberately. That question is already quarantined correctly - the PRD forbids R14/R15 entering a backlog or being sized until the operator settles it - so it is a drawn scope boundary, not a leak. It is also unresolvable by any action the architecture stage could take, which makes a Hold on it an open-ended Hold of the kind this skill's section 6 forbids, and it would stall roughly eighteen requirements that do not depend on it. It travels forward as an operator question with a default attached, per condition C1. One finding of my own, not inherited: section 8 records R0 as 'Closed by Run 1', and that claim does not survive checking. DEVH-3 is status=open in TESSERA - closed in prose by a peer session, never transitioned on the ticket. On the evidence question, this package's first revision said no dev-harness-scoped run existed; that was wrong on the specifics and is corrected here. A scoped run was produced: /Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt, 297 bytes, hint='dev-harness'. Reading it makes section 8 more wrong, not less. It reports 1.16x against a 1.1x target - OVER target - while the brief closes R0 on a 0.96x 'at parity, under the 1.1x target' figure. Two dev-harness-scoped numbers, disagreeing, and neither has surviving raw output: 0.96x was never shown, and 1.16x's JSON was overwritten in place by a later /dev-wide run to the same fixed output path, leaving only the console summary. That overwrite is R23's own argument landing concretely - an untracked tool writing to a fixed path silently destroys the prior run's raw output - which moves R23 from hygiene to load-bearing. R0 remains genuinely unsettled across two framings, neither complete. None of this blocks the gate: R0 is out of this PRD's scope and no R1-R24 requirement rests on it. It does make section 8 wrong, and condition C2 requires the correction. This package was written by a session that did not author the PRD, did not author the brief, and holds none of the reasoning that produced either. Recorded explicitly because concept_gate.py's own docstring names the unenforceability of that separation as a known open limitation - the hook cannot check it, so the claim belongs on the record instead.",
+  "conditions": [
+    {
+      "id": "C1",
+      "requirement": "R14/R15",
+      "condition": "Operator confirms whether layered_command_guard.py was ever written.",
+      "owner": "operator",
+      "default_if_unanswered": "Treat as never written. R14 and R15 become build-from-nothing requirements sized at design-and-scope, and every R12-R15 technical claim resting only on the brief's narration is re-derived by Clint rather than inherited.",
+      "due": "architecture freeze",
+      "blocks_architecture_stage": false
+    },
+    {
+      "id": "C2",
+      "requirement": "PRD section 8, R0 row",
+      "condition": "Restate the R0 row. Not 'Closed by Run 1'. Accurate wording: descoped from this PRD; DEVH-3 open in TESSERA; R0 unsettled across two framings, neither complete. The one surviving dev-harness-scoped artifact (/Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt) reports 1.16x, OVER the 1.1x target, contradicting the 0.96x at-parity figure the brief closes R0 on; its JSON was overwritten by a later /dev-wide run. Do not overstate in either direction - the claim is 'contradictory and incomplete', not 'nothing exists' and not 'closed'.",
+      "owner": "PRD author session (dev-harness-run2)",
+      "due": "before design-and-scope opens",
+      "blocks_architecture_stage": false,
+      "found_by": "this gate pass, not inherited from the PRD",
+      "revised_at_revision": 2
+    },
+    {
+      "id": "C3",
+      "requirement": "R23, sequencing",
+      "condition": "R23 clears first in the backlog. Every quantitative claim in this PRD traces to three untracked scripts, and R3's before/after comparison is unfalsifiable until there is a tool SHA to pin. Note DEVH-4 and DEVH-5 are open bugs in one of those three, so R21 shall not formalize a KPI series on it until they close.",
+      "owner": "design-and-scope stage",
+      "due": "first ticket cleared in implementation",
+      "blocks_architecture_stage": false
+    }
+  ],
+  "verified_independently_at_this_gate": [
+    "bollard/guard_destructive.py, guard_prodconfig.py, guard_untrusted_web.py all absent (R24)",
+    "store.py MI=4.78 (C), max_cc=32, SLOC=1443, commits=1 (R1a)",
+    "9 commits in tree; store.py churn=1; hotspot signal=32=max_cc (R18)",
+    "atlas/ingest/audit.py payload_json=json.dumps(obj), no scrub (R8)",
+    "git ls-files returns 0 for all three measurement scripts (R23)",
+    "4th independent search over /Users/m5/dev: layered_command_guard terms hit PRD.md only (R14)",
+    "concept_gate.py IS registered in .claude/settings.json on this project - the gate is live",
+    "R0 evidence, revision 2: /Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt read directly - 297 bytes, hint='dev-harness', 95.0% cache hit, 1.16x vs 1.1x target, 32 spikes. Contradicts the brief's 0.96x. Its JSON was overwritten in place."
+  ],
+  "notes": [
+    "PRD section 0 states the tree has 7 commits; it now has 9, the PRD's own two included. Stale by two, changes no conclusion, recorded so a later reader is not surprised by it.",
+    "foreman:tpm's own text still says concept_gate.py is registered on no project, dated 2026-08-22. That is now out of date: it is registered here and it fired. The skill text should be corrected separately."
+  ],
+  "revision": 2,
+  "revision_note": "Revision 2 corrects a specific in revision 1's R0 finding after agent-remediation-af supplied a pointer and this session read the artifact directly rather than accepting the correction on prose. Decision unchanged (go). C1 and C3 unchanged. C2 rewritten with the accurate state.",
+  "decided_at_revision_2": "2026-09-02T06:50:44Z"
+}
