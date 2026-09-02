@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "DEVH",
+  "component": "tessera",
+  "scope_version": 1,
+  "created": "2026-09-02T11:00:00Z",
+  "criteria_frozen_at": "2026-09-02T11:26:51Z",
+  "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health moves from 6.86 to at least 7.05; and the after-measurement is produced by a context that did not perform the refactor.",
+  "requirement": "PRD.md R1a (DEVH-7), R2 (DEVH-8), R3 (DEVH-9). R2 lives here as a pre-commit criterion rather than in ARCHITECTURE.md, per Addendum 3: none of R1/R2/R3 introduces a component or interface, so all three are design-and-scope work.",
+  "target_number_decision": "PRD.md left R1's target unpinned and proposed 'store.py MI >= 20 AND SLOC-weighted >= 7.5' pending confirmation. Measured rather than confirmed by hunch, and the proposal does not survive it. From the baseline report's own per_file_detail: 149 files, 14,443 total SLOC, recomputed SLOC-weighted health 6.857 which reproduces the reported 6.86. store.py is 1,443 SLOC, 10.0% of the tree, health 2.24. The health formula (foreman_quality_baseline.py:364) is health = min(10, MI/10)*0.5 + cc_bucket*0.5, where cc_bucket is 10 at max_cc<=10, 7 at <=20, 4 at <=50, else 1; store.py's 4.78 MI and 32 max_cc give 0.239 + 2.0 = 2.24, confirming the formula. Simulating store.py alone at a PERFECT health of 10 moves the tree only to 7.633, so a 7.5 tree target would require store.py at health ~9, meaning MI >= 80 and max_cc <= 10. That is a rewrite, not a refactor, and the two halves of the original proposal were never consistent with each other. What the formula also shows is that MI is the weaker lever: MI 4.78 -> 20 buys 0.76 health, while max_cc 32 -> <=20 buys 1.5. Decision, and it is derived rather than round: store.py reaches MI >= 20 AND max_cc <= 20, giving health 4.5 and a tree score of 7.083; the tree target is therefore SLOC-weighted >= 7.05. Not escalated, per REQ-49.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "Characterization tests for store.py exist and were proven to fail against a deliberately mutated copy of the pre-refactor file before any refactoring commit landed.",
+      "verification": "For store.py, produce a recorded run showing the characterization suite RED against a mutant and GREEN against the unmodified original, both dated before the first refactor commit's timestamp. The mutation must change observable behaviour the suite claims to pin, not merely a comment or a name -- for example inverting a status transition guard or dropping a projection column -- and the suite must fail on it for the stated reason rather than by erroring on import. A suite that passes against the mutant is not evidence and does not satisfy this criterion. PRD.md R2 and the operator's standing rule on self-written test code; the convergence scan's own KNOWN GAPS section names weak-oracle tests as invisible to every tool it runs.",
+      "verifiable": true,
+      "added": "2026-09-02T11:00:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "store.py reaches radon maintainability grade A and drops below the cyclomatic-complexity bucket boundary that dominates the health score.",
+      "verification": "Re-run foreman_quality_baseline.py from the repository root and read per_file_detail for tessera/store/store.py: maintainability_index >= 20 (radon grade A floor, from 4.78 grade C) AND cyclomatic_complexity max_cc <= 20 (from 32). Both halves required. MI alone moves health 2.24 -> 3.0; the cc bucket is worth more than twice that, so a run satisfying only the MI half has not done the work this criterion is for.",
+      "verifiable": true,
+      "added": "2026-09-02T11:00:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "The repository's SLOC-weighted health reaches at least 7.05, up from 6.86.",
+      "verification": "aggregate.sloc_weighted_average_health_1_to_10 >= 7.05 in the after-report. Additionally, recompute it independently from per_file_detail as sum(health*sloc)/sum(sloc) and require the two to agree to two decimal places -- the report's own aggregate must not be taken on trust when it is the number being graded. 7.05 is derived from C2's targets, not chosen: store.py at MI 20 and max_cc <= 20 gives health 4.5, which over its 10.0% SLOC share yields 7.083.",
+      "verifiable": true,
+      "added": "2026-09-02T11:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "The refactor preserves behaviour: the full tessera suite is green after, and no test was deleted or skipped to achieve it.",
+      "verification": "python3 -m unittest discover -s tessera -t . exits OK with a test count greater than or equal to the pre-refactor count of 208, measured in this session at 208 tests in 19.070s, OK. Greater-than-or-equal on the COUNT is the load-bearing half: a suite that goes green by losing tests satisfies 'OK' and fails this criterion. Any test removed must be named in results[] with a reason.",
+      "verifiable": true,
+      "added": "2026-09-02T11:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "The after-measurement is produced by a context that did not perform the refactor, and both baseline reports are retained and diffable.",
+      "verification": "PRD.md R3 and N6. Two dated baseline reports exist, each carrying tool_git_sha, tree_git_sha and formula_version per R23, and a diff between them is producible by command. The after-run is executed by a session that did not author the refactor, recorded in results[] by session name. R23 (DEVH-6) is shipped, so the provenance fields and non-clobbering filenames this depends on already exist.",
+      "verifiable": true,
+      "added": "2026-09-02T11:00:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "Characterization tests are written after the refactor, or written before but never run against a mutant. They then encode whatever the refactored code does, including any behaviour change the refactor introduced, and pass forever while proving nothing.",
+      "detection": "C1 requires a dated RED run against a mutant, timestamped before the first refactor commit."
+    },
+    {
+      "id": "F2",
+      "statement": "The mutant is trivial -- a renamed variable, a changed comment, an added log line -- so the suite fails for a reason unrelated to behaviour, or fails by erroring on import. The RED run exists and demonstrates nothing about the suite's oracle.",
+      "detection": "C1 requires the mutation to change observable behaviour the suite claims to pin, and requires the failure to be for the stated reason rather than an import error."
+    },
+    {
+      "id": "F3",
+      "statement": "MI is raised to 20 by splitting store.py's long functions into many small ones while the worst function's cyclomatic complexity stays above 20. The MI half of C2 passes, health moves 2.24 -> 3.0, the tree score lands near 6.93, and C3 fails -- but only if someone checks C3 independently.",
+      "detection": "C2 requires both halves. C3's threshold is derived from both halves together, so satisfying only MI cannot reach it."
+    },
+    {
+      "id": "F4",
+      "statement": "The tree score is reached by touching files other than store.py -- deleting dead code elsewhere, or excluding files from analysis -- rather than by the refactor this requirement is about. C3 goes green on work C2 never asked for.",
+      "detection": "C2 pins store.py's own numbers independently of the aggregate, so C3 cannot be satisfied while C2 is unmet."
+    },
+    {
+      "id": "F5",
+      "statement": "The suite goes green by deleting or skipping tests the refactor broke. 'OK' is reported honestly and coverage silently shrinks.",
+      "detection": "C4 requires the test COUNT to be at least the pre-refactor 208 and any removal to be named with a reason."
+    },
+    {
+      "id": "F6",
+      "statement": "The after-baseline is run by the same context that did the refactor, which knows which files it touched and can unconsciously scope the run to flatter them. The before/after comparison looks rigorous and is self-graded.",
+      "detection": "C5 requires the after-run to be executed by a different session, recorded by name in results[]."
+    },
+    {
+      "id": "F7",
+      "statement": "The report's own aggregate field is trusted as the after-number while per-file data tells a different story, for instance because files dropped out of analysis. The graded number is produced by the same tool being graded.",
+      "detection": "C3 requires the aggregate to be independently recomputed from per_file_detail and to agree to two decimal places."
+    }
+  ],
+  "out_of_scope": [
+    "R1b's two files. monitoring/compliance-cron/skill_broadscan.py (MI 51.35, grade A) and bollard/component_coupling.py (MI 41.45, grade A) do not meet R1's stated criterion of complexity AND maintainability both flagging, and they belong to the monitoring and bollard components rather than tessera. PRD.md requires each to carry a written justification or leave scope; neither is covered by this freeze.",
+    "tessera's other subdirectories: api/, common/, gitops/, reviewui/, tessguard/. This freeze covers store.py only, which is the sole file in the analyzed tree carrying a grade-C maintainability index.",
+    "Raising the tree score above 7.05. The measurement in target_number_decision shows store.py alone caps the tree at 7.633 even at perfect health; further movement requires work on other components and is a separate scoping question.",
+    "Any change to the health formula or the hotspot signal. R18 (DEVH-19) owns the signal's honesty; changing the formula under this freeze would invalidate the 6.86 baseline C3 is measured against.",
+    "Fixing DEVH-4 and DEVH-5. They are bugs in token_bloat_diagnostic.py, a different script from foreman_quality_baseline.py, and do not affect these criteria."
+  ],
+  "constraints": [
+    "Characterization tests land and are proven red-against-mutant BEFORE the first refactoring commit, not in the same commit and not after. C1's verification depends on the timestamps.",
+    "store.py's public behaviour is preserved. This is a maintainability refactor, not a redesign; a behaviour change that improves the score fails C4.",
+    "Do not change tessera/store/schema.py's PROJECTION_TABLES, the DDL, or any event-sourcing semantics under this freeze. store.py's structure is in scope; the data model is not.",
+    "R4's SQL-annotation work (DEVH-10) touches the same file. It is a separate ticket under a separate concern and must not be folded into this refactor, so that a behaviour regression can be bisected to one of them rather than both.",
+    "The after-measurement is run from the repository root, since foreman_quality_baseline.py analyzes its current working directory and produces no findings when run elsewhere -- confirmed by running it from a scratch directory in this session, which reported 'No Python files found'.",
+    "This file sits at tessera/GOALS.json because component_root('tessera') resolves to 'tessera/'. Verified by running the resolver. tessera/GOALS.json did not previously exist, so every write under tessera/ was denied by goals_freeze_gate before this freeze."
+  ],
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 5,
+    "frozen_at": "2026-09-02T11:26:51Z"
+  },
+  "results": [],
+  "amendments": [],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:3453f2a0b24a9eee34856c7aa224dad70a9807e0a79be60c680716ef9780f4b7",
+    "match": null
+  }
+}
