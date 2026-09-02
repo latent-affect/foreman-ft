@@ -15,7 +15,7 @@ die() {
 
 echo "install-dev-harness: source=$ROOT"
 
-REQUIRED_HOOKS="architecture_gate.py concept_gate.py goals_freeze_gate.py preflight_blocking_gate.py ship_readiness_gate.py pre_implementation_brief_gate.py hook_common.py audit_lib.py"
+REQUIRED_HOOKS="architecture_gate.py concept_gate.py goals_freeze_gate.py preflight_blocking_gate.py ship_readiness_gate.py pre_implementation_brief_gate.py hook_common.py audit_lib.py guard_destructive.py guard_prodconfig.py guard_untrusted_web.py"
 for name in $REQUIRED_HOOKS; do
   src="$ROOT/bollard/$name"
   if [ ! -f "$src" ]; then
@@ -55,9 +55,15 @@ substitute_tokens() {
 
 apply_tokens_tree() {
   tree="$1"
+  # *.template included: settings.json.template and CLAUDE.md.template both end in .template,
+  # not .json/.md, so the prior pattern silently skipped them. foreman_init.py reads
+  # settings.json.template's INSTALLED copy assuming it is already substituted (write_scaffold
+  # copies it verbatim into a new project's .claude/settings.json with no substitution step of
+  # its own) -- every hook command it names shipped with a literal, unresolvable /path/to/home
+  # token until this was fixed, for all six original gates, not only R24's new guards.
   /usr/bin/find "$tree" -type f \( \
       -name '*.py' -o -name '*.sh' -o -name '*.sb' -o -name '*.md' \
-      -o -name '*.json' -o -name '*.txt' \
+      -o -name '*.json' -o -name '*.txt' -o -name '*.template' \
     \) | while IFS= read -r f; do
     tmp="$f.substtmp"
     /usr/bin/sed \

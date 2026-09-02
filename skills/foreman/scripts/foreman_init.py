@@ -170,18 +170,31 @@ def verify_settings_shape(project_root):
     if not pre_tool_use:
         raise InitError(f"{path} has no hooks.PreToolUse entries")
 
+    # Bash-coverage invariant, checked independently of command collection below (DEVH-29): some
+    # entry's matcher must name Bash as one of its pipe-separated alternatives, or a denied
+    # Edit/Write is trivially routed around with a shell redirect, tee, cp/mv, or sed -i -- the
+    # reason this function already gave for requiring it. Splitting the matcher string on "|"
+    # and comparing tokens exactly, not a substring or prefix test on the raw matcher text: R24's
+    # guard_destructive.py is registered under the exact matcher "Bash", and the original
+    # six-gate entry stays "Edit|Write|Bash" -- both must satisfy this, and a substring test
+    # would also silently accept an unrelated future matcher like "BashDisabled".
+    found_bash_covering_matcher = any(
+        "Bash" in (entry.get("matcher") or "").split("|") for entry in pre_tool_use
+    )
+    if not found_bash_covering_matcher:
+        raise InitError(f"{path} has no PreToolUse entry whose matcher covers Bash")
+
+    # Command collection (DEVH-29 fix): every entry's commands are validated unconditionally,
+    # not gathered by matching on matcher text at all. The prior version only ever collected
+    # commands from the entry whose matcher was EXACTLY "Edit|Write|Bash" -- invisible to every
+    # other entry, including R24's three guards registered under "Bash", "Edit|Write" and the
+    # outbound-fetch surface. A broken or missing guard passed this check cleanly before this
+    # fix; nothing about that class of bug is caught by relaxing the old exact match to a
+    # substring test instead, which is why this collects from every entry rather than doing that.
     commands = []
-    found_edit_write_matcher = False
     for entry in pre_tool_use:
-        if entry.get("matcher") == "Edit|Write|Bash":
-            found_edit_write_matcher = True
-            for h in entry.get("hooks", []):
-                commands.append(h.get("command", ""))
-    if not found_edit_write_matcher:
-        # Matcher must cover Bash too, not just Edit|Write -- a denied Edit/Write
-        # is trivially routed around with a shell redirect, tee, cp/mv, or sed -i, and a hook
-        # that only matches Edit|Write never even sees that tool call.
-        raise InitError(f"{path} has no PreToolUse entry matching 'Edit|Write|Bash'")
+        for h in entry.get("hooks", []):
+            commands.append(h.get("command", ""))
 
     missing = []
     for cmd in commands:

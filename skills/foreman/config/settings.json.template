@@ -29,6 +29,33 @@
             "command": "python3 /path/to/home/.claude/hooks/ship_readiness_gate.py"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/guard_destructive.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/guard_prodconfig.py"
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/home/.claude/hooks/guard_untrusted_web.py"
+          }
+        ]
       }
     ]
   }

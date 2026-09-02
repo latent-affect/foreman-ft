@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "DEVH",
+  "component": "skills",
+  "scope_version": 1,
+  "created": "2026-09-02T08:55:00Z",
+  "criteria_frozen_at": "2026-09-02T10:12:36Z",
+  "done_state": "The configuration an installer actually receives from this repo registers every security guard this repo claims to ship, and every command path that configuration names resolves to a real, runnable hook after install-time token substitution. The install chain's own settings-shape check validates every registered hook command, not only those under one exact matcher string.",
+  "requirement": "PRD.md R24 (DEVH-2), the skills-component share of it. First design-and-scope pass for this component; it had no GOALS.json at all, so every write under skills/ was denied by goals_freeze_gate.",
+  "pre_implementation_brief": {
+    "ticket_id": "DEVH-34",
+    "persona": "dana-okafor",
+    "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."
+  },
+  "scope_note": "A real pass, not a citation anchor, but scoped to the configuration surface R24 concerns: skills/foreman/config/. The packaged skill subset itself (foreman/, code-safety/, research-lifecycle/ skill bodies) is deliberately out of scope here and named as such below -- it is a distribution copy of files whose source of record lives elsewhere, and inventing criteria for it to look thorough is the padding this stage's own guardrails forbid.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "settings.json.template's PreToolUse block registers all three security guards, each under the matcher its own design requires.",
+      "verification": "Parse skills/foreman/config/settings.json.template as JSON -- parse, never grep, because a grep matches a malformed or commented-out entry and a JSON parse does not. Assert that within hooks.PreToolUse there is an entry whose command path ends in guard_destructive.py under a matcher containing Bash; one ending in guard_prodconfig.py under a matcher containing Edit and Write; and one ending in guard_untrusted_web.py under the matcher covering this harness's outbound-fetch surface. The template currently registers six design gates and zero guards, confirmed by reading it directly on 2026-09-02.",
+      "verifiable": true,
+      "added": "2026-09-02T08:55:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "Every hook command path named anywhere in the template resolves to a real file after install-time token substitution, not only the three guards this requirement adds.",
+      "verification": "Run scripts/install-dev-harness.sh's own substitute_tokens over the template into a temp directory with a temp HOME and temp destination roots. Parse the substituted output as JSON, walk every hooks entry in every event block, extract the script path from each command string, and assert os.path.isfile for each. Applies to all entries, not just the new ones: a guard registered under a path that does not exist is precisely the class of failure R24 exists to fix, and it would be an unusually poor outcome to reintroduce it inside the fix.",
+      "verifiable": true,
+      "added": "2026-09-02T08:55:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "Each guard the template registers is a runnable hook rather than a stub or a file with a broken import.",
+      "verification": "For each of the three substituted guard paths, run it as a subprocess with an empty JSON object on stdin. Assert exit status 0 and empty stdout -- the DENY-or-nothing convention hook_common.py already enforces, under which a hook with nothing to say emits nothing. A stub that raises on import exits non-zero and fails; a file that prints anything on a payload it should ignore also fails, which keeps a guard from degrading into an advisory that never blocks.",
+      "verifiable": true,
+      "added": "2026-09-02T08:55:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "verify_settings_shape() validates the hook command in EVERY PreToolUse entry, not only entries whose matcher is exactly the string 'Edit|Write|Bash', while still requiring that such an entry exist.",
+      "verification": "Two halves, both required. Regression: build a settings.json fixture in the shape ARCHITECTURE.md specifies for these guards -- three separate PreToolUse entries with matchers 'Bash', 'Edit|Write' and the outbound-fetch surface, alongside the six-gate 'Edit|Write|Bash' entry -- with exactly one guard's target file deliberately absent. verify_settings_shape() must raise InitError naming that command. Against the code as it stands today (foreman_init.py:176, `entry.get('matcher') == 'Edit|Write|Bash'`) it returns cleanly, which is the bug. Preserved invariant: a settings.json with NO entry whose matcher covers Bash must still raise, so the fix widens what is checked without weakening the requirement that the design gates see Bash traffic -- the reason given in that function's own comment at lines 181-183, that a denied Edit or Write is trivially routed around with a shell redirect.",
+      "verifiable": true,
+      "added": "2026-09-02T10:15:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "The guards are added to the template by string append, leaving it syntactically valid to a grep but not parseable as JSON, or valid JSON with the guards nested under the wrong event block. A presence check passes and the installed configuration registers nothing that fires.",
+      "detection": "C1 parses the file as JSON and asserts position within hooks.PreToolUse, not mere substring presence."
+    },
+    {
+      "id": "F2",
+      "statement": "A guard is registered under a command path that does not survive token substitution, or points at a filename that was never added to bollard/. The template looks correct in the repository and the installed harness silently registers a hook that cannot run.",
+      "detection": "C2 substitutes tokens first, then asserts os.path.isfile for every extracted path."
+    },
+    {
+      "id": "F3",
+      "statement": "Empty or stubbed guard files are created so the template's paths resolve, satisfying every file-existence and registration check while denying nothing. This is muse's own objection to M1: a guard existing and being listed is a different claim from a guard working.",
+      "detection": "C3 executes each registered guard and requires a clean exit; bollard's own C5 through C8 require real denials through the same entry point."
+    },
+    {
+      "id": "F4",
+      "statement": "A guard is wired to emit `ask` rather than `deny`, or a PostToolUse warning envelope. It appears active in the ledger, produces visible output, and never actually blocks a destructive command -- the exact detection-instead-of-prevention shape this whole PRD is about.",
+      "detection": "bollard C8 asserts the decision envelope is `deny` specifically, and that no non-matching payload produces any output at all."
+    },
+    {
+      "id": "F5",
+      "statement": "The fix widens command collection to every PreToolUse entry but drops or weakens the separate requirement that an entry matching Bash exists. Broken guard references are now caught, and a settings.json whose gates never see Bash traffic installs cleanly -- trading one blind spot for a worse one, since the function's own comment explains that a denied Edit or Write is trivially routed around with a shell redirect.",
+      "detection": "C4's second half asserts InitError is still raised when no Bash-covering entry is present."
+    },
+    {
+      "id": "F6",
+      "statement": "Collection is widened by relaxing the exact match to a substring or prefix test on the matcher string. A matcher of 'Bash' is caught by accident, an unrelated future matcher is missed, and the same exact-string-matching bug class survives one refactor later in a less obvious form.",
+      "detection": "C4 requires validating every entry unconditionally rather than matching on matcher text at all; the matcher string is only consulted for the separate Bash-coverage invariant."
+    }
+  ],
+  "out_of_scope": [
+    "The packaged skill bodies under skills/foreman/, skills/code-safety/ and skills/research-lifecycle/. They are a distribution copy whose source of record is the operator's own ~/.claude/skills/ tree; criteria asserting their content here would be asserting something this repository does not own.",
+    "Whether the packaged subset is the RIGHT subset. A real question, and a scoping one, not a verification one -- it belongs to whoever revisits the distribution's contents, not to R24.",
+    "GOALS.template.json and the other files under skills/foreman/config/ that R24 does not touch. Adding criteria for them would inflate scope_estimate.test_criteria, which is meant to be a real ceiling later growth is measured against.",
+    "The behaviour of the three guards themselves. That is bollard's component and bollard's GOALS.json; this component only guarantees they are correctly registered and runnable.",
+    "The install script's own fail-closed REQUIRED_HOOKS preflight. That is scripts/GOALS.json C4 and C5. C4 here covers foreman_init.py's settings-shape check, which is a different artifact: it reads the installed .claude/settings.json, not the shipped template and not the hooks directory."
+  ],
+  "constraints": [
+    "The template must stay valid JSON at every step. It is consumed by substitute_tokens and then by Claude Code itself, neither of which tolerates a syntax error, and a broken settings file disables every hook rather than one.",
+    "Guard entries use the same /path/to/... token convention as the existing six gate entries, so install-time substitution reaches them identically. A hardcoded absolute path would work on the build machine and nowhere else.",
+    "Do not reorder or alter the six existing gate entries while adding the three guards. This freeze covers the addition only.",
+    "This file sits at skills/GOALS.json because component_root('skills') resolves to 'skills/'. Verified by running the resolver. Criteria here cover R24's configuration share only."
+  ],
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 4,
+    "frozen_at": "2026-09-02T10:12:36Z"
+  },
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest skills.foreman.config.test_settings_template skills.foreman.scripts.test_foreman_init\nRan 14 tests in 0.387s\nOK\n\nCovering tests:\ntest_guard_destructive_registered_under_bash_matcher ... ok\ntest_guard_prodconfig_registered_under_edit_write_matcher ... ok\ntest_guard_untrusted_web_registered_under_the_outbound_fetch_surface ... ok\ntest_six_original_gates_are_untouched ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest skills.foreman.config.test_settings_template skills.foreman.scripts.test_foreman_init\nRan 14 tests in 0.387s\nOK\n\nCovering tests:\ntest_c2_every_hook_command_in_the_installed_template_resolves_to_a_real_file ... ok\ntest_all_real_files_across_all_four_entries_passes ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest skills.foreman.config.test_settings_template skills.foreman.scripts.test_foreman_init\nRan 14 tests in 0.387s\nOK\n\nCovering tests:\ntest_c3_each_guard_runs_as_a_clean_subprocess_on_empty_payload ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest skills.foreman.config.test_settings_template skills.foreman.scripts.test_foreman_init\nRan 14 tests in 0.387s\nOK\n\nCovering tests:\ntest_regression_broken_guard_under_a_non_edit_write_bash_matcher_is_caught ... ok\ntest_control_broken_reference_inside_the_six_gate_entry_still_caught ... ok\ntest_no_bash_covering_entry_still_raises ... ok\ntest_bash_only_matcher_alone_satisfies_the_bash_coverage_invariant ... ok\ntest_broken_guard_under_bash_only_matcher_is_also_caught ... ok\ntest_anti_fix_substring_matcher_would_not_be_exploitable_here ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session",
+      "note": "Both halves of C4 are covered and so are F5 and F6: the Bash-coverage invariant is asserted to still raise when absent, and the substring shortcut F6 forbids is explicitly shown non-exploitable rather than merely avoided."
+    }
+  ],
+  "amendments": [
+    {
+      "criterion_id": null,
+      "change": "criterion added (C4)",
+      "from": "Three criteria covering the shipped settings template. Nothing covering foreman_init.py, whose settings-shape check runs against the INSTALLED settings.json rather than the template.",
+      "to": "Four criteria; C4 covers verify_settings_shape validating every PreToolUse entry.",
+      "reason": "dev-harness-33 proved by real install into a temp HOME that verify_settings_shape() (skills/foreman/scripts/foreman_init.py:176) collects commands only from an entry whose matcher is EXACTLY 'Edit|Write|Bash', so none of R24's three guards -- registered under 'Bash', 'Edit|Write' and the outbound-fetch surface, exactly as ARCHITECTURE.md specifies -- have their command paths checked at all. A guard pointing at a file that does not exist passed cleanly. Their control test (same broken reference inside the six-gate entry) correctly raised InitError, so the blindness is specific, not general breakage. Confirmed here by reading the function directly. Without this, a broken or missing guard passes all nine of R24's frozen criteria AND the install chain's own settings-shape check. Scoped into skills rather than opened as a fourth component because foreman_init.py resolves to the skills component, verified by running the resolver -- the same component frozen earlier tonight.",
+      "requested_by": "dev-harness-33 (found), priya-desai (scoped)",
+      "at": "2026-09-02T10:15:00Z"
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:ed86c4e884aafae0473a1315fce76aef4bc2e2c517874094b447d615520ddee1",
+    "match": null
+  }
+}
