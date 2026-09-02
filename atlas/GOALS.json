@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "DEVH",
+  "component": "atlas",
+  "scope_version": 1,
+  "created": "2026-09-02T08:05:00Z",
+  "criteria_frozen_at": "2026-09-02T07:28:35Z",
+  "done_state": "A credential pattern present in an audit-plane line is redacted before that line's row is persisted, verified by reading the row back from the database file itself; any failure in one line's scrub-verify-publish chain results in zero rows for that line and a run that exits non-zero rather than reporting success; and the independent read-time credential check remains live and is promoted from advisory to contract.",
+  "requirement": "PRD.md R8 (DEVH-13). Architecture: ARCHITECTURE.md 'R8 \u2014 write-time credential scrub, fail-closed'.",
+  "design_decision_reconciling_prd_and_architecture": "PRD.md R8 says a forced scrub failure means 'the ingest run shall exit non-zero and shall write no row'. The architecture, following muse, sets the unit of fail-closed atomicity at one audit line rather than one ingest run, so lines N-1 and N+1 still land when line N fails. These conflict and this freeze resolves them rather than inheriting both. Per-record atomicity is adopted, because it does not weaken the guarantee at all: the claim being protected is that no credential is persisted, and line N is never persisted either way, while lines N plus or minus one were independently verified clean on their own chains. Run-level abort would additionally have to decide what happens to rows already written, and either answer is worse -- rolling them back discards verified-clean audit data, and leaving them is the partial success the operator's fail-closed rule forbids by name. What does NOT survive from PRD.md R8 is the literal 'shall write no row', since other clean lines in the same run do get written; that clause is narrowed to the failing line. In exchange, and this is the half muse's note only gestured at, the run must not be allowed to report success: a dropped line is counted and the run exits non-zero at the end. Otherwise per-record atomicity converts a credential-leak failure into a silent record-loss failure, which is the same 'you only find out by looking' shape the rule exists to make impossible.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "A payload matching any credential pattern is redacted before persistence, and the redaction is confirmed by reading the stored row back from the database file rather than from any in-memory value.",
+      "verification": "Build one synthetic audit line carrying a distinct planted match for EVERY pattern in atlas.warehouse.dq_runner.CREDENTIAL_PATTERNS, imported at test time rather than copied into the test, so that adding an eleventh pattern cannot leave this criterion silently testing ten. Ingest the line. Then open a NEW raw sqlite3 connection to the warehouse file on disk -- not the ingest connection, and not QueryFacade, whose own read path must not be able to satisfy a write-time criterion -- SELECT payload_json for that row, and assert no pattern matches. An implementation that scrubs only the first match found fails, because every pattern is planted in the same line.",
+      "verifiable": true,
+      "added": "2026-09-02T08:05:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "A scrub whose return value is clean while the bytes it persists are the original is caught and hard-fails, writing zero rows for that line.",
+      "verification": "Deliberately inject a scrub that returns a cleaned string while writing the original payload. Ingest a line containing all planted patterns. Assert the ingest reports failure for that line and that a fresh connection to the database file finds zero rows for it. This is the criterion the architecture's toy model at r8_writetime_scrub_toy.py already proves is load-bearing: re-run in this session, its trap control hard-failed with all ten patterns detected, and a verification that trusted the scrub's return value would have passed the same bug clean.",
+      "verifiable": true,
+      "added": "2026-09-02T08:05:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "A scrub that raises hard-fails its line, leaving zero rows and no partial state.",
+      "verification": "Force the scrub to raise. Assert the line's ingest reports failure, a fresh connection finds zero rows for it, and no temporary artifact from the write-temp step remains in the warehouse directory. An error that is logged while the row is written anyway fails this criterion, as does an error that leaves an orphaned temp row or file.",
+      "verifiable": true,
+      "added": "2026-09-02T08:05:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "The unit of atomicity is one line, and a dropped line cannot be silent: in a run where exactly one line fails, every other line still lands, the failing line writes nothing, the run reports a non-zero count of fail-closed drops, and the run exits non-zero.",
+      "verification": "Ingest a batch of five lines in which exactly one is rigged to fail its scrub. Assert, from a fresh connection to the database file: exactly four rows present, all four clean, the rigged line absent. Assert the run's own reported drop count equals 1 and its process exit status is non-zero. All four halves are required together. An implementation that aborts the whole run fails the four-rows-present half; one that drops the line and exits zero fails the non-silence half, which would convert this design's credential guarantee into undetected record loss.",
+      "verifiable": true,
+      "added": "2026-09-02T08:05:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "The independent read-time credential check stays live and is promoted from advisory to contract.",
+      "verification": "check_audit_payload_credential_scan remains registered and executable after the write-time gate lands -- it is not retired as redundant, because a second differently-shaped check that does not share the write path's blind spots is the point. Its registration tuple in atlas/warehouse/tests/test_schema.py, currently ('audit_event', 'source', 'advisory', 'invariant'), reads 'contract' in the third position, and test_schema is green.",
+      "verifiable": true,
+      "added": "2026-09-02T08:05:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "A redacted row records that redaction occurred, stays wellformed, and an unredacted row is not marked as redacted.",
+      "verification": "Per PRD.md N3, the fact of redaction must be recorded on the row rather than being inferable only from the absence of a secret. Ingest one line containing a planted credential and one clean line. Assert the redacted row carries a positive redaction marker and the clean row does not, so an implementation that sets the marker unconditionally fails. Assert both rows still pass check_audit_envelope_wellformed. If the marker needs a schema column, it is added to the DDL block in docs/atlas-architecture.md section 16, which atlas/warehouse/ddl.py extracts at import time, not to a second copy of the DDL in code.",
+      "verifiable": true,
+      "added": "2026-09-02T08:05:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "Verification trusts the value the scrub function returned instead of the bytes on disk. The scrub looks correct, every test is green, and a bug in the function's own persistence path ships a verbatim credential into the warehouse. This is not hypothetical: the architecture's toy model reproduced exactly this bug and only the disk read-back caught it.",
+      "detection": "C1 opens a new raw sqlite3 connection to the database file. C2 injects the bug deliberately and requires it to hard-fail."
+    },
+    {
+      "id": "F2",
+      "statement": "Redaction is implemented in the serve path -- QueryFacade, a view definition -- rather than at write time. Every test that reads through the facade shows clean output, the stored payload is still verbatim, and any consumer reaching the table directly still sees the secret.",
+      "detection": "C1 forbids reading through QueryFacade and requires a raw connection to the file."
+    },
+    {
+      "id": "F3",
+      "statement": "The scrub stops at the first pattern it matches. A line carrying one planted secret passes, and a real payload carrying several leaks all but one.",
+      "detection": "C1 plants a distinct match for every pattern in one line and asserts none survive."
+    },
+    {
+      "id": "F4",
+      "statement": "The pattern list is copied into the test rather than imported. An eleventh pattern is added to CREDENTIAL_PATTERNS later, the test keeps asserting ten, and the new pattern is never verified as scrubbed by anything.",
+      "detection": "C1 requires the list be imported from atlas.warehouse.dq_runner at test time."
+    },
+    {
+      "id": "F5",
+      "statement": "Per-record atomicity is implemented and a failed line is only logged. Rows keep flowing, the run exits zero, and record loss accumulates undetected -- the same 'you only find out by going to look' failure the fail-closed rule exists to prevent, moved from credential leak to silent data loss.",
+      "detection": "C4 requires a reported drop count and a non-zero process exit alongside the surviving four rows."
+    },
+    {
+      "id": "F6",
+      "statement": "The read-time check is retired once the write-time gate lands, on the reasoning that it is now redundant. The system loses its only control that does not share the write path's blind spots, so a write-path bug becomes undetectable by construction.",
+      "detection": "C5 requires the check to remain registered and executable, and to be promoted rather than removed."
+    },
+    {
+      "id": "F7",
+      "statement": "The redaction marker is set unconditionally, or derived from whether the scrub ran rather than whether it changed anything. Every row looks redacted, so the marker carries no information and cannot distinguish a scrubbed payload from a clean one.",
+      "detection": "C6 ingests a clean line alongside a credential-bearing one and requires the marker to differ."
+    },
+    {
+      "id": "F8",
+      "statement": "A schema change for the marker is made by editing DDL in code. atlas/warehouse/ddl.py extracts the real DDL from docs/atlas-architecture.md section 16 at import time, so a second hand-maintained copy drifts silently from the source of record -- the exact failure ddl.py's own docstring says it exists to prevent.",
+      "detection": "C6 names the document section as the only place a column may be added."
+    }
+  ],
+  "out_of_scope": [
+    "Redacting safety.jsonl itself. The warehouse is a derived store and the append-only source is a separate decision with different reversibility, per PRD.md's own constraint.",
+    "R9's cwd-based ledger routing. Same write-time shape, separate requirement, separate ticket (DEVH-14), and blocked on a current measured count that does not exist yet.",
+    "Serve-time redaction in QueryFacade or in v_fail_open_incident's definition. Reasonable defense in depth on top of this, explicitly not a substitute for it, and not scoped here.",
+    "Ingest throughput or latency tuning. N2's budget governs PreToolUse hooks, not the ingest path, which is not on the tool-call critical path.",
+    "Retiring or rewriting check_audit_ledger_partition_by_cwd. C5 covers the credential check only.",
+    "Any change to atlas/mcp/server.py. It already excludes v_fail_open_incident from MCP_VIEWS and is R7's subject, not R8's."
+  ],
+  "constraints": [
+    "The unit of fail-closed atomicity is one audit line. See design_decision_reconciling_prd_and_architecture above -- this deviates from PRD.md R8's literal 'shall write no row' wording, deliberately and with the compensating non-silence requirement in C4.",
+    "audit.py's make_row_mapper keeps its existing behaviour and signature: it still produces the row dict. The new scrub is a separate module, atlas/ingest/audit_scrub.py, sitting between the mapper and the insert.",
+    "insert_audit_event_row keeps its signature. The architecture has it called against a temp table by the new harness rather than directly against the live warehouse; it is not rewritten.",
+    "Write-temp, verify by reading from disk through a fresh connection, then publish atomically. Never mutate a persisted row in place.",
+    "No new cross-component interface. Both files live under atlas/**, which is one declared component, so this stays intra-component exactly as the existing empty interfaces block already reasons.",
+    "Any schema change goes in the DDL block of docs/atlas-architecture.md section 16, which ddl.py extracts at import time. Never a second copy in Python.",
+    "This file sits at atlas/GOALS.json because component_root('atlas') resolves to 'atlas/'. Verified by running the resolver. Criteria here cover R8 only; do not land R9 or R7 work under this freeze."
+  ],
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 6,
+    "frozen_at": "2026-09-02T07:28:35Z"
+  },
+  "results": [],
+  "amendments": [],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:ca388a9c03c91f52a6b41730bbad4e54de271b9a991df786a1a482808233d97f",
+    "match": null
+  }
+}
