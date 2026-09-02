@@ -66,6 +66,35 @@ class ProjectionTests(unittest.TestCase):
         empty_project_id = self.store.get_project("EMP")["id"]
         self.assertIn((empty_project_id, "ticket_id", 0), rebuilt["counters"])
 
+    def test_rebuild_covers_assignee_watch_unwatch_unarchive_and_attachment(self):
+        # PRD.md R2 / tessera/GOALS.json C1: five event types (AssigneeSet, TicketWatched,
+        # TicketUnwatched, TicketUnarchived, AttachmentAdded) had zero rebuild-vs-live
+        # coverage anywhere in this suite before this test -- confirmed by grepping every
+        # test file for set_assignee/watch_ticket/unwatch_ticket/unarchive_ticket/
+        # add_attachment, each returning only this file. A bug introduced into any of
+        # replay_event_internal's branches for these five event types during the R1
+        # refactor would have shipped silently without this.
+        s = self.store
+        a = s.create_ticket(ticket_type="Task", reporter="me", actor="agent")
+        s.set_assignee(a, "agent", "bob")
+        s.watch_ticket(a, "carol", "agent")
+        s.watch_ticket(a, "dave", "agent")
+        s.unwatch_ticket(a, "dave", "agent")
+        s.archive_ticket(a, "agent")
+        s.unarchive_ticket(a, "agent")
+        s.add_attachment(a, "agent", "notes.txt", b"investigation notes")
+
+        live = s.live_projection()
+        rebuilt = s.rebuild_projection()
+        self.assertEqual(set(live.keys()), set(rebuilt.keys()))
+        for table in live:
+            self.assertEqual(
+                sorted(live[table]), sorted(rebuilt[table]),
+                f"table {table!r} diverged between live and rebuilt projections",
+            )
+        self.assertFalse(s.get_ticket(a)["archived"])
+        self.assertEqual(sorted(w["watcher"] for w in s.get_watchers(a)), ["carol"])
+
     def test_verify_chain_one_root_one_tip_no_orphans(self):
         self.representative_sequence()
         result = self.store.verify_chain()
