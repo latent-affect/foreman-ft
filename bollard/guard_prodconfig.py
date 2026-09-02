@@ -25,6 +25,11 @@ PRODCONFIG_PATTERNS = [
     ("dotenv_production", re.compile(r"(^|/)\.env\.(production|prod)$", re.IGNORECASE)),
     ("production_path_segment", re.compile(r"(^|/)(production|prod)(/|$)", re.IGNORECASE)),
     ("docker_compose_prod", re.compile(r"(^|/)docker-compose\.(prod|production)(\.ya?ml)?$", re.IGNORECASE)),
+    # DEVH-2 follow-up: the ticket's own description named "mcp.json hard-deny, REQ-3" as part
+    # of what this guard ships -- TrustFall (disclosed May 2026) is a one-click RCE via a cloned
+    # repo's own .mcp.json/.claude/settings.json auto-starting a malicious MCP server, so a
+    # cloned/untrusted repo silently editing this path is exactly this guard's threat class.
+    ("mcp_config", re.compile(r"(^|/)\.(claude|cursor)/mcp\.json$", re.IGNORECASE)),
 ]
 
 
