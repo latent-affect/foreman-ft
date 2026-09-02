@@ -31,7 +31,7 @@ ATLAS_REPO = Path(os.environ.get(
     "ATLAS_REPO", str(Path(__file__).resolve().parents[2])
 ))
 sys.path.insert(0, str(ATLAS_REPO))
-from atlas.query.facade import QueryFacade, QueryFacadeUnavailable  # noqa: E402
+from atlas.query.facade import QueryFacade, QueryFacadeUnavailable, QueryRefused  # noqa: E402
 
 WAREHOUSE_DB = ATLAS_REPO / "atlas" / "warehouse" / "atlas.db"
 TESSERA_DB = Path(os.environ.get(
@@ -73,42 +73,57 @@ def load_atlas_snapshot():
         facade.close()
         return warehouse, None
 
-    tickets_by_prefix = {}
-    cols, rows = facade.fetch("v_ticket_diff_binding")
-    idx = {c: i for i, c in enumerate(cols)}
-    for r in rows:
-        prefix = r[idx["project_prefix"]]
-        bucket = tickets_by_prefix.setdefault(
-            prefix, {"total": 0, "closed": 0, "linkable": 0, "claimed": 0}
+    # facade.fetch() re-checks status() internally on EVERY call, not just once -- a real race,
+    # not a hypothetical one: the warehouse's own state can flip between the status() check
+    # above and any of the five fetch() calls below (e.g. a live ingest completing mid-script),
+    # and fetch() raises QueryRefused defensively when that happens. A raw sqlite3.Error is
+    # possible too (a lock, a schema change). Either must come back "unavailable with the real
+    # reason," the same pattern the construction-time QueryFacadeUnavailable case above already
+    # uses -- never a silent crash, and never tickets/gates silently reading as zero (this
+    # module's own documented promise). facade.close() moved to finally so it runs on every
+    # exit path, not just the two that were already reached before this fix (Check 6 finding,
+    # monitoring/GOALS.json C1-C3).
+    try:
+        tickets_by_prefix = {}
+        cols, rows = facade.fetch("v_ticket_diff_binding")
+        idx = {c: i for i, c in enumerate(cols)}
+        for r in rows:
+            prefix = r[idx["project_prefix"]]
+            bucket = tickets_by_prefix.setdefault(
+                prefix, {"total": 0, "closed": 0, "linkable": 0, "claimed": 0}
+            )
+            bucket["total"] += 1
+            if r[idx["is_closed"]]:
+                bucket["closed"] += 1
+            if r[idx["linkability"]] == "linkable":
+                bucket["linkable"] += 1
+            if r[idx["claim_count"]]:
+                bucket["claimed"] += 1
+
+        gates_by_prefix = {}
+        cols, rows = facade.fetch("v_decision_outcome_rate")
+        idx = {c: i for i, c in enumerate(cols)}
+        for r in rows:
+            prefix = r[idx["project_scope"]]
+            bucket = gates_by_prefix.setdefault(prefix, {"deny": 0, "ask": 0})
+            bucket[r[idx["decision"]]] = bucket.get(r[idx["decision"]], 0) + r[idx["n"]]
+
+        cols, rows = facade.fetch("v_source_freshness")
+        freshness = [dict(zip(cols, r)) for r in rows]
+
+        cols, rows = facade.fetch("v_project_resolution_coverage")
+        resolution = [dict(zip(cols, r)) for r in rows]
+
+        cols, rows = facade.fetch("v_gate_proven_live")
+        gate_health = sorted(
+            [dict(zip(cols, r)) for r in rows], key=lambda d: d["fires_total"], reverse=True
         )
-        bucket["total"] += 1
-        if r[idx["is_closed"]]:
-            bucket["closed"] += 1
-        if r[idx["linkability"]] == "linkable":
-            bucket["linkable"] += 1
-        if r[idx["claim_count"]]:
-            bucket["claimed"] += 1
+    except (QueryRefused, sqlite3.Error) as exc:
+        warehouse["fetch_error"] = str(exc)
+        return warehouse, None
+    finally:
+        facade.close()
 
-    gates_by_prefix = {}
-    cols, rows = facade.fetch("v_decision_outcome_rate")
-    idx = {c: i for i, c in enumerate(cols)}
-    for r in rows:
-        prefix = r[idx["project_scope"]]
-        bucket = gates_by_prefix.setdefault(prefix, {"deny": 0, "ask": 0})
-        bucket[r[idx["decision"]]] = bucket.get(r[idx["decision"]], 0) + r[idx["n"]]
-
-    cols, rows = facade.fetch("v_source_freshness")
-    freshness = [dict(zip(cols, r)) for r in rows]
-
-    cols, rows = facade.fetch("v_project_resolution_coverage")
-    resolution = [dict(zip(cols, r)) for r in rows]
-
-    cols, rows = facade.fetch("v_gate_proven_live")
-    gate_health = sorted(
-        [dict(zip(cols, r)) for r in rows], key=lambda d: d["fires_total"], reverse=True
-    )
-
-    facade.close()
     return warehouse, {
         "tickets_by_prefix": tickets_by_prefix,
         "gates_by_prefix": gates_by_prefix,

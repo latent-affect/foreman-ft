@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "DEVH",
+  "component": "monitoring",
+  "scope_version": 1,
+  "created": "2026-09-02T13:50:00Z",
+  "status": "narrow freeze, disclosed as such -- covers one fix only, not a real design-and-scope pass for the whole monitoring component",
+  "note": "monitoring/ has no design-and-scope pass of its own yet, and other sessions are actively building real content into it tonight (build_dashboard.html/.py under monitoring/ directly). This freeze is scoped strictly to foreman-status/foreman_status_dashboard_data.py's facade exception-handling gap (Check 6 finding, DEVH-46) so goals_freeze_gate.py has real, verified criteria to check that one write against -- not a claim that the rest of monitoring/ has been reviewed. Same disclosed-narrow-freeze pattern used for docs/GOALS.json before its own real pass (DEVH-28); a real design-and-scope pass for monitoring as a whole is a separate, later decision, not this implementer's to make unilaterally.",
+  "pre_implementation_brief": {
+    "ticket_id": "DEVH-46",
+    "persona": "dana-okafor",
+    "note": "REQ-45 citation."
+  },
+  "requirement": "Check 6 finding (dev-harness-33, independent): foreman_status_dashboard_data.py's load_atlas_snapshot() checks warehouse status once then makes 5 unhandled facade.fetch() calls, contradicting its own documented 'never silently as zero' promise.",
+  "done_state": "load_atlas_snapshot() never crashes build_snapshot() when the warehouse's clean state flips between its initial status() check and a later facade.fetch() call, or when a raw sqlite3 error occurs mid-fetch; on either failure it returns a warehouse dict naming the real reason and tickets/gates data as None (never zero, never a silently-empty dict), and facade.close() is called on every exit path.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "A facade.fetch() call raising QueryRefused after the initial status() check reported clean does not crash build_snapshot(); it returns a warehouse dict naming the real reason and atlas_data of None.",
+      "verification": "Construct a real ATLAS warehouse db, real-clean at the moment load_atlas_snapshot() calls facade.status(). Monkeypatch or otherwise force ONE of the five facade.fetch() calls to raise QueryRefused (simulating the warehouse's state flipping mid-script, e.g. a live ingest completing). Call build_snapshot() and assert it returns normally (no exception), the returned warehouse dict is not None and carries a field naming the QueryRefused reason, and every project's 'tickets'/'gates' values in the returned projects list are None, not 0 or {}.",
+      "verifiable": true,
+      "added": "2026-09-02T13:50:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "A raw sqlite3.Error raised mid-fetch (not just QueryRefused) is also caught, with the same behavior as C1.",
+      "verification": "Same harness as C1, but the forced failure is a real sqlite3.Error (e.g. corrupt the warehouse db file between the status() check and a fetch call, or monkeypatch the connection to raise sqlite3.OperationalError). build_snapshot() must not crash; the same warehouse-dict-with-reason and None-not-zero behavior holds.",
+      "verifiable": true,
+      "added": "2026-09-02T13:50:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "facade.close() is called on every exit path from load_atlas_snapshot(), including when a fetch call raises -- not left leaked.",
+      "verification": "In the C1/C2 forced-failure scenarios, assert the QueryFacade's underlying sqlite3 connection is genuinely closed after load_atlas_snapshot() returns (a further operation against that connection raises sqlite3.ProgrammingError, the documented behavior of a closed connection) -- not merely that a close() call appears in the source.",
+      "verifiable": true,
+      "added": "2026-09-02T13:50:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "The already-working paths are unaffected by this fix: construction-time QueryFacadeUnavailable, and the not-clean-at-first-status-check path, behave exactly as before.",
+      "verification": "Re-run (or write, if none existed) a case for each: WAREHOUSE_DB pointing at a nonexistent/unmigrated file (QueryFacadeUnavailable at construction), and a warehouse whose status() is genuinely not clean at the first check (no fetch calls ever attempted). Both must return the same shape they did before this fix.",
+      "verifiable": true,
+      "added": "2026-09-02T13:50:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "The except clause only catches QueryRefused, not sqlite3.Error, so a real database-level failure (a lock, a corrupt file, a schema change) still crashes build_snapshot() unhandled -- the fix looks complete because the one exception class that's easy to trigger in a quick test is covered, while the harder-to-trigger one that Check 6 also named is not.",
+      "detection": "C2 forces a real sqlite3.Error specifically, separate from C1's QueryRefused case."
+    },
+    {
+      "id": "F2",
+      "statement": "facade.close() is moved into the except block only, not a finally, so the success path (no exception) never closes the connection -- inverts the original bug into a leak on the COMMON path instead of the rare one.",
+      "detection": "C3 checks close() actually happened by testing the connection's own closed state, and C4 confirms the non-exception paths still behave correctly."
+    },
+    {
+      "id": "F3",
+      "statement": "tickets/gates default to an empty dict or 0 on the caught-exception path rather than None, so a consumer cannot tell 'the warehouse was queried and found nothing' from 'the query itself failed' -- the same class of ambiguity the module's own docstring already names as the thing to avoid ('never silently as zero').",
+      "detection": "C1 and C2 both assert None specifically, not falsy-in-general."
+    }
+  ],
+  "out_of_scope": [
+    "monitoring/build_dashboard.html, build_dashboard_data.py, build_dashboard_server.py and any other file under monitoring/ not named above. Other sessions' own work tonight; this freeze does not cover it.",
+    "A real design-and-scope pass for the monitoring component as a whole. This is a citation-anchor-plus-one-fix freeze, disclosed as such, not that pass."
+  ],
+  "constraints": [
+    "This file sits at monitoring/GOALS.json because component_root('monitoring') resolves to 'monitoring/'. Criteria here cover the Check 6 facade-exception-handling fix only."
+  ],
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 4,
+    "frozen_at": "2026-09-02T12:37:34.618525Z"
+  },
+  "results": [],
+  "amendments": [],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:99e5a38e9bbf844956c6a49c445b21898afc9d1e61689faa93741641573cbb07",
+    "match": null
+  },
+  "criteria_frozen_at": "2026-09-02T12:37:34.618525Z"
+}
