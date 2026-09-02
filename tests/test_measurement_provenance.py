@@ -91,15 +91,26 @@ class R23ProvenanceTests(unittest.TestCase):
         self.assertGreaterEqual(meta["python_files_analyzed"], 150)
         self.assertGreaterEqual(meta["total_functions_analyzed"], 900)
 
-        # Known-real values a silently-broken analysis pass cannot produce. store.py is the
-        # only grade-C maintainability file in the tree; measured 2026-09-02 at max_cc 32,
-        # MI 4.78. Bounds are loose enough to survive the refactor R1 will make, and tight
-        # enough that an empty or stubbed analysis fails.
+        # Known-real values a silently-broken analysis pass cannot produce -- store.py's own
+        # numbers, whatever they currently, legitimately are. Originally pinned to the pre-R1
+        # grade-C values (max_cc 32, MI 4.78), with a comment guessing the refactor's bounds
+        # would still be "loose enough to survive" -- wrong direction: DEVH-7's refactor (commit
+        # b00057d, this same session) brought max_cc to 8 and MI to ~21.79, both outside the
+        # original bounds, so this test started failing "8 not greater than or equal to 20"
+        # once that refactor landed. This test's own real intent, per its docstring ("actually
+        # analysing something, not merely exiting 0"), was never to pin store.py's history --
+        # it was to prove the pass is real, not stubbed. Rebound to the CURRENT, refactored,
+        # real state (grade A per R1's own target: max_cc <= 20, MI >= 20) plus a plain
+        # non-zero floor on max_cc, which a stubbed or broken pass reporting all-zero
+        # complexity would fail regardless of which side of any refactor it runs on.
         store = [f for f in report["per_file_detail"]
                  if f["file_path"].endswith("tessera/store/store.py")]
         self.assertEqual(len(store), 1, "store.py must appear exactly once in per_file_detail")
-        self.assertGreaterEqual(store[0]["cyclomatic_complexity"]["max"], 20)
-        self.assertLess(store[0]["maintainability_index"]["score"], 25)
+        store_max_cc = store[0]["cyclomatic_complexity"]["max"]
+        store_mi = store[0]["maintainability_index"]["score"]
+        self.assertGreater(store_max_cc, 0, "a stubbed analysis would report zero complexity")
+        self.assertLessEqual(store_max_cc, 20, "post-DEVH-7, store.py's real max_cc is 8")
+        self.assertGreaterEqual(store_mi, 20, "post-DEVH-7, store.py's real MI is ~21.79")
 
         # Third script. Only the environment-independent half of C1's clause is asserted:
         # dependency pins are PARSED from a manifest in the tree, which any machine can do.
