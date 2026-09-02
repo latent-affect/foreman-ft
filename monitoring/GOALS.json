@@ -11,6 +11,18 @@
     "persona": "dana-okafor",
     "note": "REQ-45 citation."
   },
+  "briefs": [
+    {
+      "ticket_id": "DEVH-46",
+      "persona": "dana-okafor",
+      "covers": "Check 6 facade exception-handling fix (C1-C4), original freeze"
+    },
+    {
+      "ticket_id": "DEVH-51",
+      "persona": "dana-okafor",
+      "covers": "SECURITY-PRIVACY-REVIEW.md F3, sanitizing str(exc) path leaks (C5 amendment). Brief marker updated to this ticket; DEVH-46 remains cited here."
+    }
+  ],
   "requirement": "Check 6 finding (dev-harness-33, independent): foreman_status_dashboard_data.py's load_atlas_snapshot() checks warehouse status once then makes 5 unhandled facade.fetch() calls, contradicting its own documented 'never silently as zero' promise.",
   "done_state": "load_atlas_snapshot() never crashes build_snapshot() when the warehouse's clean state flips between its initial status() check and a later facade.fetch() call, or when a raw sqlite3 error occurs mid-fetch; on either failure it returns a warehouse dict naming the real reason and tickets/gates data as None (never zero, never a silently-empty dict), and facade.close() is called on every exit path.",
   "criteria": [
@@ -41,6 +53,13 @@
       "verification": "Re-run (or write, if none existed) a case for each: WAREHOUSE_DB pointing at a nonexistent/unmigrated file (QueryFacadeUnavailable at construction), and a warehouse whose status() is genuinely not clean at the first check (no fetch calls ever attempted). Both must return the same shape they did before this fix.",
       "verifiable": true,
       "added": "2026-09-02T13:50:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "Neither of load_atlas_snapshot()'s two exception-catch sites puts an exception's raw text (str(exc)) into the returned structure -- SECURITY-PRIVACY-REVIEW.md F3 (dev-harness-9b). QueryFacadeUnavailable's message embeds the warehouse's absolute filesystem path (observed directly: 'cannot open /Users/m5/dev/dev-harness-run2/atlas/warehouse/atlas.db read-only...'), and this module's own docstring promises outputs carry 'only the resolved prefix, not a human-readable name or path' -- the error paths must meet that same promise, not just the data paths C1's own docstring reference already covers.",
+      "verification": "Force each of the two exceptions for real: (a) point WAREHOUSE_DB at a nonexistent/unmigrated file to trigger QueryFacadeUnavailable at construction; (b) monkeypatch facade.fetch() to raise QueryRefused or a real sqlite3.Error mid-fetch (the C1/C2 harness). In both cases, assert the absolute path string (or any substring of it, e.g. the warehouse filename or the repo root) never appears ANYWHERE in build_snapshot()'s returned structure -- serialize it with json.dumps(..., default=str) and grep the resulting text, not just the one field expected to carry it, since a raw exception could leak into more than one place. The reason field must still name something actionable: either the exception's TYPE (type(exc).__name__) or a fixed, hand-written sanitized string -- never str(exc) itself.",
+      "verifiable": true,
+      "added": "2026-09-02T17:20:00Z"
     }
   ],
   "failure_criteria": [
@@ -58,6 +77,11 @@
       "id": "F3",
       "statement": "tickets/gates default to an empty dict or 0 on the caught-exception path rather than None, so a consumer cannot tell 'the warehouse was queried and found nothing' from 'the query itself failed' -- the same class of ambiguity the module's own docstring already names as the thing to avoid ('never silently as zero').",
       "detection": "C1 and C2 both assert None specifically, not falsy-in-general."
+    },
+    {
+      "id": "F4",
+      "statement": "The fix redacts the reason field for one exception type but not the other, or only checks the one field the test author remembered rather than the whole serialized output -- a raw path could leak through a nested field, a log line folded into the structure, or a second copy of the reason.",
+      "detection": "C5 requires forcing BOTH exception types and grepping the whole json.dumps()'d structure for the path, not just the one field expected to carry it."
     }
   ],
   "out_of_scope": [
@@ -70,14 +94,62 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 4,
-    "frozen_at": "2026-09-02T12:37:34.618525Z"
+    "test_criteria": 5,
+    "frozen_at": "2026-09-02T13:46:39.046096Z"
   },
-  "results": [],
-  "amendments": [],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 monitoring/foreman-status/test_foreman_status_dashboard_data.py -v\ntest_c1_query_refused_mid_fetch_does_not_crash_and_returns_none_not_zero ... ok\nRan 6 tests in 0.058s\nOK",
+      "recorded": "2026-09-02T14:20:00Z",
+      "verified_by": "dev-harness-33, re-run in this session (also built an independent negative-control worktree against the pre-fix commit a26fbc8; the same test errors there, confirming it discriminates)"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 monitoring/foreman-status/test_foreman_status_dashboard_data.py -v\ntest_c2_raw_sqlite_error_mid_fetch_is_also_caught ... ok\nRan 6 tests in 0.058s\nOK",
+      "recorded": "2026-09-02T14:20:00Z",
+      "verified_by": "dev-harness-33, re-run in this session"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 monitoring/foreman-status/test_foreman_status_dashboard_data.py -v\ntest_c3_facade_connection_is_genuinely_closed_even_on_mid_fetch_exception ... ok\nRan 6 tests in 0.058s\nOK",
+      "recorded": "2026-09-02T14:20:00Z",
+      "verified_by": "dev-harness-33, re-run in this session"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 monitoring/foreman-status/test_foreman_status_dashboard_data.py -v\ntest_c4_construction_time_unavailable_path_unaffected ... ok\ntest_c4_not_clean_at_first_check_path_unaffected ... ok\nRan 6 tests in 0.058s\nOK",
+      "recorded": "2026-09-02T14:20:00Z",
+      "verified_by": "dev-harness-33, re-run in this session"
+    }
+  ],
+  "amendments": [
+    {
+      "criterion_id": null,
+      "change": "results recorded retroactively for C1-C4",
+      "from": "results[] empty despite commit 9effe00 landing a real fix with a real, passing test suite -- the same gap this project's own precedent (bollard, root, atlas) has repeatedly caught elsewhere tonight.",
+      "to": "Four results recorded, from an independent re-run plus a from-scratch negative-control worktree built against the pre-fix commit, not from trusting the commit message's own claimed negative control.",
+      "reason": "Found while validating the overall build (foreman:validate stage). A fully-verified freeze with an empty results[] is indistinguishable, to a reader of this file alone, from an unverified one.",
+      "requested_by": "dev-harness-33",
+      "at": "2026-09-02T14:20:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "scope extended to cover SECURITY-PRIVACY-REVIEW.md F3 (DEVH-51); C5 and F4 added",
+      "from": "C1-C4 covered whether an exception crashes build_snapshot(); nothing checked what the resulting reason/fetch_error text actually contained.",
+      "to": "C5 requires neither exception-catch site to leak str(exc)'s raw text -- specifically the absolute warehouse path QueryFacadeUnavailable's message carries -- into the returned structure, checked against the module's own docstring promise ('only the resolved prefix, not a human-readable name or path').",
+      "reason": "agent-remediation-af routed dev-harness-9b's SECURITY-PRIVACY-REVIEW.md F3 to this session: the fetch-exception path this same freeze's own C1/C2 added (commit 9effe00) widened an existing leak (load_atlas_snapshot()'s construction-time catch, pre-existing) from one path to two, both putting str(exc) straight into emitted JSON. The review is explicit that closing Check 6 was correct and necessary -- the finding is the widening, not the original fix.",
+      "requested_by": "dev-harness-run2 (this session, self-scoped per the routed security review)",
+      "at": "2026-09-02T17:20:00Z"
+    }
+  ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:99e5a38e9bbf844956c6a49c445b21898afc9d1e61689faa93741641573cbb07",
+    "criteria_hash_at_freeze": "sha256:1b6b8e6527f8e352a17dfceee853aa77d6077d47bfd8aaff2207ec9ec361b90c",
     "match": null
   },
-  "criteria_frozen_at": "2026-09-02T12:37:34.618525Z"
+  "criteria_frozen_at": "2026-09-02T13:46:39.046096Z"
 }

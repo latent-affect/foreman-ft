@@ -4,7 +4,7 @@
   "component": "atlas",
   "scope_version": 1,
   "created": "2026-09-02T08:05:00Z",
-  "criteria_frozen_at": "2026-09-02T07:37:18Z",
+  "criteria_frozen_at": "2026-09-02T13:43:33.579413Z",
   "done_state": "A credential pattern present in an audit-plane line is redacted before that line's row is persisted, verified by reading the row back from the database file itself; any failure in one line's scrub-verify-publish chain results in zero rows for that line and a run that exits non-zero rather than reporting success; and the independent read-time credential check remains live and is promoted from advisory to contract.",
   "requirement": "PRD.md R8 (DEVH-13). Architecture: ARCHITECTURE.md 'R8 \u2014 write-time credential scrub, fail-closed'.",
   "pre_implementation_brief": {
@@ -12,6 +12,23 @@
     "persona": "dana-okafor",
     "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."
   },
+  "briefs": [
+    {
+      "ticket_id": "DEVH-27",
+      "persona": "dana-okafor",
+      "covers": "R8 (C1-C6), original freeze"
+    },
+    {
+      "ticket_id": "DEVH-49",
+      "persona": "dana-okafor",
+      "covers": "SECURITY-PRIVACY-REVIEW.md F1, atlas/mcp/server.py MCP_VIEWS allowlist inversion (C7 amendment)"
+    },
+    {
+      "ticket_id": "DEVH-50",
+      "persona": "dana-okafor",
+      "covers": "SECURITY-PRIVACY-REVIEW.md F2, QueryFacade.fetch() LIMIT pushdown (C8 amendment). Brief marker updated to this ticket; DEVH-27 and DEVH-49 remain cited here."
+    }
+  ],
   "design_decision_reconciling_prd_and_architecture": "PRD.md R8 says a forced scrub failure means 'the ingest run shall exit non-zero and shall write no row'. The architecture, following muse, sets the unit of fail-closed atomicity at one audit line rather than one ingest run, so lines N-1 and N+1 still land when line N fails. These conflict and this freeze resolves them rather than inheriting both. Per-record atomicity is adopted, because it does not weaken the guarantee at all: the claim being protected is that no credential is persisted, and line N is never persisted either way, while lines N plus or minus one were independently verified clean on their own chains. Run-level abort would additionally have to decide what happens to rows already written, and either answer is worse -- rolling them back discards verified-clean audit data, and leaving them is the partial success the operator's fail-closed rule forbids by name. What does NOT survive from PRD.md R8 is the literal 'shall write no row', since other clean lines in the same run do get written; that clause is narrowed to the failing line. In exchange, and this is the half muse's note only gestured at, the run must not be allowed to report success: a dropped line is counted and the run exits non-zero at the end. Otherwise per-record atomicity converts a credential-leak failure into a silent record-loss failure, which is the same 'you only find out by looking' shape the rule exists to make impossible.",
   "criteria": [
     {
@@ -55,6 +72,20 @@
       "verification": "Per PRD.md N3, the fact of redaction must be recorded on the row rather than being inferable only from the absence of a secret. Ingest one line containing a planted credential and one clean line. Assert the redacted row carries a positive redaction marker and the clean row does not, so an implementation that sets the marker unconditionally fails. The wellformedness half must actually exercise the fields redaction touches, not merely run check_audit_envelope_wellformed and observe it pass: assert that the redacted row's payload_json still parses as JSON after substitution, that its payload_bytes still reflects the stored value rather than the pre-redaction length, and that the envelope check passes for both rows. If the marker needs a schema column, it is added to the DDL block in docs/atlas-architecture.md section 16, which atlas/warehouse/ddl.py extracts at import time, not to a second copy of the DDL in code.",
       "verifiable": true,
       "added": "2026-09-02T08:05:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "atlas/mcp/server.py's MCP_VIEWS is an explicit allowlist of what MCP may serve, not ALLOWED_VIEWS minus one excluded name -- SECURITY-PRIVACY-REVIEW.md F1. A view added to ALLOWED_VIEWS in future is invisible over MCP until someone deliberately admits it into MCP_VIEWS's own list.",
+      "verification": "MCP_VIEWS's definition no longer derives from ALLOWED_VIEWS by set subtraction (grep confirms no 'ALLOWED_VIEWS if' construct remains). A test adds a synthetic view name to ALLOWED_VIEWS at test time and asserts it is NOT present in MCP_VIEWS unless separately added to the allowlist. Regression: every view servable over MCP before this change (ALLOWED_VIEWS minus v_fail_open_incident) is still servable after -- the allowlist's initial contents must be seeded from today's real set, not from an empty or arbitrary one.",
+      "verifiable": true,
+      "added": "2026-09-02T17:00:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "QueryFacade.fetch() bounds the SQL query itself with a server-side integer LIMIT parameter, never a Python-side slice applied after fetchall() has already materialized the whole view -- SECURITY-PRIVACY-REVIEW.md F2, the one finding exploitable by a caller today. The existing where_sql refusal (fetch() accepts no caller-supplied SQL fragment) is unaffected; LIMIT is bound as a parameter, never string-interpolated.",
+      "verification": "Real warehouse fixture with more rows in a view than the requested limit. fetch(view_name, limit=N) returns exactly at most N rows AND its return shape is unchanged (columns, rows) whether or not limit is passed, so every existing zero-argument caller (monitoring's five fetch() call sites) stays correct with no change. Prove the bound is pushed into SQL, not applied after the fact: instrument or monkeypatch the cursor/connection so the test can observe how many rows the underlying sqlite3 cursor actually produces before any Python-side handling, and assert that count is exactly <= N -- a passing test built only on the RETURNED list's length would not catch a rows[:limit] slice after a full, unbounded fetchall(), which is the exact pre-fix defect. atlas_query_view (the one caller that needs to know whether more rows existed beyond the page) is responsible for its own truncation detection by requesting limit+1 from fetch() and trimming the last row itself -- fetch() itself does not fetch an extra row silently. where_sql is still refused when supplied (regression, unchanged from C1-C6's existing behavior). limit remains an int-only parameter; a non-integer, boolean, or out-of-range value raises QueryRefused rather than being silently coerced.",
+      "verifiable": true,
+      "added": "2026-09-02T17:00:00Z"
     }
   ],
   "failure_criteria": [
@@ -107,15 +138,30 @@
       "id": "F10",
       "statement": "The drop count is a boolean wearing a number's clothes -- `1 if any_line_failed else 0`, or a flag coerced to int. A single-failure scenario passes, the operator sees a plausible '1', and every run that drops two or more lines silently under-reports. The counting mechanism meant to make record loss visible becomes the thing hiding it.",
       "detection": "C4 runs a second scenario with two rigged failures among six lines and requires the reported count to equal 2."
+    },
+    {
+      "id": "F11",
+      "statement": "MCP_VIEWS is inverted to an allowlist, but the allowlist is seeded wrong -- empty, or missing a view that was legitimately servable before -- so the fix silently breaks existing MCP callers instead of just closing the future-addition gap.",
+      "detection": "C7's regression clause requires every view servable before (ALLOWED_VIEWS minus v_fail_open_incident) to still be servable after."
+    },
+    {
+      "id": "F12",
+      "statement": "LIMIT is pushed into the SQL string via f-string/format interpolation of the caller-supplied limit value rather than a bound parameter, reopening exactly the caller-controlled-SQL crack fetch()'s where_sql refusal exists to close -- a limit value crafted as '1; DROP TABLE x' or similar would not be caught by an integer-only clamp applied to the wrong stage.",
+      "detection": "C8 requires LIMIT to be bound as a parameter, never string-interpolated, and requires where_sql's existing refusal to still hold."
+    },
+    {
+      "id": "F13",
+      "statement": "The fix truncates the RETURNED row list to N rows (rows[:limit]) after fetchall() still ran unbounded -- the visible symptom (row count) looks fixed while the actual DoS cost (materializing the whole view) is unchanged.",
+      "detection": "C8 requires instrumenting the underlying cursor to prove the database itself never produces more than N rows, not just that the Python list handed back is short."
     }
   ],
   "out_of_scope": [
     "Redacting safety.jsonl itself. The warehouse is a derived store and the append-only source is a separate decision with different reversibility, per PRD.md's own constraint.",
     "R9's cwd-based ledger routing. Same write-time shape, separate requirement, separate ticket (DEVH-14), and blocked on a current measured count that does not exist yet.",
-    "Serve-time redaction in QueryFacade or in v_fail_open_incident's definition. Reasonable defense in depth on top of this, explicitly not a substitute for it, and not scoped here.",
+    "Serve-time credential redaction in QueryFacade or in v_fail_open_incident's definition. Reasonable defense in depth on top of R8's write-time scrub, explicitly not a substitute for it, and not scoped here. Distinct from C8's LIMIT pushdown, which is a DoS bound, not a redaction mechanism.",
     "Ingest throughput or latency tuning. N2's budget governs PreToolUse hooks, not the ingest path, which is not on the tool-call critical path.",
     "Retiring or rewriting check_audit_ledger_partition_by_cwd. C5 covers the credential check only.",
-    "Any change to atlas/mcp/server.py. It already excludes v_fail_open_incident from MCP_VIEWS and is R7's subject, not R8's."
+    "Any OTHER change to atlas/mcp/server.py beyond C7's MCP_VIEWS inversion. R7 (DEVH-12) is the STRIDE review of this file as a whole and is otherwise not R8's or this amendment's subject."
   ],
   "constraints": [
     "The unit of fail-closed atomicity is one audit line. See design_decision_reconciling_prd_and_architecture above -- this deviates from PRD.md R8's literal 'shall write no row' wording, deliberately and with the compensating non-silence requirement in C4.",
@@ -124,13 +170,13 @@
     "Write-temp, verify by reading from disk through a fresh connection, then publish atomically. Never mutate a persisted row in place.",
     "No new cross-component interface. Both files live under atlas/**, which is one declared component, so this stays intra-component exactly as the existing empty interfaces block already reasons.",
     "Any schema change goes in the DDL block of docs/atlas-architecture.md section 16, which ddl.py extracts at import time. Never a second copy in Python.",
-    "This file sits at atlas/GOALS.json because component_root('atlas') resolves to 'atlas/'. Verified by running the resolver. Criteria here cover R8 only; do not land R9 or R7 work under this freeze."
+    "This file sits at atlas/GOALS.json because component_root('atlas') resolves to 'atlas/'. Verified by running the resolver. Criteria here originally covered R8 only. The DEVH-49/DEVH-50 amendment (C7, C8) narrowly extends coverage to two named SECURITY-PRIVACY-REVIEW.md findings that happen to touch atlas/mcp/server.py and atlas/query/facade.py -- not a general reopening of R7 or R9 work under this freeze, which is still excluded beyond those two named fixes."
   ],
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 6,
-    "frozen_at": "2026-09-02T07:37:18Z"
+    "test_criteria": 8,
+    "frozen_at": "2026-09-02T13:43:33.579413Z"
   },
   "results": [
     {
@@ -221,10 +267,28 @@
       "reason": "The implementation named each test after the criterion it verifies, which made per-criterion attestation possible without guessing. Re-run here rather than cited from a report: 143/143 across atlas, 10/10 in test_audit_scrub.",
       "requested_by": "priya-desai",
       "at": "2026-09-02T10:30:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "scope narrowly extended to cover SECURITY-PRIVACY-REVIEW.md F1 and F2 (DEVH-49, DEVH-50); C7, C8 and F11-F13 added",
+      "from": "out_of_scope excluded any change to atlas/mcp/server.py outright, and named serve-time redaction in QueryFacade as out of scope (a different concern, credential redaction, from F2's DoS bound). No criteria existed for either finding.",
+      "to": "C7 covers exactly one change to atlas/mcp/server.py (MCP_VIEWS allowlist inversion, F1). C8 covers exactly one change to atlas/query/facade.py (LIMIT pushdown into SQL, F2). out_of_scope reworded to except these two named fixes specifically rather than reopening R7 generally; the QueryFacade exclusion is clarified to be about credential redaction, not DoS bounding, so it does not conflict with C8.",
+      "reason": "agent-remediation-af routed dev-harness-9b's SECURITY-PRIVACY-REVIEW.md findings to this session. F2 is marked in that report as 'the only one exploitable today by a caller' (atlas_query_view's limit clamp runs in Python after fetch() already did SELECT * and fetchall(), so limit=1 still materializes all 363,289 rows on the reference warehouse) and is fixed first per the report's own recommendation. F1 is latent (MCP_VIEWS derived from ALLOWED_VIEWS by subtraction, so a future view addition is auto-published with no review step) but cheap and adjacent, fixed in the same pass. F3 (monitoring's str(exc) path leak) is a different component and amended separately in monitoring/GOALS.json.",
+      "requested_by": "dev-harness-run2 (this session, self-scoped per the routed security review)",
+      "at": "2026-09-02T17:00:00Z"
+    },
+    {
+      "criterion_id": "C8",
+      "change": "verification",
+      "from": "Required the underlying cursor to produce at most N rows (strictly <= N) before Python-side truncation, with no statement about fetch()'s return shape when limit is used.",
+      "to": "Requires exactly <= N rows AND requires fetch()'s return shape to stay (columns, rows) regardless of whether limit is passed -- truncation detection ('were there more rows than the page') is pushed to the one caller that needs it, atlas_query_view, which requests limit+1 from fetch() and trims the extra row itself. fetch() stays a minimal, honest LIMIT pushdown with no hidden extra-row fetching and no change to what any existing zero-argument caller sees.",
+      "reason": "Self-caught twice while designing the fix, before any implementation or verification ran, per this project's own real-execution-only standard (same discipline as docs/GOALS.json's C1 and this same file's own prior C3 amendment). First pass wrongly put the +1/truncation logic inside fetch() itself and returned a 3-tuple only when limit was given, which would have broken every existing 2-value-unpack caller (monitoring's five fetch() call sites, atlas/mcp/server.py's own) the moment they passed limit, and behaved inconsistently based on an argument's presence. Reworked so fetch()'s contract never changes shape; only atlas_query_view, which already owns the 'truncated' field in its own response and is the only real limit-passing caller today, does the +1 request and trim.",
+      "requested_by": "dev-harness-run2 (this session, self-caught during scoping, before implementation)",
+      "at": "2026-09-02T17:15:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:4778b62a19e10394d41880f069d67d3eb2223da27af0f2265557620764641976",
+    "criteria_hash_at_freeze": "sha256:eb258b7513cb0314592fc04568065ff80c5a21d467af9b080a96502e63b55c1d",
     "match": null
   }
 }

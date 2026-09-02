@@ -19,7 +19,22 @@ from mcp.server.mcpserver import MCPServer
 
 from atlas.query.facade import ALLOWED_VIEWS, QueryFacade, QueryFacadeUnavailable, QueryRefused
 
-MCP_VIEWS = frozenset(v for v in ALLOWED_VIEWS if v != "v_fail_open_incident")
+# SECURITY-PRIVACY-REVIEW.md F1 (dev-harness-9b, DEVH-49): this used to be
+# ALLOWED_VIEWS minus "v_fail_open_incident" -- a denylist of one name, derived from
+# facade.py's own allowlist by subtraction. Every view added to ALLOWED_VIEWS in the
+# future would have been published over MCP automatically, with no review step and no
+# failure mode that would surface it. Rewritten as an explicit allowlist instead: a
+# new view is invisible over MCP until someone deliberately adds its name here. This
+# is today's real set (17 of ALLOWED_VIEWS's 18, everything except the payload-bearing
+# v_fail_open_incident) -- GOALS.json C7's own regression clause requires it to match
+# what was servable before this change, not an arbitrary or empty set.
+MCP_VIEWS = frozenset({
+    "v_atlas_status", "v_decision_outcome_rate", "v_deny_streak",
+    "v_gate_proven_live", "v_handler_denominator", "v_hook_latency_rollup", "v_hook_verdict",
+    "v_pipeline_selfcheck", "v_project_resolution_coverage", "v_project_scope",
+    "v_queryable_source", "v_snapshot_publishable", "v_source_freshness", "v_source_trust",
+    "v_ticket_diff_binding", "v_trapped_agent_candidate", "v_verdict_confusion_matrix",
+})
 
 DB_PATH = os.environ.get("ATLAS_DB_PATH", str(_REPO_ROOT / "atlas" / "warehouse" / "atlas.db"))
 MAX_ROWS = 1000
@@ -68,7 +83,14 @@ def atlas_query_view(view_name: str, limit: int = DEFAULT_ROWS) -> dict:
             f"{view_name!r} is not served over MCP (secret-bearing or not allowlisted)"
         )
     try:
-        columns, rows = get_facade().fetch(view_name)
+        # SECURITY-PRIVACY-REVIEW.md F2 (DEVH-50/GOALS.json C8): limit is now bound into
+        # the SQL itself via facade.fetch()'s own limit= parameter, not sliced off a
+        # full fetchall() after the fact -- the previous version of this call cost a
+        # full-view read (363,289 rows on the reference warehouse) even for limit=1.
+        # limit+1, not limit, is requested here so the "truncated" flag below can still
+        # be computed without a second query: this is the one place that extra row is
+        # asked for, never inside fetch() itself.
+        columns, rows = get_facade().fetch(view_name, limit=limit + 1)
     except (QueryRefused, QueryFacadeUnavailable) as exc:
         raise ValueError(str(exc)) from exc
     truncated = len(rows) > limit

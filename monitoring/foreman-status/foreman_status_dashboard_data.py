@@ -57,7 +57,12 @@ def load_atlas_snapshot():
     try:
         facade = QueryFacade(str(WAREHOUSE_DB))
     except QueryFacadeUnavailable as exc:
-        return {"available": False, "reason": str(exc)}, None
+        # SECURITY-PRIVACY-REVIEW.md F3 (dev-harness-9b, DEVH-51/GOALS.json C5): str(exc) here
+        # embeds the absolute warehouse path (QueryFacadeUnavailable's own message includes
+        # it), which this module's own docstring promises never to emit ("only the resolved
+        # prefix, not a human-readable name or path"). The exception TYPE names the failure
+        # mode without carrying the path.
+        return {"available": False, "reason": type(exc).__name__}, None
 
     status = facade.status()
     warehouse = {
@@ -119,7 +124,11 @@ def load_atlas_snapshot():
             [dict(zip(cols, r)) for r in rows], key=lambda d: d["fires_total"], reverse=True
         )
     except (QueryRefused, sqlite3.Error) as exc:
-        warehouse["fetch_error"] = str(exc)
+        # SECURITY-PRIVACY-REVIEW.md F3 (DEVH-51/GOALS.json C5): same reasoning as the
+        # construction-time catch above -- str(exc) can carry a path (or, for a raw
+        # sqlite3.Error, other DB-internal detail); the exception type is sufficient to act
+        # on and carries nothing from the underlying warehouse.
+        warehouse["fetch_error"] = type(exc).__name__
         return warehouse, None
     finally:
         facade.close()

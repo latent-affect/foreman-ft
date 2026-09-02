@@ -93,7 +93,7 @@ class QueryFacade:
             f"run {run_id}: {checks_evaluated} checks evaluated, 0 contract failures",
         )
 
-    def fetch(self, view_name, where_sql=None, params=()):
+    def fetch(self, view_name, where_sql=None, params=(), limit=None):
         if view_name not in ALLOWED_VIEWS:
             raise QueryRefused(
                 f"{view_name!r} is not one of the {len(ALLOWED_VIEWS)} declared gated views -- "
@@ -110,6 +110,25 @@ class QueryFacade:
                 "where_sql is not accepted; this facade serves whole gated views only"
             )
         sql = f"SELECT * FROM {view_name}"
-        cursor = self._conn.execute(sql, params)
+        bind_params = list(params)
+        # SECURITY-PRIVACY-REVIEW.md F2 (dev-harness-9b, DEVH-50/GOALS.json C8): limit used
+        # to be applied as a Python-side rows[:limit] slice by callers, AFTER this method had
+        # already run fetchall() and materialized the entire view -- a caller asking for
+        # limit=1 still cost a full-view read (363,289 rows on the reference warehouse). Bound
+        # here instead, as a real SQL LIMIT: the underlying cursor never produces more than
+        # `limit` rows regardless of view size. limit is bound as a query PARAMETER (?), never
+        # string-interpolated -- the existing where_sql refusal above is the injection control
+        # this facade relies on, and a LIMIT pushdown must not become a second, unguarded way
+        # for caller-controlled text to reach the SQL string. Return shape is unchanged
+        # (columns, rows) regardless of whether limit is given, so every existing caller stays
+        # correct with no argument -- a caller that wants to detect "were there more rows than
+        # the page" (atlas_query_view does) asks for limit+1 itself and trims the last row off,
+        # rather than this method silently fetching one extra row nobody asked for.
+        if limit is not None:
+            if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+                raise QueryRefused(f"limit must be a positive integer, got {limit!r}")
+            sql += " LIMIT ?"
+            bind_params.append(limit)
+        cursor = self._conn.execute(sql, bind_params)
         columns = [d[0] for d in cursor.description]
         return columns, cursor.fetchall()

@@ -1,4 +1,5 @@
-"""monitoring/GOALS.json C1-C4 (Check 6 finding, dev-harness-33 independent). Real fixtures --
+"""monitoring/GOALS.json C1-C5 (Check 6 finding, dev-harness-33 independent; C5 SECURITY-
+PRIVACY-REVIEW.md F3, dev-harness-9b). Real fixtures --
 a real ATLAS warehouse db migrated and made genuinely clean, a real TESSERA-shaped projects
 table -- not mocks standing in for the whole system.
 
@@ -8,6 +9,7 @@ table -- not mocks standing in for the whole system.
 file directly instead: /path/to/venv/bin/python3 monitoring/foreman-status/test_foreman_status_dashboard_data.py)
 """
 import importlib.util
+import json
 import shutil
 import sqlite3
 import sys
@@ -91,7 +93,10 @@ class FacadeExceptionHandlingTests(unittest.TestCase):
 
         self.assertIsNotNone(snapshot["warehouse"])
         self.assertIn("fetch_error", snapshot["warehouse"])
-        self.assertIn("simulated", snapshot["warehouse"]["fetch_error"])
+        # GOALS.json C5 (SECURITY-PRIVACY-REVIEW.md F3): the raised message text ("simulated:
+        # ...") must NOT reach the output -- only the exception's sanitized type name may.
+        self.assertNotIn("simulated", snapshot["warehouse"]["fetch_error"])
+        self.assertEqual(snapshot["warehouse"]["fetch_error"], "QueryRefused")
         self.assertTrue(snapshot["projects"], "the tessera fixture project must still appear")
         for p in snapshot["projects"]:
             self.assertIsNone(p["tickets"], "must be None, not 0 or {}, on a failed fetch")
@@ -114,7 +119,8 @@ class FacadeExceptionHandlingTests(unittest.TestCase):
             snapshot = module.build_snapshot()  # must not raise
 
         self.assertIn("fetch_error", snapshot["warehouse"])
-        self.assertIn("simulated", snapshot["warehouse"]["fetch_error"])
+        self.assertNotIn("simulated", snapshot["warehouse"]["fetch_error"])
+        self.assertEqual(snapshot["warehouse"]["fetch_error"], "OperationalError")
         for p in snapshot["projects"]:
             self.assertIsNone(p["tickets"])
             self.assertIsNone(p["gates"])
@@ -174,6 +180,38 @@ class FacadeExceptionHandlingTests(unittest.TestCase):
         self.assertEqual(snapshot["warehouse"]["state"], "clean")
         self.assertNotIn("fetch_error", snapshot["warehouse"])
         self.assertIn("source_freshness", snapshot["global"])
+
+    # ---------------------------------------------------------------- C5
+
+    def test_c5_construction_time_path_never_leaks_the_absolute_warehouse_path(self):
+        missing_db = self.tmp / "does-not-exist.db"
+        module = _load_module_with_dbs(missing_db, self.tessera_db)
+        snapshot = module.build_snapshot()
+
+        serialized = json.dumps(snapshot, default=str)
+        self.assertNotIn(str(missing_db), serialized)
+        self.assertNotIn("does-not-exist.db", serialized)
+        self.assertFalse(snapshot["warehouse"]["available"])
+        self.assertEqual(snapshot["warehouse"]["reason"], "QueryFacadeUnavailable")
+
+    def test_c5_fetch_error_path_never_leaks_the_absolute_warehouse_path(self):
+        module = _load_module_with_dbs(self.warehouse_db, self.tessera_db)
+        real_fetch = module.QueryFacade.fetch
+        call_count = {"n": 0}
+
+        def flaky_fetch(self, view_name, where_sql=None, params=()):
+            call_count["n"] += 1
+            if call_count["n"] == 2:
+                raise sqlite3.OperationalError(f"disk I/O error reading {module.WAREHOUSE_DB}")
+            return real_fetch(self, view_name, where_sql, params)
+
+        with mock.patch.object(module.QueryFacade, "fetch", flaky_fetch):
+            snapshot = module.build_snapshot()
+
+        serialized = json.dumps(snapshot, default=str)
+        self.assertNotIn(str(self.warehouse_db), serialized)
+        self.assertNotIn("atlas.db", serialized)
+        self.assertEqual(snapshot["warehouse"]["fetch_error"], "OperationalError")
 
 
 if __name__ == "__main__":
