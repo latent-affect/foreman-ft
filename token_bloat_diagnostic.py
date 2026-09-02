@@ -349,6 +349,13 @@ def build_report(project_hint: str, days: int) -> dict:
                      "silent zero here.",
             "parse_stats": parse_stats,
             "searched_dir": str(CLAUDE_PROJECTS_DIR),
+            # A hint matching zero real project directories (e.g. a test-generated probe
+            # string) is a legitimate, expected input, not a malformed one -- GOALS.json C4
+            # requires the report still echo which hint produced it. Added alongside the
+            # existing keys, not in place of them, so write_txt_summary's error branch is
+            # untouched.
+            "project_hint": project_hint,
+            "days_scanned": days,
         }
 
     records = compute_cache_metrics(records)
