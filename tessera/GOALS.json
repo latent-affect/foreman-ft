@@ -4,7 +4,7 @@
   "component": "tessera",
   "scope_version": 1,
   "created": "2026-09-02T11:00:00Z",
-  "criteria_frozen_at": "2026-09-02T13:14:11.440586Z",
+  "criteria_frozen_at": "2026-09-02T13:20:23.387156Z",
   "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health rises by at least the amount that improvement mathematically produces, measured against a same-session before-report rather than a fixed historical number; and no test that existed before is missing after, checked by identity rather than count; and the after-measurement is produced by a context that did not perform the refactor.",
   "requirement": "PRD.md R1a (DEVH-7), R2 (DEVH-8), R3 (DEVH-9). R2 lives here as a pre-commit criterion rather than in ARCHITECTURE.md, per Addendum 3: none of R1/R2/R3 introduces a component or interface, so all three are design-and-scope work.",
   "pre_implementation_brief": {
@@ -22,6 +22,11 @@
       "ticket_id": "DEVH-10",
       "persona": "dana-okafor",
       "covers": "R4 SQL-annotation work (C6-C7 amendment). Brief marker at .foreman/briefs/tessera.json updated to this ticket; both remain cited here so DEVH-37's original citation is not lost."
+    },
+    {
+      "ticket_id": "DEVH-11",
+      "persona": "dana-okafor",
+      "covers": "R5 detect-secrets baseline for tessguard's EXPECTED_SHIM_SHAS (C8 amendment). Brief marker updated to this ticket; DEVH-37 and DEVH-10 remain cited here."
     }
   ],
   "target_number_decision": "PRD.md left R1's target unpinned and proposed 'store.py MI >= 20 AND SLOC-weighted >= 7.5' pending confirmation. Measured rather than confirmed by hunch, and the proposal does not survive it. From the baseline report's own per_file_detail: 149 files, 14,443 total SLOC, recomputed SLOC-weighted health 6.857 which reproduces the reported 6.86. store.py is 1,443 SLOC, 10.0% of the tree, health 2.24. The health formula (foreman_quality_baseline.py:364) is health = min(10, MI/10)*0.5 + cc_bucket*0.5, where cc_bucket is 10 at max_cc<=10, 7 at <=20, 4 at <=50, else 1; store.py's 4.78 MI and 32 max_cc give 0.239 + 2.0 = 2.24, confirming the formula. Simulating store.py alone at a PERFECT health of 10 moves the tree only to 7.633, so a 7.5 tree target would require store.py at health ~9, meaning MI >= 80 and max_cc <= 10. That is a rewrite, not a refactor, and the two halves of the original proposal were never consistent with each other. What the formula also shows is that MI is the weaker lever: MI 4.78 -> 20 buys 0.76 health, while max_cc 32 -> <=20 buys 1.5. Decision, and it is derived rather than round: store.py reaches MI >= 20 AND max_cc <= 20, giving health 4.5 and a tree score of 7.083; the tree target is therefore SLOC-weighted >= 7.05. Not escalated, per REQ-49.",
@@ -74,6 +79,13 @@
       "verification": "python3 -m unittest against a new test calling set_priority_like(ticket_id, actor, 'not_a_real_field', value) and asserting ValueError. Negative control: with store.py's line 461-462 guard commented out or stubbed to a no-op in an isolated copy, the same test must fail (no ValueError raised, or a different exception), proving the test is not vacuous. One risk-register row records the widening risk DEVH-10 names: line 461's guard is fourteen-ish lines from the f-string interpolation it protects, and a future edit could widen PRIORITY_LIKE_FIELDS or move the guard without an obvious link back to the SQL site it defends.",
       "verifiable": true,
       "added": "2026-09-02T16:00:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "tessera/tessguard/config.py's EXPECTED_SHIM_SHAS entries (two distinct SHA-256 hex digests, one shared by pre-commit/pre-push and one for commit-msg) are recorded as AUDITED false positives in a repo-root .secrets.baseline, each carrying is_secret: false and a stated reason (these are integrity hashes of git hook shims, not credentials -- verified DEVH-11's own claim that the in-file comment already says so is FALSE, corrected by adding an explicit one-line comment stating it, since detect-secrets flags exactly these two hex strings as Hex High Entropy String candidates and a reader auditing the baseline later needs the reason next to the finding, not just in a ticket).",
+      "verification": "python3 -m detect_secrets scan against the live repo reproduces exactly these two findings in tessera/tessguard/config.py (line 45's shared pre-commit/pre-push hash, line 47's commit-msg hash) and no others in that file. The baseline's entries for both are set is_secret: false with a comment. detect-secrets audit .secrets.baseline --report --only-real then contains zero entries for tessera/tessguard/config.py -- the file-scoped 'zero unaudited findings' DEVH-11's own verification clause asks for, not a whole-repo claim (other files' findings from the same scan are out of scope for this ticket and are left as found-but-unaudited, named in results[] rather than silently baselined).",
+      "verifiable": true,
+      "added": "2026-09-02T16:20:00Z"
     }
   ],
   "failure_criteria": [
@@ -126,11 +138,16 @@
       "id": "F10",
       "statement": "The regression test asserts ValueError is raised but does so vacuously -- for example by testing an unrelated code path, or by the test itself containing a bug that makes it pass regardless of the guard's presence.",
       "detection": "C7's negative control removes the actual guard and requires the test to fail; a vacuous test passes both with and without the guard and is caught by this."
+    },
+    {
+      "id": "F11",
+      "statement": "The baseline entry is marked is_secret: false with no stated reason, so a later reader re-running detect-secrets audit interactively has no context for why it was dismissed and either re-flags it as suspicious or blindly re-approves without checking.",
+      "detection": "C8 requires a comment on the audited entry, and a corrected in-file comment on EXPECTED_SHIM_SHAS itself stating what the values are."
     }
   ],
   "out_of_scope": [
     "R1b's two files. monitoring/compliance-cron/skill_broadscan.py (MI 51.35, grade A) and bollard/component_coupling.py (MI 41.45, grade A) do not meet R1's stated criterion of complexity AND maintainability both flagging, and they belong to the monitoring and bollard components rather than tessera. PRD.md requires each to carry a written justification or leave scope; neither is covered by this freeze.",
-    "tessera's other subdirectories: api/, common/, gitops/, reviewui/, tessguard/. This freeze covers store.py only, which is the sole file in the analyzed tree carrying a grade-C maintainability index.",
+    "tessera's other subdirectories: api/, common/, gitops/, reviewui/. This freeze covers store.py's C1-C5 MI/complexity work only, which is the sole file in the analyzed tree carrying a grade-C maintainability index. tessguard/ is excepted narrowly by the DEVH-11 amendment (C8) for one file, config.py's EXPECTED_SHIM_SHAS detect-secrets baseline entry only -- not a general freeze of tessguard/.",
     "Raising the tree score above 7.05. The measurement in target_number_decision shows store.py alone caps the tree at 7.633 even at perfect health; further movement requires work on other components and is a separate scoping question.",
     "Any change to the health formula or the hotspot signal. R18 (DEVH-19) owns the signal's honesty; changing the formula under this freeze would invalidate the 6.86 baseline C3 is measured against.",
     "Fixing DEVH-4 and DEVH-5. They are bugs in token_bloat_diagnostic.py, a different script from foreman_quality_baseline.py, and do not affect these criteria."
@@ -146,8 +163,8 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 7,
-    "frozen_at": "2026-09-02T13:14:11.440586Z"
+    "test_criteria": 8,
+    "frozen_at": "2026-09-02T13:20:23.387156Z"
   },
   "results": [
     {
@@ -305,10 +322,19 @@
       "reason": "agent-remediation-af routed DEVH-10 (R4) to this session with the ticket's own already-closed vulnerability question (all four sites parameterize values, interpolate identifiers only, no actor/ticket-supplied string reaches any of them) and its open ask: inline suppression with a written justification per site, plus a regression test proven non-vacuous. DEVH-10's own cited line numbers (799, 1651, 1663, 1806) are stale, from before this session's own C1-C5 refactor moved code between files and shrank store.py -- re-located here by direct read: store.py:479 (field_name), store.py:1308 and :1320 (table/col_list), and replay_handlers.py:155 (column, a new file this session's refactor extracted from store.py -- the ternary that used to be inline is now there).",
       "requested_by": "dev-harness-run2 (this session, self-scoped per DEVH-10's assignment)",
       "at": "2026-09-02T16:00:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "scope narrowly extended to cover R5 (DEVH-11); C8 and F11 added, tessguard/ removed from the blanket out_of_scope exclusion for this one file only",
+      "from": "out_of_scope excluded all of tessguard/ from this freeze; no criteria existed for a detect-secrets baseline entry.",
+      "to": "C8 covers exactly one file, tessera/tessguard/config.py's EXPECTED_SHIM_SHAS, and exactly one artifact, the repo-root .secrets.baseline entries for its two findings. out_of_scope reworded to except this one file by name rather than opening tessguard/ generally.",
+      "reason": "agent-remediation-af routed DEVH-11 (R5) to this session. DEVH-11's own text claimed 'the in-file comment already says so' (that EXPECTED_SHIM_SHAS holds integrity hashes, not credentials) -- read directly and found FALSE: the existing comment (config.py:42-43) explains the pre-commit/pre-push/commit-msg relationship but never states what the values represent. Corrected as part of this same fix rather than filed separately, since it's the exact clarifying line the audit justification depends on and costs one line. detect-secrets was not installed in this venv (confirmed absent alongside bandit and pip-audit in GOALS.json's own C1 reproduction_gap note) -- installed via pip into /Users/m5/.venv per this session's existing Python-interpreter convention, since security_privacy_convergence.py's own docstring already names it as an expected optional dependency, not a new one to the project.",
+      "requested_by": "dev-harness-run2 (this session, self-scoped per DEVH-11's assignment)",
+      "at": "2026-09-02T16:20:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:76f420b8245230299ba53f5b80930c9c4c7919786eee7c0c9833d5b441b53d47",
+    "criteria_hash_at_freeze": "sha256:9f711be5e682b5b509622b238f1f3a4abb8c9e49ef81e94cee9070abd9ef7d48",
     "match": null
   }
 }

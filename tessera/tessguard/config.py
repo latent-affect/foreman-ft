@@ -39,6 +39,11 @@ def resolve_db_path():
     return path
 
 
+# SHA-256 integrity hashes of the .githooks/ shim files themselves -- not credentials, not
+# secrets. detect-secrets' Hex High Entropy String plugin flags long hex strings regardless of
+# what they represent, so these two values are recorded as audited false positives in the
+# repo-root .secrets.baseline (DEVH-11/GOALS.json C8); this comment is the justification a
+# reader of that baseline needs, since the baseline file itself carries no free-text field.
 # pre-commit and pre-push share a body today (activity-window gate). commit-msg is the
 # T-7 binding and has its own hash. Entries stay independent so a one-file edit is caught.
 EXPECTED_SHIM_SHAS = {
