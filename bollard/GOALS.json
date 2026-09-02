@@ -294,6 +294,22 @@
       "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest discover -s . -t .\nRan 98 tests in 1.238s\nOK\n\nCovering tests:\ntest_empty_payload_exits_zero_with_no_output ... ok (x3, one per guard)\ntest_unrelated_tool_name_produces_empty_stdout ... ok (x3, one per guard)",
       "recorded": "2026-09-02T12:45:00Z",
       "verified_by": "priya-desai, re-run in this session"
+    },
+    {
+      "criterion_id": "C10",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_allowlist -v\ntest_benign_command_produces_empty_stdout ... ok\ntest_plain_sudo_is_denied ... ok\ntest_quote_embedding_sudo_is_denied ... ok\ntest_shell_string_concatenation_sudo_is_denied ... ok\ntest_a_classification_raising_still_emits_deny ... ok\ntest_b_unpatched_benign_payload_produces_empty_stdout ... ok\ntest_c_discriminator_identical_monkeypatch_on_guard_destructive_stays_silent ... ok\nRan 7 tests in 0.073s\nOK\n\nguard_allowlist.py driven as a real subprocess, no other guard invoked in the same test. Three distinct spellings of the same denied capability (sudo): plain, the su\"\"do quote-embedding form PRD.md R13 names, and 'su'\"do\" shell-level string concatenation. Plus a benign control (ls -la /tmp) producing empty stdout.",
+      "recorded": "2026-09-02T20:55:00Z",
+      "verified_by": "dev-harness-run2-e5, real subprocess run this session, DEVH-16/DEVH-61",
+      "note": "New file bollard/guard_allowlist.py. Normalizes quote/backslash characters (same technique as guard_destructive.py) so all three spellings collapse to the same matched text; does not deny-everything (benign control passes)."
+    },
+    {
+      "criterion_id": "C11",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_allowlist -v\ntest_a_classification_raising_still_emits_deny ... ok\ntest_b_unpatched_benign_payload_produces_empty_stdout ... ok\ntest_c_discriminator_identical_monkeypatch_on_guard_destructive_stays_silent ... [hook_common] python3 -m unittest error (failing open): boom\nok\nRan 7 tests in 0.073s\nOK\n\n(a) guard_allowlist._matched_capability monkeypatched to raise RuntimeError; guard_allowlist.main's own guard-local try/except catches it and calls hc.deny() directly -- json.loads(stdout)['hookSpecificOutput']['permissionDecision'] == 'deny' and ['hookEventName'] == 'PreToolUse'. (b) unpatched benign payload -> stdout.strip() == ''. (c) THE DISCRIMINATOR: the identical monkeypatch applied to guard_destructive._matched_pattern (no guard-local try/except there, correctly relies on hook_common.run()'s fail-open default) -> empty stdout, with hook_common's own fail-open stderr line ('...error (failing open): boom') printed as independent evidence the real exception path executed rather than a mock return. Full 119-test suite (unittest discover) still green, no regressions.",
+      "recorded": "2026-09-02T20:55:00Z",
+      "verified_by": "dev-harness-run2-e5, real run this session, DEVH-16/DEVH-62",
+      "note": "guard_allowlist.py's main() wraps its classification call in a guard-local try/except calling hc.deny() on failure (DEVH-62's toy-modeled mitigation), unlike every other guard in bollard/ which relies on hook_common.run()'s shared fail-open. Field-equality assertions throughout, no substring search, per the criterion's own text."
     }
   ],
   "amendments": [
