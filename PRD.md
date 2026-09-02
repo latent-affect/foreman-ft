@@ -5,7 +5,8 @@
 **Date:** 2026-09-02
 **Input:** `/Users/m5/Downloads/dev-harness-BUILD-BRIEF_2.md` (293 lines, corrected edition)
 **Scope:** R1 through R22 of that brief, plus DEVH-2 and two gaps found while verifying it.
-**Out of this document's scope:** R0 (closed by Run 1; cited here, never reopened).
+**Out of this document's scope:** R0 (Run 1's item, and still open. Cited here, never reopened
+or re-scoped by this document. See section 8).
 **Next stage:** `foreman:architecture` (Clint Eastwood), then `foreman:design-and-scope` (Priya).
 
 ---
@@ -14,7 +15,9 @@
 
 The brief is an input, not a source. Every requirement below was checked against the live
 tree at `/Users/m5/dev/dev-harness-run2` and against the report artifacts in
-`/Users/m5/dev/dev-harness` before it was written down. That pass moved eight items.
+`/Users/m5/dev/dev-harness` before it was written down. That pass moved eight items. A ninth and
+a tenth row were added later, after the concept gate challenged one of this document's own
+claims and a second session re-checked the artifact behind it.
 
 | Brief item | What the brief said | What the artifact says | Effect |
 |---|---|---|---|
@@ -25,7 +28,8 @@ tree at `/Users/m5/dev/dev-harness-run2` and against the report artifacts in
 | R14/R15 | Validate `layered_command_guard.py` | Neither the file nor any of its four named classes exists anywhere on this machine, across two independent searches | Both requirements blocked on an existence question, not a path question. See 0.1 |
 | R16 | Un-defer ATLAS D5 (model column) | D5's stated reason is *no data source*: `sessions.jsonl` carries no model field (`docs/atlas-architecture.md:63`, DDL comment at line 600) | Two-part requirement; the data source is the blocking half |
 | R18 | Churn reads 1 almost everywhere; probably an ATLAS gap | The repo has 7 commits total. `get_git_churn` counts all history with no window. Churn of 1 is arithmetically correct | Not an ATLAS gap. The real defect is downstream: see R18 |
-| — | not in the brief | The three report scripts every number here rests on are untracked (`??`) in git | New requirement R23 |
+| — | not in the brief | The three report scripts every number here rests on are untracked (`??`) in git, and one of them overwrites its own prior output on reuse | New requirement R23, sequenced first |
+| R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` reads `open` in TESSERA. Two scoped numbers disagree, 0.96x and 1.16x, neither with surviving raw output | Corrected in 8.1 after the concept gate challenged it |
 
 Confidence notation follows the operator's standing rule: **High** = verified against an
 independent artifact; **Medium** = internally consistent, not independently confirmed;
@@ -90,10 +94,14 @@ plainly that it does not redact. A real Gemini API key already reached persisten
 through this channel, recorded in the project's own `CLAUDE.md`. Detection is the wrong shape
 for a guarantee an operator only discovers has failed by going and looking for it.
 
-**Its measurements are not reproducible.** The health score, the hotspot ranking and the
-security convergence report that this whole remediation is scoped against come from three
-scripts that are untracked in git. There is no commit to diff a "before" against, and the
-before/after comparison R3 asks for cannot currently be made honest.
+**Its measurements are not reproducible, and one of them erases its own evidence.** The health
+score, the hotspot ranking and the security convergence report that this whole remediation is
+scoped against come from three scripts that are untracked in git. There is no commit to diff a
+"before" against. Worse, `token_bloat_diagnostic.py` writes to a fixed filename in the working
+directory, so running it twice from one place destroys the first result, which has already
+happened to the only dev-harness-scoped run anyone can point at (section 8.1). A measurement
+tool that overwrites prior evidence on ordinary reuse is not a hygiene problem, and R23 is
+sequenced ahead of every requirement whose verification is a before/after comparison.
 
 None of these is a performance problem or a taste problem. Each is a checkable statement about
 the system that is currently false.
@@ -456,21 +464,41 @@ Zero references to `SendMessage` or `ListAgents` exist anywhere in this reposito
 
 ### New requirements found while verifying the brief
 
-**R23 — The measurement tooling shall be version-controlled.**
+**R23 — The measurement tooling shall be version-controlled, and its outputs shall stop
+overwriting each other. Sequence this first.**
 
-`git status` in `/Users/m5/dev/dev-harness` reports `foreman_quality_baseline.py`,
-`token_bloat_diagnostic.py` and `security_privacy_convergence.py`, plus all six of their `.json`
-and `.txt` outputs, as untracked. `git ls-files` matching those names returns zero. Every
-quantitative claim in this PRD and in the brief traces to one of those three files, and none of
-them exists in the branch this work is being done on.
+Two halves. The second was found after the first was written and is the reason this requirement
+moved to the front of the queue.
 
-- **Requirement:** all three scripts shall be tracked in git, and each generated report shall
-  record the tool commit SHA and the analyzed tree SHA in its own output.
-- **Verification:** `git ls-files` returns all three paths; a fresh report contains both SHAs.
-- **Why this is load-bearing rather than hygiene:** R3 asks for a before/after comparison. An
-  untracked "before" can change or vanish between the two runs with no diff to show it, which
-  makes the comparison unfalsifiable in exactly the way this project's own literature calls out.
-- **Confidence: High** (`git status --short` output read directly).
+*R23a, provenance.* `git status` in `/Users/m5/dev/dev-harness` reports
+`foreman_quality_baseline.py`, `token_bloat_diagnostic.py` and
+`security_privacy_convergence.py`, plus all six of their `.json` and `.txt` outputs, as
+untracked. `git ls-files` matching those names returns zero. Every quantitative claim in this
+PRD and in the brief traces to one of those three files, and none of them exists in the branch
+this work is being done on.
+
+*R23b, evidence destruction on ordinary reuse.* `token_bloat_diagnostic.py` writes to
+`Path.cwd() / "token_bloat_diagnostic.json"` and the matching `.txt` (lines 503-504). Fixed
+name, no timestamp, no run id, no scope marker. Running it twice from one directory destroys
+the first result, and that has already happened to the only dev-harness-scoped run anyone can
+point at. Section 8.1 has the demonstration. This is not a hypothetical failure mode being
+guarded against, it is a completed one being reported.
+
+- **Requirement:** all three scripts shall be tracked in git; each generated report shall record
+  the tool commit SHA and the analyzed tree SHA in its own output; and no run shall be capable
+  of overwriting a prior run's output, whether by run-scoped filenames or by refusing to write
+  over an existing file.
+- **Verification:** `git ls-files` returns all three paths; a fresh report contains both SHAs;
+  and two consecutive runs from one directory with different arguments leave two readable
+  results, not one.
+- **Sequencing, and this is the point:** R23 shall land before R1, R3 or R21 produce any number
+  intended to be relied on. A tool that is untracked *and* destroys prior evidence on normal use
+  cannot support a before/after comparison, and R3 and R21 are both nothing but before/after
+  comparisons. Treating this as hygiene and deferring it is how R0 ended up with two
+  disagreeing scoped numbers and complete raw output for neither.
+- **Confidence: High** on both halves. R23a from `git status --short` read directly; R23b from
+  the script's own lines 503-504 and docstring line 45, plus the surviving evidence of the
+  overwrite in section 8.1.
 
 **R24 — dev-harness shall run and ship its own security guards. (DEVH-2)**
 
@@ -534,8 +562,10 @@ work being checked.
 
 Each with the reason, because an unnamed non-goal is scope creep with a head start.
 
-- **R0, context-size reduction.** Closed by Run 1. Its original 2.3x-3.1x claim is retracted as
-  an unscoped-aggregation artifact. Cited in this document, never reopened.
+- **R0, context-size reduction.** Run 1's item, not this document's, and still open (DEVH-3,
+  verified `open` in TESSERA 2026-09-02). Out of scope here because it belongs to another run,
+  not because it is finished. Its original 2.3x-3.1x claim is separately and genuinely
+  retracted. Section 8 states the real status.
 - **The Alice/Bob QA architecture.** A separate project, gated on this one. R13 is
   command-string evasion defense and is adjacent, not the same system, and the architecture stage
   should keep the language distinct.
@@ -606,23 +636,77 @@ implementation still satisfy the stated verification? Findings, and what was cha
 
 ---
 
-## 8. Closed before this stage, recorded for traceability
+## 8. Disposition of items not carried as requirements
 
 | Item | Disposition | Evidence |
 |---|---|---|
-| R0 | Closed by Run 1. Original growth claim retracted | Brief's own correction section; DEVH-3 exit report |
 | R6 | No action. `cli.py` is a flat dispatcher, NIST 500-235 named exception | Independently supported: MI 33.1, grade A |
 | R10 | No change to Nadia. Confirmed intentional | Brief section "what this is not," item 3 |
 | R11 | Retired, folded into R8. Number not reused | Brief |
 | R12 | Absorbed into R13 as its premise | This document |
-| R15 | Absorbed into R14, pending artifact resolution | This document |
-| DEVH-4, DEVH-5 | Two script bugs filed during Run 1 | Run 1 |
+| R15 | Absorbed into R14, pending the existence question in 0.1 | This document |
+| DEVH-4, DEVH-5 | Two script bugs filed during Run 1. Both still `open` | TESSERA, verified 2026-09-02 |
+
+### 8.1 R0 is not closed. Correcting this document's own earlier claim.
+
+An earlier revision of this PRD recorded R0 as "Closed by Run 1," sourced to a Run 1 exit report
+that said so in prose. The concept gate challenged it and was right. I verified the ticket
+myself rather than accept either account: `DEVH-3` reads **`open`** in TESSERA
+(`/Users/m5/dev/ticket-system/data/tessera.db`, queried read-only 2026-09-02). A run reporting
+itself finished is not a transition, and I should have checked before writing the row. This is
+the same self-report-versus-artifact gap section 0.1 exists to warn about, appearing in my own
+document, which is the reason it gets a correction here rather than a silent edit.
+
+The honest status is not "closed" and not "no data exists." It is unsettled across two
+incomplete framings.
+
+**Framing one, single-project, incomplete, and two scoped numbers that disagree.** The brief
+requires a `--project-hint dev-harness` scoped run to exist as an actual file before R0 can be
+resolved. Two dev-harness-scoped results are claimed, and they do not agree:
+
+| Result | Source | Raw output |
+|---|---|---|
+| **0.96x**, under the 1.1x target | An independently-run session, reported in the brief's own R0 correction | None. The brief states plainly the raw output "was never shown here, only summarized" |
+| **1.16x**, over the 1.1x target | `/Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt`, 297 bytes. Also 95.0% cache hit rate, 32 invalidation spikes | Console summary only. The full JSON it names no longer contains this run |
+
+One says at parity, one says over target, and neither has complete surviving raw output. That is
+the actual state of the evidence.
+
+**Why the second one's raw output is gone, and why that is a finding rather than an accident.**
+`token_bloat_diagnostic.py` writes its results to a fixed filename in the current working
+directory: `Path.cwd() / "token_bloat_diagnostic.json"` and the matching `.txt` (lines 503-504;
+the module docstring at line 45 says so outright, "next to wherever you run it"). No timestamp,
+no run id, no scope in the filename. Every run from the same directory overwrites the last one.
+Both runs were made from `/Users/m5/dev/dev-harness`, so the later `/dev`-wide run destroyed the
+scoped run's JSON. This is demonstrated, not inferred: that file now carries
+`project_hint: "m5-dev-"` over 149 session files, which is the broader run's output, not the
+scoped one's.
+
+**And the surviving number is produced by a computation with an open bug against it.** DEVH-5,
+`open`: "day_over_day ratio compares a fixed historical day against an in-progress 'today',
+producing an unstable number." A latest-day-versus-day-one ratio is exactly that computation.
+DEVH-4, also `open`, adds UTC bucketing that misfiles evening Pacific sessions into the next
+day. So 1.16x is over target and is not a number that can be read as settled even on its own
+terms.
+
+*One correction to how this reached me:* it was relayed as a hardcoded output path. It is not
+hardcoded, it is cwd-relative with a fixed name, which is a slightly different mechanism with
+the same consequence. Recorded because the mechanism is what a fix has to address.
+
+**Framing two, cross-project, also incomplete.** The operator redirected the investigation after
+that run, calling the single-project framing "missing the point," and asked for a pre- versus
+post-Foreman-adoption comparison across all of `/dev` instead. That work was not completed; it
+still lacks the operator's actual cutover date, which is an input only he holds.
+
+**Effect on this document: none.** No requirement in section 3 depends on R0's status, and R0 is
+another run's item. The correction matters for traceability, not for scope. The one thing it
+does change is section 9's disposal of the brief's fourth open question.
 
 ---
 
 ## 9. Open decisions carried into architecture
 
-Four, three of which block something. The first is for the operator, not the architecture stage,
+Five, three of which block something. The first is for the operator, not the architecture stage,
 and it is the highest-severity open item in this document.
 
 1. **HIGH — Was `layered_command_guard.py` ever written?** Blocks R14 and R15 entirely, and
@@ -635,9 +719,11 @@ and it is the highest-severity open item in this document.
 4. **Docker and Postgres on the FCLB build machine.** Carried from the brief. Not blocking
    anything in this document's scope, since nothing here depends on FCLB. Recorded so it is not
    lost.
-
-The brief's fourth open question, whether R0 blocks an autonomous pass, is moot: R0 closed in
-Run 1.
+5. **Whether R0 blocks the start of an autonomous pass.** The brief's own fourth open question.
+   An earlier revision of this document called it moot on the strength of R0 having closed. R0
+   has not closed (section 8.1), so it is live again. Settled for this run by decision rather
+   than by resolution: the operator gave explicit go-ahead for Run 2 with R0 open. That answers
+   it once, not as a standing rule, so it stays on the list.
 
 ---
 
@@ -646,6 +732,18 @@ Run 1.
 `PRD.md` exists at the project root. Every requirement in section 3 states a verification or is
 explicitly marked blocked with a reason. The out-of-scope section is non-empty. The falsification
 pass in section 7 has run and changed four requirements.
+
+**Concept gate: GO with three conditions.** One was this document's: an unverified "R0 closed by
+Run 1" row in section 8. Corrected in 8.1, with the ticket status checked directly against
+TESSERA rather than taken from either the Run 1 report or the gate's account of it. Four other
+statements resting on that assumption were tracked down and fixed in the same pass (the header,
+the out-of-scope entry, the section 8 table, and section 9's disposal of the brief's fourth open
+question, which is now item 5 and live again).
+
+Worth recording rather than quietly fixing: the error was mine, it was the one class of error
+this document's own section 0.1 was written to warn about, and it took an outside context to
+catch it. A reviewer who has read this far is entitled to weigh that when deciding how much of
+the rest to take on trust.
 
 This stage is **not mechanically enforced**. No hook checks for `PRD.md` the way
 `architecture_gate.py` checks for `ARCHITECTURE.md`. Nothing prevented this document from being
