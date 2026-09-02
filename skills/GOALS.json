@@ -4,8 +4,8 @@
   "component": "skills",
   "scope_version": 1,
   "created": "2026-09-02T08:55:00Z",
-  "criteria_frozen_at": "2026-09-02T08:05:41Z",
-  "done_state": "The configuration an installer actually receives from this repo registers every security guard this repo claims to ship, and every command path that configuration names resolves to a real, runnable hook after install-time token substitution.",
+  "criteria_frozen_at": "2026-09-02T10:12:36Z",
+  "done_state": "The configuration an installer actually receives from this repo registers every security guard this repo claims to ship, and every command path that configuration names resolves to a real, runnable hook after install-time token substitution. The install chain's own settings-shape check validates every registered hook command, not only those under one exact matcher string.",
   "requirement": "PRD.md R24 (DEVH-2), the skills-component share of it. First design-and-scope pass for this component; it had no GOALS.json at all, so every write under skills/ was denied by goals_freeze_gate.",
   "scope_note": "A real pass, not a citation anchor, but scoped to the configuration surface R24 concerns: skills/foreman/config/. The packaged skill subset itself (foreman/, code-safety/, research-lifecycle/ skill bodies) is deliberately out of scope here and named as such below -- it is a distribution copy of files whose source of record lives elsewhere, and inventing criteria for it to look thorough is the padding this stage's own guardrails forbid.",
   "criteria": [
@@ -29,6 +29,13 @@
       "verification": "For each of the three substituted guard paths, run it as a subprocess with an empty JSON object on stdin. Assert exit status 0 and empty stdout -- the DENY-or-nothing convention hook_common.py already enforces, under which a hook with nothing to say emits nothing. A stub that raises on import exits non-zero and fails; a file that prints anything on a payload it should ignore also fails, which keeps a guard from degrading into an advisory that never blocks.",
       "verifiable": true,
       "added": "2026-09-02T08:55:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "verify_settings_shape() validates the hook command in EVERY PreToolUse entry, not only entries whose matcher is exactly the string 'Edit|Write|Bash', while still requiring that such an entry exist.",
+      "verification": "Two halves, both required. Regression: build a settings.json fixture in the shape ARCHITECTURE.md specifies for these guards -- three separate PreToolUse entries with matchers 'Bash', 'Edit|Write' and the outbound-fetch surface, alongside the six-gate 'Edit|Write|Bash' entry -- with exactly one guard's target file deliberately absent. verify_settings_shape() must raise InitError naming that command. Against the code as it stands today (foreman_init.py:176, `entry.get('matcher') == 'Edit|Write|Bash'`) it returns cleanly, which is the bug. Preserved invariant: a settings.json with NO entry whose matcher covers Bash must still raise, so the fix widens what is checked without weakening the requirement that the design gates see Bash traffic -- the reason given in that function's own comment at lines 181-183, that a denied Edit or Write is trivially routed around with a shell redirect.",
+      "verifiable": true,
+      "added": "2026-09-02T10:15:00Z"
     }
   ],
   "failure_criteria": [
@@ -51,6 +58,16 @@
       "id": "F4",
       "statement": "A guard is wired to emit `ask` rather than `deny`, or a PostToolUse warning envelope. It appears active in the ledger, produces visible output, and never actually blocks a destructive command -- the exact detection-instead-of-prevention shape this whole PRD is about.",
       "detection": "bollard C8 asserts the decision envelope is `deny` specifically, and that no non-matching payload produces any output at all."
+    },
+    {
+      "id": "F5",
+      "statement": "The fix widens command collection to every PreToolUse entry but drops or weakens the separate requirement that an entry matching Bash exists. Broken guard references are now caught, and a settings.json whose gates never see Bash traffic installs cleanly -- trading one blind spot for a worse one, since the function's own comment explains that a denied Edit or Write is trivially routed around with a shell redirect.",
+      "detection": "C4's second half asserts InitError is still raised when no Bash-covering entry is present."
+    },
+    {
+      "id": "F6",
+      "statement": "Collection is widened by relaxing the exact match to a substring or prefix test on the matcher string. A matcher of 'Bash' is caught by accident, an unrelated future matcher is missed, and the same exact-string-matching bug class survives one refactor later in a less obvious form.",
+      "detection": "C4 requires validating every entry unconditionally rather than matching on matcher text at all; the matcher string is only consulted for the separate Bash-coverage invariant."
     }
   ],
   "out_of_scope": [
@@ -58,7 +75,7 @@
     "Whether the packaged subset is the RIGHT subset. A real question, and a scoping one, not a verification one -- it belongs to whoever revisits the distribution's contents, not to R24.",
     "GOALS.template.json and the other files under skills/foreman/config/ that R24 does not touch. Adding criteria for them would inflate scope_estimate.test_criteria, which is meant to be a real ceiling later growth is measured against.",
     "The behaviour of the three guards themselves. That is bollard's component and bollard's GOALS.json; this component only guarantees they are correctly registered and runnable.",
-    "The install script's own fail-closed preflight. That is scripts/GOALS.json C4 and C5."
+    "The install script's own fail-closed REQUIRED_HOOKS preflight. That is scripts/GOALS.json C4 and C5. C4 here covers foreman_init.py's settings-shape check, which is a different artifact: it reads the installed .claude/settings.json, not the shipped template and not the hooks directory."
   ],
   "constraints": [
     "The template must stay valid JSON at every step. It is consumed by substitute_tokens and then by Claude Code itself, neither of which tolerates a syntax error, and a broken settings file disables every hook rather than one.",
@@ -69,13 +86,23 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 3,
-    "frozen_at": "2026-09-02T08:05:41Z"
+    "test_criteria": 4,
+    "frozen_at": "2026-09-02T10:12:36Z"
   },
   "results": [],
-  "amendments": [],
+  "amendments": [
+    {
+      "criterion_id": null,
+      "change": "criterion added (C4)",
+      "from": "Three criteria covering the shipped settings template. Nothing covering foreman_init.py, whose settings-shape check runs against the INSTALLED settings.json rather than the template.",
+      "to": "Four criteria; C4 covers verify_settings_shape validating every PreToolUse entry.",
+      "reason": "dev-harness-33 proved by real install into a temp HOME that verify_settings_shape() (skills/foreman/scripts/foreman_init.py:176) collects commands only from an entry whose matcher is EXACTLY 'Edit|Write|Bash', so none of R24's three guards -- registered under 'Bash', 'Edit|Write' and the outbound-fetch surface, exactly as ARCHITECTURE.md specifies -- have their command paths checked at all. A guard pointing at a file that does not exist passed cleanly. Their control test (same broken reference inside the six-gate entry) correctly raised InitError, so the blindness is specific, not general breakage. Confirmed here by reading the function directly. Without this, a broken or missing guard passes all nine of R24's frozen criteria AND the install chain's own settings-shape check. Scoped into skills rather than opened as a fourth component because foreman_init.py resolves to the skills component, verified by running the resolver -- the same component frozen earlier tonight.",
+      "requested_by": "dev-harness-33 (found), priya-desai (scoped)",
+      "at": "2026-09-02T10:15:00Z"
+    }
+  ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:bd178f1bd05e05319df9f26b149c4ff4576144669362f699eb401e6d52966272",
+    "criteria_hash_at_freeze": "sha256:ed86c4e884aafae0473a1315fce76aef4bc2e2c517874094b447d615520ddee1",
     "match": null
   }
 }
