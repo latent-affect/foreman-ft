@@ -1,0 +1,1503 @@
+{
+  "meta": {
+    "project_hint": null,
+    "days_scanned": 1,
+    "session_files": 33,
+    "parse_stats": {
+      "lines_total": 29702,
+      "lines_json_valid": 29702,
+      "lines_with_usage": 8959,
+      "lines_duplicate_skipped": 4438,
+      "files_scanned": 33
+    },
+    "projects_seen": [
+      "-Users-m5-agent-remediation",
+      "-Users-m5-dev-atlas-sonnet-qa",
+      "-Users-m5-dev-dev-harness",
+      "-Users-m5-dev-dev-harness-run2",
+      "-Users-m5-dev-dev-harness-run2-e1",
+      "-Users-m5-dev-dev-harness-run2-e2",
+      "-Users-m5-dev-foreman-context-balancer",
+      "-Users-m5-dev-ticket-system"
+    ],
+    "scope_warning": "WARNING: no --project-hint was given. This report aggregates 8 different projects into one set of numbers. Any day-over-day or growth figure below describes this MIX, not any single project -- do not attribute it to one project by name. Rerun with --project-hint <name> for a single-project claim."
+  },
+  "overall": {
+    "turns_analyzed": 4521,
+    "overall_avg_cache_hit_rate": 0.982,
+    "note": "cache_hit_rate = cache_read_input_tokens / total_prompt_tokens per turn. Anthropic's own guidance: track this number directly, don't estimate it."
+  },
+  "day_over_day": {
+    "day_one": "2026-09-01",
+    "day_one_avg_tokens_per_turn": 186293.7,
+    "day_one_avg_cache_hit_rate": 0.9619,
+    "latest_day": "2026-09-02",
+    "latest_vs_day_one_ratio": 2.25,
+    "target_ratio": 1.1,
+    "total_zero_token_artifacts_excluded": 1,
+    "per_day": {
+      "2026-09-01": {
+        "turns": 599,
+        "zero_token_artifacts_excluded": 0,
+        "avg_total_prompt_tokens": 186293.7,
+        "avg_cache_hit_rate": 0.9619,
+        "ratio_vs_day_one_tokens": 1.0
+      },
+      "2026-09-02": {
+        "turns": 3921,
+        "zero_token_artifacts_excluded": 1,
+        "avg_total_prompt_tokens": 418316.4,
+        "avg_cache_hit_rate": 0.9854,
+        "ratio_vs_day_one_tokens": 2.25
+      }
+    }
+  },
+  "launch_clusters": {
+    "note": "Each cluster = 2+ sessions in the same project starting within 60s of each other -- your concurrent-review pattern. cold_write_count = sessions that opened without benefiting from another's cache (the race-condition loss the theory predicted). warm_hit_count = sessions whose opening turn got a cache hit from an already-running sibling.",
+    "clusters_found": 4,
+    "clusters": [
+      {
+        "project": "-Users-m5-dev-dev-harness",
+        "cluster_start": "2026-09-02T05:29:09.798000+00:00",
+        "session_count": 2,
+        "cold_write_count": 0,
+        "warm_hit_count": 2,
+        "models_involved": [
+          "claude-opus-5",
+          "claude-sonnet-5"
+        ],
+        "sessions": [
+          {
+            "session_file": "8a41f70c-d837-4acb-b92a-aba697c8433c.jsonl",
+            "timestamp": "2026-09-02T05:29:09.798000+00:00",
+            "model": "claude-opus-5",
+            "cache_creation": 16446,
+            "cache_read": 26349,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "5c92ac28-071d-4518-a3a9-b8eae2ebb1ae.jsonl",
+            "timestamp": "2026-09-02T05:29:11.595000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 19261,
+            "cache_read": 34878,
+            "opened": "warm_hit"
+          }
+        ]
+      },
+      {
+        "project": "-Users-m5-dev-dev-harness-run2",
+        "cluster_start": "2026-09-02T06:17:30.242000+00:00",
+        "session_count": 3,
+        "cold_write_count": 0,
+        "warm_hit_count": 3,
+        "models_involved": [
+          "claude-opus-5",
+          "claude-sonnet-5"
+        ],
+        "sessions": [
+          {
+            "session_file": "4074b6f5-b471-4f30-8613-3b737989d5f0.jsonl",
+            "timestamp": "2026-09-02T06:17:30.242000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 19260,
+            "cache_read": 34878,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "e175b64c-a795-4b21-945e-2c1dfa6d284f.jsonl",
+            "timestamp": "2026-09-02T06:17:31.881000+00:00",
+            "model": "claude-opus-5",
+            "cache_creation": 16758,
+            "cache_read": 26349,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "73be5b99-042f-4341-bfcf-529e29aa04d7.jsonl",
+            "timestamp": "2026-09-02T06:17:34.301000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 19260,
+            "cache_read": 34878,
+            "opened": "warm_hit"
+          }
+        ]
+      },
+      {
+        "project": "-Users-m5-dev-dev-harness-run2",
+        "cluster_start": "2026-09-02T19:25:59.084000+00:00",
+        "session_count": 11,
+        "cold_write_count": 0,
+        "warm_hit_count": 11,
+        "models_involved": [
+          "claude-opus-5",
+          "claude-sonnet-5"
+        ],
+        "sessions": [
+          {
+            "session_file": "1f684f67-fdfa-4f8c-9d22-06e4f3197402.jsonl",
+            "timestamp": "2026-09-02T19:25:59.084000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 19505,
+            "cache_read": 34878,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "2cbe45c1-eeae-4632-a903-ddb83822c952.jsonl",
+            "timestamp": "2026-09-02T19:26:02.133000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "7f70cc1d-af16-4d25-97bb-4e78ea5999e8.jsonl",
+            "timestamp": "2026-09-02T19:26:02.781000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "711af95c-95ec-4af6-b28b-4d2bc76d6f8e.jsonl",
+            "timestamp": "2026-09-02T19:26:04.038000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "d2156388-1a63-4598-a4de-68065d70d1d7.jsonl",
+            "timestamp": "2026-09-02T19:26:05.532000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "8eb4cb63-425f-4381-8e18-274f97bebe20.jsonl",
+            "timestamp": "2026-09-02T19:26:09.658000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "e45f6f65-b4fa-498b-aa3a-3a395f9f52a6.jsonl",
+            "timestamp": "2026-09-02T19:26:11.930000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "235bc8ca-d283-4f8b-bb9d-a7af7b2a9ad9.jsonl",
+            "timestamp": "2026-09-02T19:26:13.777000+00:00",
+            "model": "claude-opus-5",
+            "cache_creation": 16990,
+            "cache_read": 26349,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "ef168a2a-27af-44a4-b03b-5525c5efe54f.jsonl",
+            "timestamp": "2026-09-02T19:26:16.194000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+            "timestamp": "2026-09-02T19:26:16.487000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "766ae5b9-2482-4ccf-91fc-6254fd0cfcd7.jsonl",
+            "timestamp": "2026-09-02T19:26:23.112000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 54383,
+            "opened": "warm_hit"
+          }
+        ]
+      },
+      {
+        "project": "-Users-m5-dev-atlas-sonnet-qa",
+        "cluster_start": "2026-09-02T14:35:01.370000+00:00",
+        "session_count": 3,
+        "cold_write_count": 0,
+        "warm_hit_count": 3,
+        "models_involved": [
+          "claude-opus-5",
+          "claude-sonnet-5"
+        ],
+        "sessions": [
+          {
+            "session_file": "d13426b0-80ae-4709-abf3-a33fc07c499e.jsonl",
+            "timestamp": "2026-09-02T14:35:01.370000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 0,
+            "cache_read": 56206,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "03978833-433d-484d-8d6b-b25f8967106c.jsonl",
+            "timestamp": "2026-09-02T14:35:02.054000+00:00",
+            "model": "claude-opus-5",
+            "cache_creation": 18746,
+            "cache_read": 26349,
+            "opened": "warm_hit"
+          },
+          {
+            "session_file": "ba81d2c6-f55e-498b-a28f-d626f9237450.jsonl",
+            "timestamp": "2026-09-02T14:35:13.340000+00:00",
+            "model": "claude-sonnet-5",
+            "cache_creation": 21058,
+            "cache_read": 34878,
+            "opened": "warm_hit"
+          }
+        ]
+      }
+    ]
+  },
+  "spike_count": 978,
+  "spike_cause_buckets": {
+    "unknown_genuine_break_candidate": 4,
+    "healthy_growth_not_a_break": 437,
+    "new_session_expected": 535,
+    "idle_gap_ttl": 2
+  },
+  "spikes_by_day": {
+    "2026-09-01": 46,
+    "2026-09-02": 932
+  },
+  "invalidation_spikes_sample": [
+    {
+      "message_id": "msg_011CedUgfWXTtugLpKf2G6Rk",
+      "timestamp": "2026-09-01T22:05:32.334000+00:00",
+      "cache_creation_input_tokens": 36617,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "unknown, same session, cache_read did NOT keep pace -- a real candidate for a genuine break; check hook output / CLAUDE.md edits manually"
+    },
+    {
+      "message_id": "msg_011CedUiGk7oyF5cRaZzD3wF",
+      "timestamp": "2026-09-01T22:05:47.870000+00:00",
+      "cache_creation_input_tokens": 5418,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedUio7ESfdG5VFburLQB",
+      "timestamp": "2026-09-01T22:06:08.675000+00:00",
+      "cache_creation_input_tokens": 9558,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedUk2pWo5gvudWdLsqyH",
+      "timestamp": "2026-09-01T22:06:27.599000+00:00",
+      "cache_creation_input_tokens": 2860,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedXQHhm9WmJDafpAB4am",
+      "timestamp": "2026-09-01T22:41:05.182000+00:00",
+      "cache_creation_input_tokens": 30462,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedXRSaq9A6GV93MdqUjT",
+      "timestamp": "2026-09-01T22:41:23.890000+00:00",
+      "cache_creation_input_tokens": 42767,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedXSJmK1N4AjcPYjxxkD",
+      "timestamp": "2026-09-01T22:41:35.260000+00:00",
+      "cache_creation_input_tokens": 8842,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedXT9m7HsDiFqCNa7JF1",
+      "timestamp": "2026-09-01T22:41:44.040000+00:00",
+      "cache_creation_input_tokens": 2370,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedXcwWgejTeLGTfdYBLB",
+      "timestamp": "2026-09-01T22:44:06.360000+00:00",
+      "cache_creation_input_tokens": 5662,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedXnW6zn6ABEPJEaP1ux",
+      "timestamp": "2026-09-01T22:46:05.674000+00:00",
+      "cache_creation_input_tokens": 2712,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedXouJYCo38i9RCe8xGe",
+      "timestamp": "2026-09-01T22:46:26.417000+00:00",
+      "cache_creation_input_tokens": 3214,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedXqDQVW8TvDE4Db7nd8",
+      "timestamp": "2026-09-01T22:47:00.546000+00:00",
+      "cache_creation_input_tokens": 20331,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYQCPePQSYrPTVD6U3q",
+      "timestamp": "2026-09-01T22:54:12.195000+00:00",
+      "cache_creation_input_tokens": 2633,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYQdspfgihneRsKK4Z9",
+      "timestamp": "2026-09-01T22:54:14.953000+00:00",
+      "cache_creation_input_tokens": 3947,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYRXGEPgyoHthPTteuv",
+      "timestamp": "2026-09-01T22:54:34.186000+00:00",
+      "cache_creation_input_tokens": 4302,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYVj6zAWJ7Noq6j4Qra",
+      "timestamp": "2026-09-01T22:55:31.407000+00:00",
+      "cache_creation_input_tokens": 2581,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYXBhQzXXWo3se46jNY",
+      "timestamp": "2026-09-01T22:55:43.759000+00:00",
+      "cache_creation_input_tokens": 4668,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYZqDT6ZLptuvg4ZME4",
+      "timestamp": "2026-09-01T22:56:24.419000+00:00",
+      "cache_creation_input_tokens": 2850,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYbZqnpHK2HSU3BfCch",
+      "timestamp": "2026-09-01T22:57:13.775000+00:00",
+      "cache_creation_input_tokens": 3759,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYdz2duqEHc8LHMnWWy",
+      "timestamp": "2026-09-01T22:57:34.139000+00:00",
+      "cache_creation_input_tokens": 2818,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYh7RUFk5i2ABr7QR3D",
+      "timestamp": "2026-09-01T22:58:00.547000+00:00",
+      "cache_creation_input_tokens": 26244,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYhTn5T2ijLRZFg4p3t",
+      "timestamp": "2026-09-01T22:58:25.430000+00:00",
+      "cache_creation_input_tokens": 29659,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYihh1kcMChTKm7znW7",
+      "timestamp": "2026-09-01T22:58:26.756000+00:00",
+      "cache_creation_input_tokens": 7963,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYiLV4fdB1py5RC4CWN",
+      "timestamp": "2026-09-01T22:58:29.679000+00:00",
+      "cache_creation_input_tokens": 17535,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYjmtoWXB9C7GMNqKPu",
+      "timestamp": "2026-09-01T22:58:39.895000+00:00",
+      "cache_creation_input_tokens": 12323,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYih457xFDX61CxCrM5",
+      "timestamp": "2026-09-01T22:59:07.879000+00:00",
+      "cache_creation_input_tokens": 4206,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYnLh5LsEw4mUk2LABn",
+      "timestamp": "2026-09-01T22:59:10.507000+00:00",
+      "cache_creation_input_tokens": 7022,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYnp7qAz7oVpnX9tGq9",
+      "timestamp": "2026-09-01T22:59:33.323000+00:00",
+      "cache_creation_input_tokens": 19927,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYpUb95KFahZMjVBgb4",
+      "timestamp": "2026-09-01T22:59:38.662000+00:00",
+      "cache_creation_input_tokens": 2516,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYphJ7vM65dWEGGx6wg",
+      "timestamp": "2026-09-01T22:59:41.063000+00:00",
+      "cache_creation_input_tokens": 2598,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYqnNjzSVNhMCALm7U5",
+      "timestamp": "2026-09-01T23:00:01.756000+00:00",
+      "cache_creation_input_tokens": 4723,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedYyGnUxJLoY8egkNXgn",
+      "timestamp": "2026-09-01T23:01:41.775000+00:00",
+      "cache_creation_input_tokens": 5468,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYyss7VnFDfmodTZ8UZ",
+      "timestamp": "2026-09-01T23:01:51.718000+00:00",
+      "cache_creation_input_tokens": 4648,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedYznmoWRbsNuPNXz5ib",
+      "timestamp": "2026-09-01T23:02:03.896000+00:00",
+      "cache_creation_input_tokens": 3133,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZ1izNYbx1ndXCNvPct",
+      "timestamp": "2026-09-01T23:02:17.468000+00:00",
+      "cache_creation_input_tokens": 2960,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZ2c1xJFdwMQozjRbij",
+      "timestamp": "2026-09-01T23:02:39.796000+00:00",
+      "cache_creation_input_tokens": 2405,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZ47GdXeyPHPAao7mtw",
+      "timestamp": "2026-09-01T23:02:45.952000+00:00",
+      "cache_creation_input_tokens": 2722,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZ7dJjdE7tEh7BPzxN2",
+      "timestamp": "2026-09-01T23:03:33.660000+00:00",
+      "cache_creation_input_tokens": 3761,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZ8oyhpwjP5b84ajLv7",
+      "timestamp": "2026-09-01T23:03:56.224000+00:00",
+      "cache_creation_input_tokens": 2386,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZABZ1hSZpTx1oJeZYG",
+      "timestamp": "2026-09-01T23:04:09.704000+00:00",
+      "cache_creation_input_tokens": 5025,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZEvZWLXUbBLDc56BHE",
+      "timestamp": "2026-09-01T23:05:12.393000+00:00",
+      "cache_creation_input_tokens": 5698,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZEuUXH5yQwPoneu2rU",
+      "timestamp": "2026-09-01T23:05:22.373000+00:00",
+      "cache_creation_input_tokens": 3059,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedZRvbJB1n5VhbgeBgLE",
+      "timestamp": "2026-09-01T23:07:41.942000+00:00",
+      "cache_creation_input_tokens": 4492,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZSTLEmpcxLwhPqNh6u",
+      "timestamp": "2026-09-01T23:08:06.585000+00:00",
+      "cache_creation_input_tokens": 8884,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedZUNHBdNYrEVxjq4Di8",
+      "timestamp": "2026-09-01T23:08:52.472000+00:00",
+      "cache_creation_input_tokens": 6516,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedZXUoBeeHMhQY1mVM44",
+      "timestamp": "2026-09-01T23:08:57.985000+00:00",
+      "cache_creation_input_tokens": 3955,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cedfp38m81vBM1GPkshHe",
+      "timestamp": "2026-09-02T00:31:24.817000+00:00",
+      "cache_creation_input_tokens": 91448,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedfvYdxHbqUgzBpny69K",
+      "timestamp": "2026-09-02T00:32:52.603000+00:00",
+      "cache_creation_input_tokens": 9064,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedfyLCRofR6KztfRScdY",
+      "timestamp": "2026-09-02T00:34:14.267000+00:00",
+      "cache_creation_input_tokens": 2550,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cedg33WCVQ1XGLnkbwbVX",
+      "timestamp": "2026-09-02T00:34:48.635000+00:00",
+      "cache_creation_input_tokens": 6592,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cedg5gWyFyU5nXcqhdBC2",
+      "timestamp": "2026-09-02T00:34:56.677000+00:00",
+      "cache_creation_input_tokens": 3667,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cedg5g9u1beARusGxQtE1",
+      "timestamp": "2026-09-02T00:35:00.800000+00:00",
+      "cache_creation_input_tokens": 196511,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgBRyHJRtvp3VJ4wUwT",
+      "timestamp": "2026-09-02T00:36:13.722000+00:00",
+      "cache_creation_input_tokens": 50750,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgCu11M6TsLzPpxNZag",
+      "timestamp": "2026-09-02T00:36:30.853000+00:00",
+      "cache_creation_input_tokens": 15005,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgDCposP3ea7CjqyT1w",
+      "timestamp": "2026-09-02T00:36:47.425000+00:00",
+      "cache_creation_input_tokens": 16772,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgEa8kUBzSeTD8ehEFr",
+      "timestamp": "2026-09-02T00:37:01.905000+00:00",
+      "cache_creation_input_tokens": 3533,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgFreCvWeBcChdX6hrh",
+      "timestamp": "2026-09-02T00:37:14.821000+00:00",
+      "cache_creation_input_tokens": 5938,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgGuC2Wz5fbipDLshxk",
+      "timestamp": "2026-09-02T00:37:32.532000+00:00",
+      "cache_creation_input_tokens": 4444,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgHztcEdUZ8KZ77Lvns",
+      "timestamp": "2026-09-02T00:37:43.654000+00:00",
+      "cache_creation_input_tokens": 4072,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgSQpFJmuuuTca7j54W",
+      "timestamp": "2026-09-02T00:39:37.697000+00:00",
+      "cache_creation_input_tokens": 2774,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgUTq81AuzkvMZM7T9G",
+      "timestamp": "2026-09-02T00:40:03.575000+00:00",
+      "cache_creation_input_tokens": 20557,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "6a38d740-2b85-4a07-9681-2f1167f25b9f.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgVJLPu8Mm9Sngsbzzd",
+      "timestamp": "2026-09-02T00:40:14.427000+00:00",
+      "cache_creation_input_tokens": 20927,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "6a38d740-2b85-4a07-9681-2f1167f25b9f.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgWcogUuiZwoE1m3kDj",
+      "timestamp": "2026-09-02T00:40:34.027000+00:00",
+      "cache_creation_input_tokens": 4438,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "6a38d740-2b85-4a07-9681-2f1167f25b9f.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgVLAHHaKFKq3rDRrQR",
+      "timestamp": "2026-09-02T00:40:34.968000+00:00",
+      "cache_creation_input_tokens": 5557,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgVmHdcRwqfEqVJX4pn",
+      "timestamp": "2026-09-02T00:40:36.210000+00:00",
+      "cache_creation_input_tokens": 168416,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "ba306356-c598-4919-a4f2-1abcf4e4adc3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgXUiY5cNbCJxY8tPz2",
+      "timestamp": "2026-09-02T00:40:44.848000+00:00",
+      "cache_creation_input_tokens": 2387,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "6a38d740-2b85-4a07-9681-2f1167f25b9f.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cedgarv7HwiEuCsHyYZxH",
+      "timestamp": "2026-09-02T00:41:30.795000+00:00",
+      "cache_creation_input_tokens": 5164,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgfGbVtwGTWhB531Rmx",
+      "timestamp": "2026-09-02T00:42:32.540000+00:00",
+      "cache_creation_input_tokens": 3205,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011CedgfGP6nd72YpdfXQ4e1",
+      "timestamp": "2026-09-02T00:43:45.920000+00:00",
+      "cache_creation_input_tokens": 4233,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cedgn8med4ZG5aLj2wEmZ",
+      "timestamp": "2026-09-02T00:44:03.479000+00:00",
+      "cache_creation_input_tokens": 3635,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cedgnfmy27LUFfBLTKfLg",
+      "timestamp": "2026-09-02T00:44:09.875000+00:00",
+      "cache_creation_input_tokens": 2494,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cedgq79kdyE1ejiE3z3Wr",
+      "timestamp": "2026-09-02T00:44:45.867000+00:00",
+      "cache_creation_input_tokens": 14811,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011CedgpRmuCBg1zTHrKGWsq",
+      "timestamp": "2026-09-02T00:44:48.050000+00:00",
+      "cache_creation_input_tokens": 3056,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee2PbujX68qKrpc9dQVd",
+      "timestamp": "2026-09-02T05:01:52.553000+00:00",
+      "cache_creation_input_tokens": 146379,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "likely idle-gap TTL expiry (15241s since previous turn, TTL is 300s)"
+    },
+    {
+      "message_id": "msg_011Cee2Sx2nu88p8w6CnvfqA",
+      "timestamp": "2026-09-02T05:02:03.206000+00:00",
+      "cache_creation_input_tokens": 4641,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee2ToEybcWnPLgyNVj11",
+      "timestamp": "2026-09-02T05:02:29.474000+00:00",
+      "cache_creation_input_tokens": 2528,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee2uXUvEAVQHH2UtiBpS",
+      "timestamp": "2026-09-02T05:08:00.441000+00:00",
+      "cache_creation_input_tokens": 3008,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "b53d507a-045e-4426-9710-8df2343c5c89.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee3KW1nQxtWTYn5DPtC3",
+      "timestamp": "2026-09-02T05:13:42.888000+00:00",
+      "cache_creation_input_tokens": 216539,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee3M83F6rp35itzNhcvo",
+      "timestamp": "2026-09-02T05:13:50.586000+00:00",
+      "cache_creation_input_tokens": 2914,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee3TXTaAoSWb9YN79XKd",
+      "timestamp": "2026-09-02T05:15:11.339000+00:00",
+      "cache_creation_input_tokens": 2835,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee3TeE7canzn5WfhhUpz",
+      "timestamp": "2026-09-02T05:15:54.199000+00:00",
+      "cache_creation_input_tokens": 7201,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee3X4cebCjyrs9bqwmGi",
+      "timestamp": "2026-09-02T05:16:02.156000+00:00",
+      "cache_creation_input_tokens": 3780,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee46eSYpvMsUwyUHTyyV",
+      "timestamp": "2026-09-02T05:23:44.080000+00:00",
+      "cache_creation_input_tokens": 5180,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee46eBAjELBo3Jb72Mp9",
+      "timestamp": "2026-09-02T05:24:01.096000+00:00",
+      "cache_creation_input_tokens": 133365,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee48qVru2fPqDgEDqeNT",
+      "timestamp": "2026-09-02T05:24:33.477000+00:00",
+      "cache_creation_input_tokens": 9682,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee4B5S4sBo1jE9BAu4kR",
+      "timestamp": "2026-09-02T05:24:57.117000+00:00",
+      "cache_creation_input_tokens": 3694,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee4XJvjQYCYYohUb5Uo9",
+      "timestamp": "2026-09-02T05:29:09.798000+00:00",
+      "cache_creation_input_tokens": 16446,
+      "rolling_median": 1156,
+      "model": "claude-opus-5",
+      "session_file": "8a41f70c-d837-4acb-b92a-aba697c8433c.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee4XTk4PtW7g8wo3gfm8",
+      "timestamp": "2026-09-02T05:29:11.595000+00:00",
+      "cache_creation_input_tokens": 19261,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "5c92ac28-071d-4518-a3a9-b8eae2ebb1ae.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee4Zkuz49usVEMGD4c76",
+      "timestamp": "2026-09-02T05:29:43.833000+00:00",
+      "cache_creation_input_tokens": 11569,
+      "rolling_median": 1156,
+      "model": "claude-opus-5",
+      "session_file": "8a41f70c-d837-4acb-b92a-aba697c8433c.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee4bPCKk4sPxSeKxWjPF",
+      "timestamp": "2026-09-02T05:30:13.512000+00:00",
+      "cache_creation_input_tokens": 11895,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "5c92ac28-071d-4518-a3a9-b8eae2ebb1ae.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee4cCi51nq4Kfp7B72e2",
+      "timestamp": "2026-09-02T05:30:16.173000+00:00",
+      "cache_creation_input_tokens": 2682,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "5c92ac28-071d-4518-a3a9-b8eae2ebb1ae.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee4xt7xbqKGTVaPehBQM",
+      "timestamp": "2026-09-02T05:35:28.712000+00:00",
+      "cache_creation_input_tokens": 2347,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee51SHHYt8nv4R53KinB",
+      "timestamp": "2026-09-02T05:35:35.240000+00:00",
+      "cache_creation_input_tokens": 3287,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee53yt7oNxx4D21tGN6Q",
+      "timestamp": "2026-09-02T05:36:16.125000+00:00",
+      "cache_creation_input_tokens": 3785,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee5ZQ6xRzsUju82BDvMg",
+      "timestamp": "2026-09-02T05:42:45.152000+00:00",
+      "cache_creation_input_tokens": 4647,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee5ecCceg2qfnTVLEjgE",
+      "timestamp": "2026-09-02T05:44:33.172000+00:00",
+      "cache_creation_input_tokens": 4086,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee5kLdABthUG1ykS733Q",
+      "timestamp": "2026-09-02T05:45:22.181000+00:00",
+      "cache_creation_input_tokens": 2341,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee5r6WWvjNG1t6RDaDeW",
+      "timestamp": "2026-09-02T05:46:44.876000+00:00",
+      "cache_creation_input_tokens": 2659,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "new session (different transcript file) -- expected fresh cache, not a break"
+    },
+    {
+      "message_id": "msg_011Cee5wr2HzoAB19uSH3wGg",
+      "timestamp": "2026-09-02T05:47:50.300000+00:00",
+      "cache_creation_input_tokens": 2657,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "f72156d5-f47e-4f3a-866f-e5f41faeaaac.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    },
+    {
+      "message_id": "msg_011Cee5xYjG5HPwrYuXFJxyw",
+      "timestamp": "2026-09-02T05:48:03.157000+00:00",
+      "cache_creation_input_tokens": 5703,
+      "rolling_median": 1156,
+      "model": "claude-sonnet-5",
+      "session_file": "838edddc-be9e-4aa5-8e4f-70d623638df3.jsonl",
+      "likely_cause": "healthy growth, not a break -- cache_read kept pace with the prior turn's total, so this is new content (a newly-read file) added on top of an intact cached prefix, not a reset"
+    }
+  ],
+  "raw_records_tail_20": [
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDFfSNmXD9gkcKTNF4c",
+      "timestamp": "2026-09-02T20:04:17.753000+00:00",
+      "timestamp_epoch": 1788379457.753,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 935,
+      "cache_read_input_tokens": 86544,
+      "output_tokens": 574,
+      "total_prompt_tokens": 87481,
+      "cache_hit_rate": 0.9893,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.1
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDGD1fovWXHzZqBv3dG",
+      "timestamp": "2026-09-02T20:04:23.036000+00:00",
+      "timestamp_epoch": 1788379463.036,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1628,
+      "cache_read_input_tokens": 87479,
+      "output_tokens": 241,
+      "total_prompt_tokens": 89109,
+      "cache_hit_rate": 0.9817,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.16
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDGTgDxTw1pPgtLjeea",
+      "timestamp": "2026-09-02T20:04:25.940000+00:00",
+      "timestamp_epoch": 1788379465.94,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 948,
+      "cache_read_input_tokens": 89107,
+      "output_tokens": 285,
+      "total_prompt_tokens": 90057,
+      "cache_hit_rate": 0.9895,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.09
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDGrD47LsMN6J3Rw5sT",
+      "timestamp": "2026-09-02T20:04:30.843000+00:00",
+      "timestamp_epoch": 1788379470.843,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 425,
+      "cache_read_input_tokens": 90055,
+      "output_tokens": 177,
+      "total_prompt_tokens": 90482,
+      "cache_hit_rate": 0.9953,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.04
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDHCh6zmffAph1KbP2G",
+      "timestamp": "2026-09-02T20:04:40.869000+00:00",
+      "timestamp_epoch": 1788379480.869,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 420,
+      "cache_read_input_tokens": 90480,
+      "output_tokens": 828,
+      "total_prompt_tokens": 90902,
+      "cache_hit_rate": 0.9954,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.04
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDHvkBgxURTQBQAUFYN",
+      "timestamp": "2026-09-02T20:04:45.740000+00:00",
+      "timestamp_epoch": 1788379485.74,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1379,
+      "cache_read_input_tokens": 90900,
+      "output_tokens": 174,
+      "total_prompt_tokens": 92281,
+      "cache_hit_rate": 0.985,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.13
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDJHAkwEhYuBbshcLSB",
+      "timestamp": "2026-09-02T20:04:51.100000+00:00",
+      "timestamp_epoch": 1788379491.1,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1054,
+      "cache_read_input_tokens": 92279,
+      "output_tokens": 357,
+      "total_prompt_tokens": 93335,
+      "cache_hit_rate": 0.9887,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.1
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDJiPZSnG412PGXczBj",
+      "timestamp": "2026-09-02T20:04:55.797000+00:00",
+      "timestamp_epoch": 1788379495.797,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1339,
+      "cache_read_input_tokens": 93333,
+      "output_tokens": 551,
+      "total_prompt_tokens": 94674,
+      "cache_hit_rate": 0.9858,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.13
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDKSkkMQFmmiC79JmNK",
+      "timestamp": "2026-09-02T20:05:11.371000+00:00",
+      "timestamp_epoch": 1788379511.371,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 8203,
+      "cache_read_input_tokens": 94672,
+      "output_tokens": 719,
+      "total_prompt_tokens": 102877,
+      "cache_hit_rate": 0.9202,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.72
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDL3MrhPve2Pomze4ns",
+      "timestamp": "2026-09-02T20:05:14.838000+00:00",
+      "timestamp_epoch": 1788379514.838,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1015,
+      "cache_read_input_tokens": 102875,
+      "output_tokens": 261,
+      "total_prompt_tokens": 103892,
+      "cache_hit_rate": 0.9902,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.09
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDLHjYUqcNFagKeGQXU",
+      "timestamp": "2026-09-02T20:05:18+00:00",
+      "timestamp_epoch": 1788379518.0,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 331,
+      "cache_read_input_tokens": 103890,
+      "output_tokens": 1777,
+      "total_prompt_tokens": 104223,
+      "cache_hit_rate": 0.9968,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.03
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDMyQXvzZDZJbJxDs1c",
+      "timestamp": "2026-09-02T20:05:42.361000+00:00",
+      "timestamp_epoch": 1788379542.361,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1914,
+      "cache_read_input_tokens": 104221,
+      "output_tokens": 557,
+      "total_prompt_tokens": 106137,
+      "cache_hit_rate": 0.9819,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.16
+    },
+    {
+      "project_dir": "-Users-m5-agent-remediation",
+      "session_file": "c73d6fb4-ee2a-450c-97cd-660ced0476a0.jsonl",
+      "message_id": "msg_011CefDMygu5ScqQY5X4eCbQ",
+      "timestamp": "2026-09-02T20:05:48.804000+00:00",
+      "timestamp_epoch": 1788379548.804,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1813,
+      "cache_read_input_tokens": 253480,
+      "output_tokens": 1041,
+      "total_prompt_tokens": 255295,
+      "cache_hit_rate": 0.9929,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.06
+    },
+    {
+      "project_dir": "-Users-m5-agent-remediation",
+      "session_file": "c73d6fb4-ee2a-450c-97cd-660ced0476a0.jsonl",
+      "message_id": "msg_011CefDNuzRdBqBfvC7rBp5Y",
+      "timestamp": "2026-09-02T20:05:55.298000+00:00",
+      "timestamp_epoch": 1788379555.298,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1315,
+      "cache_read_input_tokens": 255293,
+      "output_tokens": 838,
+      "total_prompt_tokens": 256610,
+      "cache_hit_rate": 0.9949,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.05
+    },
+    {
+      "project_dir": "-Users-m5-agent-remediation",
+      "session_file": "c73d6fb4-ee2a-450c-97cd-660ced0476a0.jsonl",
+      "message_id": "msg_011CefDPeX37mzLzUiwNPGbM",
+      "timestamp": "2026-09-02T20:06:05.808000+00:00",
+      "timestamp_epoch": 1788379565.808,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 902,
+      "cache_read_input_tokens": 256608,
+      "output_tokens": 366,
+      "total_prompt_tokens": 257512,
+      "cache_hit_rate": 0.9965,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.03
+    },
+    {
+      "project_dir": "-Users-m5-dev-dev-harness-run2",
+      "session_file": "526fa351-9c52-48b2-b643-ec7c61c4b632.jsonl",
+      "message_id": "msg_011CefDQ7gv7uZV8KYQ76onc",
+      "timestamp": "2026-09-02T20:06:09.324000+00:00",
+      "timestamp_epoch": 1788379569.324,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1040,
+      "cache_read_input_tokens": 106135,
+      "output_tokens": 281,
+      "total_prompt_tokens": 107177,
+      "cache_hit_rate": 0.9903,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.09
+    },
+    {
+      "project_dir": "-Users-m5-agent-remediation",
+      "session_file": "c73d6fb4-ee2a-450c-97cd-660ced0476a0.jsonl",
+      "message_id": "msg_011CefDQ8ZzspCxvvTsASNuu",
+      "timestamp": "2026-09-02T20:06:22.342000+00:00",
+      "timestamp_epoch": 1788379582.342,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 500,
+      "cache_read_input_tokens": 257510,
+      "output_tokens": 1314,
+      "total_prompt_tokens": 258012,
+      "cache_hit_rate": 0.9981,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.02
+    },
+    {
+      "project_dir": "-Users-m5-agent-remediation",
+      "session_file": "c73d6fb4-ee2a-450c-97cd-660ced0476a0.jsonl",
+      "message_id": "msg_011CefDRRGs76wowdzLRbggX",
+      "timestamp": "2026-09-02T20:06:27.798000+00:00",
+      "timestamp_epoch": 1788379587.798,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1526,
+      "cache_read_input_tokens": 258010,
+      "output_tokens": 285,
+      "total_prompt_tokens": 259538,
+      "cache_hit_rate": 0.9941,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.05
+    },
+    {
+      "project_dir": "-Users-m5-agent-remediation",
+      "session_file": "c73d6fb4-ee2a-450c-97cd-660ced0476a0.jsonl",
+      "message_id": "msg_011CefDRhJ2KJQazF2rwPKdP",
+      "timestamp": "2026-09-02T20:06:32.813000+00:00",
+      "timestamp_epoch": 1788379592.813,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 444,
+      "cache_read_input_tokens": 259536,
+      "output_tokens": 316,
+      "total_prompt_tokens": 259982,
+      "cache_hit_rate": 0.9983,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.02
+    },
+    {
+      "project_dir": "-Users-m5-agent-remediation",
+      "session_file": "c73d6fb4-ee2a-450c-97cd-660ced0476a0.jsonl",
+      "message_id": "msg_011CefDSAFkjitPsMfj6qXXA",
+      "timestamp": "2026-09-02T20:06:39.258000+00:00",
+      "timestamp_epoch": 1788379599.258,
+      "model": "claude-sonnet-5",
+      "input_tokens": 2,
+      "cache_creation_input_tokens": 1477,
+      "cache_read_input_tokens": 259980,
+      "output_tokens": 384,
+      "total_prompt_tokens": 261459,
+      "cache_hit_rate": 0.9943,
+      "is_zero_token_artifact": false,
+      "effective_multiplier_vs_ideal_cache": 1.05
+    }
+  ],
+  "tool_git_sha": "4eae54ebc0f2c8fcea34fa646a2dcb94e0047f8c",
+  "tree_git_sha": "612f76968ed31b15306ef826d262ce765f6abc62",
+  "formula_version": "token_bloat_formula=v1(cache_hit_rate=read/total;effective_multiplier=(input+creation+read*0.1)/(total*0.1);spike_threshold=2.0x;day_over_day_target=1.1x)"
+}

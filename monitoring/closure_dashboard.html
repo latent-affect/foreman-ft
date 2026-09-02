@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>dev-harness Run 2 closure + Tier 3 recycle</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #12151c; --border: #232838; --text: #d8dee9; --muted: #7b8496;
+    --good: #3fb950; --bad: #f85149; --warn: #d29922; --accent: #58a6ff; --tier3: #bc8cff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, "SF Mono", Menlo, monospace;
+    margin: 0; padding: 24px; max-width: 1180px; margin-inline: auto;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .sub { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .b-open { background: #1f6feb33; color: var(--accent); }
+  .b-closed { background: #3fb95033; color: var(--good); }
+  .b-notfound { background: #f8514933; color: var(--bad); }
+  .tier-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .t1 { background: #7b849633; color: var(--muted); }
+  .t2 { background: #58a6ff33; color: var(--accent); }
+  .t3 { background: #bc8cff33; color: var(--tier3); }
+  .tnone { background: #7b849622; color: var(--muted); }
+  .chain { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .chain-node { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; min-width: 90px; text-align: center; position: relative; }
+  .chain-node.closed { border-color: var(--good); background: #3fb95015; }
+  .chain-node.open { border-color: var(--warn); background: #d2992215; }
+  .chain-node.current { box-shadow: 0 0 0 2px var(--accent); }
+  .chain-node .id { font-weight: 700; }
+  .chain-arrow { color: var(--muted); font-size: 16px; }
+  .current-tag { position: absolute; top: -9px; right: 6px; background: var(--accent); color: #0b0d12; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
+  .this-pass-mark { color: var(--accent); font-weight: 700; }
+  .note { color: var(--muted); font-size: 12px; }
+  .err { color: var(--bad); }
+  a { color: var(--accent); }
+  code { background: #ffffff10; padding: 1px 5px; border-radius: 4px; }
+  .footer { color: var(--muted); font-size: 11px; margin-top: 24px; }
+  .stat-row { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 6px; }
+  .stat { font-size: 12px; }
+  .stat b { font-size: 20px; display: block; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>dev-harness Run 2 &mdash; closure pass + Tier 3 recycle status</h1>
+  <div class="sub" id="meta">loading&hellip;</div>
+
+  <div class="panel">
+    <h2>R14/R15 Tier 3 architecture recycle &mdash; the real gate sequence</h2>
+    <div id="recycle-chain"></div>
+    <div id="gate-package" class="note"></div>
+  </div>
+
+  <div class="panel">
+    <h2>This closure pass &mdash; every ticket touched tonight</h2>
+    <div id="this-pass-table"></div>
+  </div>
+
+  <div class="panel">
+    <h2>All DEVH tickets, grouped by tier</h2>
+    <div id="tier-groups"></div>
+  </div>
+
+  <div class="footer" id="footer"></div>
+
+<script>
+function badge(status) {
+  const cls = status === 'closed' ? 'b-closed' : status === 'not-found' ? 'b-notfound' : 'b-open';
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+function tierBadge(tier) {
+  const cls = tier === 1 ? 't1' : tier === 2 ? 't2' : tier === 3 ? 't3' : 'tnone';
+  const label = tier === null || tier === undefined ? 'none' : `T${tier}`;
+  return `<span class="tier-badge ${cls}">${label}</span>`;
+}
+function ticketRow(t) {
+  return `<tr>
+    <td><a href="#" onclick="return false">${t.ticket_id}</a>${t.this_pass ? ' <span class="this-pass-mark">&#9679;</span>' : ''}</td>
+    <td>${tierBadge(t.tier)}</td>
+    <td>${badge(t.status)}</td>
+    <td>${t.summary || ''}</td>
+    <td>${t.assigned_session || '<span class="note">&mdash;</span>'}</td>
+    <td>${t.comment_count}</td>
+    <td class="note">${(t.updated_at || '').slice(0, 16).replace('T', ' ')}</td>
+  </tr>`;
+}
+function tableHead() {
+  return `<tr><th>Ticket</th><th>Tier</th><th>Status</th><th>Summary</th><th>Session</th><th>Comments</th><th>Updated</th></tr>`;
+}
+
+async function render() {
+  let d;
+  try {
+    const res = await fetch('/data.json', { cache: 'no-store' });
+    d = await res.json();
+    if (d.error) throw new Error(d.error);
+  } catch (e) {
+    document.getElementById('meta').innerHTML = `<span class="err">Failed to load data.json: ${e}</span>`;
+    return;
+  }
+
+  document.getElementById('meta').textContent =
+    `generated ${d.generated_at} | source: ${d.source} | project: ${d.project} | ` +
+    `${d.total_tickets} tickets total (${d.total_open} open, ${d.total_closed} closed)`;
+
+  // Recycle chain
+  const rc = d.recycle_chain;
+  let chainHtml = '<div class="chain">';
+  rc.chain.forEach((c, i) => {
+    const cls = c.status === 'closed' ? 'closed' : c.status === 'not-found' ? '' : 'open';
+    const isCurrent = c.ticket_id === rc.current_gate;
+    chainHtml += `<div class="chain-node ${cls}${isCurrent ? ' current' : ''}">
+      ${isCurrent ? '<span class="current-tag">current</span>' : ''}
+      <div class="id">${c.ticket_id}</div>
+      <div>${badge(c.status || 'unknown')}</div>
+      ${c.assigned_session ? `<div class="note">${c.assigned_session}</div>` : ''}
+    </div>`;
+    if (i < rc.chain.length - 1) chainHtml += '<div class="chain-arrow">&rarr;</div>';
+  });
+  chainHtml += '</div>';
+  if (rc.all_closed) {
+    chainHtml += '<p class="note">All four recycle steps closed &mdash; ready for design-and-scope.</p>';
+  } else {
+    chainHtml += `<p class="note">Current gate: <b>${rc.current_gate}</b>. DEVH-16 (parent) stays open for the whole recycle by design &mdash; not itself a sequence step.</p>`;
+  }
+  document.getElementById('recycle-chain').innerHTML = chainHtml;
+
+  const gp = d.gate_package;
+  document.getElementById('gate-package').innerHTML = gp.exists
+    ? `Architecture-stage gate package: <b>${gp.decision}</b>, gate owner <code>${gp.gate_owner_persona}</code>, decided ${gp.decided_at}. ${gp.error ? `<span class="err">${gp.error}</span>` : ''}`
+    : '<span class="note">No gate-review package found on disk.</span>';
+
+  // This-pass table
+  const tp = d.this_pass_tickets.slice().sort((a, b) => {
+    const na = parseInt(a.ticket_id.split('-')[1], 10);
+    const nb = parseInt(b.ticket_id.split('-')[1], 10);
+    return na - nb;
+  });
+  document.getElementById('this-pass-table').innerHTML =
+    `<table>${tableHead()}${tp.map(ticketRow).join('')}</table>
+     <p class="note">${tp.length} tickets touched by tonight's closure pass and the R14/R15 recycle.</p>`;
+
+  // All tiers, grouped
+  let tierHtml = '';
+  d.all_tier_groups.forEach(g => {
+    tierHtml += `<details ${g.tier === 3 ? 'open' : ''}>
+      <summary>${tierBadge(g.tier)} ${g.label} &mdash; ${g.open_count} open, ${g.closed_count} closed, ${g.total} total</summary>
+      <table>${tableHead()}${g.tickets.map(ticketRow).join('')}</table>
+    </details>`;
+  });
+  document.getElementById('tier-groups').innerHTML = tierHtml;
+
+  document.getElementById('footer').textContent =
+    'Every row above is read live from TESSERA (tessera.db, read-only) on each page load -- nothing here is hand-typed or cached across requests.';
+}
+render();
+</script>
+</body>
+</html>

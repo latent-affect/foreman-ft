@@ -1,0 +1,60 @@
+======================================================================
+TOKEN / CACHE DIAGNOSTIC -- SUMMARY
+======================================================================
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+WARNING: no --project-hint was given. This report aggregates 8 different projects into one set of numbers. Any day-over-day or growth figure below describes this MIX, not any single project -- do not attribute it to one project by name. Rerun with --project-hint <name> for a single-project claim.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Session files scanned: 33 (project hint: None, last 1 days)
+Projects seen: 8
+  - -Users-m5-agent-remediation
+  - -Users-m5-dev-atlas-sonnet-qa
+  - -Users-m5-dev-dev-harness
+  - -Users-m5-dev-dev-harness-run2
+  - -Users-m5-dev-dev-harness-run2-e1
+  - -Users-m5-dev-dev-harness-run2-e2
+  - -Users-m5-dev-foreman-context-balancer
+  - -Users-m5-dev-ticket-system
+Parse stats: {'lines_total': 29702, 'lines_json_valid': 29702, 'lines_with_usage': 8959, 'lines_duplicate_skipped': 4438, 'files_scanned': 33}
+
+Turns analyzed: 4521
+Overall average cache hit rate: 98.2%
+
+----------------------------------------------------------------------
+CONCURRENT LAUNCH CLUSTERS (4 found -- the real test of the theory)
+----------------------------------------------------------------------
+  Across all clusters: 0 cold writes, 19 warm hits (100% got the cache-sharing benefit)
+
+  [-Users-m5-dev-dev-harness] 2026-09-02T05:29:09.798000+00:00: 2 sessions launched together, 0 cold / 2 warm, models=['claude-opus-5', 'claude-sonnet-5']
+  [-Users-m5-dev-dev-harness-run2] 2026-09-02T06:17:30.242000+00:00: 3 sessions launched together, 0 cold / 3 warm, models=['claude-opus-5', 'claude-sonnet-5']
+  [-Users-m5-dev-dev-harness-run2] 2026-09-02T19:25:59.084000+00:00: 11 sessions launched together, 0 cold / 11 warm, models=['claude-opus-5', 'claude-sonnet-5']
+  [-Users-m5-dev-atlas-sonnet-qa] 2026-09-02T14:35:01.370000+00:00: 3 sessions launched together, 0 cold / 3 warm, models=['claude-opus-5', 'claude-sonnet-5']
+
+----------------------------------------------------------------------
+DAY-OVER-DAY (the 1.1x target, measured directly)
+----------------------------------------------------------------------
+Day one (2026-09-01): 186294 avg tokens/turn, 96.2% cache hit rate
+Latest day (2026-09-02) vs day one: 2.25x (target: 1.1x)
+NOTE: 1 zero-token records excluded as likely parsing artifacts (incomplete streaming events), not real turns.
+
+Per-day breakdown:
+  2026-09-01: 599 turns, 186294 avg tokens/turn, 96.2% hit rate, 1.0x vs day one
+  2026-09-02: 3921 turns, 418316 avg tokens/turn, 98.5% hit rate, 2.25x vs day one, 1 artifacts excluded
+
+----------------------------------------------------------------------
+CACHE INVALIDATION SPIKES (978 found, aggregated by cause)
+----------------------------------------------------------------------
+  new_session_expected: 535 (54.7%)
+  healthy_growth_not_a_break: 437 (44.7%)
+  unknown_genuine_break_candidate: 4 (0.4%)
+  idle_gap_ttl: 2 (0.2%)
+
+  Spikes by day (look for clusters, not just totals):
+    2026-09-01: 46
+    2026-09-02: 932
+
+  First 100 individual spikes (of 978) in the JSON's 'invalidation_spikes_sample' field -- the buckets above are the real signal, not the full list.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+WARNING: no --project-hint was given. This report aggregates 8 different projects into one set of numbers. Any day-over-day or growth figure below describes this MIX, not any single project -- do not attribute it to one project by name. Rerun with --project-hint <name> for a single-project claim.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
