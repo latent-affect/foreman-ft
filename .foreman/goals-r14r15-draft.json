@@ -1,0 +1,137 @@
+{
+  "$comment": "DRAFT criteria C9-C16 and failure criteria F8-F14 for R14/R15, authored by Session A (priya-desai lens) at design-and-scope, 2026-09-02. NOT yet merged into bollard/GOALS.json and NOT frozen. Held out of that file deliberately: appending criteria there without simultaneously recomputing integrity.criteria_hash_at_freeze would make goals_freeze_gate deny every implementation write in bollard for anyone working there in the meantime. Merge and re-freeze happen in one edit, after the adversarial review foreman:design-and-scope requires from a context that did not author these. Reasoning behind every entry is PRD-DELTA-R14-R15.md.",
+  "target_file": "/Users/m5/dev/dev-harness-run2/bollard/GOALS.json",
+  "authored_by": "Session A / dev-harness-run2 (priya-desai lens)",
+  "authored_at": "2026-09-02",
+  "adversarial_review": {
+    "required_by": "foreman:design-and-scope, 'Falsification: a separate, genuinely adversarial pass'",
+    "status": "ROUND 1 RETURNED, FIXES APPLIED, AWAITING RE-VERIFICATION",
+    "reviewer": "dev-harness-run2-cf (blind: no exposure to the authoring session's reasoning)",
+    "round_1": {
+      "verdict": "Not ready to freeze as written. C9, C10, C12, C14 clean. Four verification-text gaps, each with a concrete broken implementation that would pass. No design rework required.",
+      "findings_and_fixes": [
+        "C11(c): substring match on stdout instead of JSON-parse plus field equality, so a guard printing a log line mentioning deny and permissionDecision passes while emitting no hook envelope. FIXED -- all three cases now require json.loads plus field equality, matching C10.",
+        "C13: name-matching Call nodes misses dynamic resolution (getattr(__builtins__, 'ev'+'al')), which reintroduces F12. FIXED -- the walk must now also flag any Call tracing through getattr/__builtins__/globals()/locals(), and must be shown to fire on TWO fixtures, direct and dynamically resolved.",
+        "C15(a): prefix-only check on the rewritten command lets a rewrite emit a correct sandbox-exec prefix and then discard the real input. FIXED -- the original command must appear verbatim as the wrapped suffix.",
+        "C15(b): one hand-picked outside-class command lets an over-broad capability class pass while allow-ing most real Bash traffic, which is F9 exactly. FIXED -- at least four outside-class commands, one adversarially near the class boundary.",
+        "C16: run 1 registers both removal guards together, so a non-functional OSSandboxGuard stub passes on AllowlistGuard's work and R14a's kernel-level claim goes unverified. FIXED -- three runs, the added one registering OSSandboxGuard alone, with the test command required to fall outside AllowlistGuard's pattern set (asserted separately)."
+      ]
+    }
+  },
+
+  "done_state_addition": "AND (R14a/R15a, DEVH-16): bollard ships guard_allowlist.py, guard_semantic_resolution.py, guard_pattern_feed.py and guard_os_sandbox.py plus lib/deny_capability.sb and lib/capability_scope.sh; the capability-removal pair denies the PRD R13 quote-embedding shell-escalation evasion with both detection guards absent from the registration, and SemanticResolutionGuard alone catches a character-code-constructed destructive command with the other three absent.",
+
+  "criteria": [
+    {
+      "id": "C9",
+      "statement": "Every file this work creates under bollard/ resolves to the 'bollard' component through the shipped component_coupling predicate, so goals_freeze_gate actually gates it.",
+      "verification": "cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_component_map_covers_guards -v exits 0. The test calls the real component_coupling.parse_component_map(find_project_root(...)) -- not a reimplementation of the parser -- and for each of bollard/guard_allowlist.py, bollard/guard_semantic_resolution.py, bollard/guard_pattern_feed.py, bollard/guard_os_sandbox.py, bollard/lib/deny_capability.sb, bollard/lib/capability_scope.sh and every new bollard/test_*.py file it adds, asserts component_of(rel) == 'bollard' AND is_implementation_path(abs) is True. It must ALSO assert a positive control (component_of('bollard/hook_common.py') == 'bollard') and a negative control (component_of('no-such-component/x.py') is None), because a component map that resolved every string to 'bollard' would otherwise pass. History, because this criterion's value is now as a regression guard rather than as an open finding: measured 2026-09-02 against the then-current map, all four guard_*.py paths AND the already-shipped bollard/test_guard_destructive.py resolved to None, because 'bollard/guard_destructive.py' is a bare-filename glob that no sibling matches and 'bollard/test_*.py' has a mid-string wildcard that _prefix_of cannot strip. DEVH-72 replaced both with prefix forms ('bollard/guard_', 'bollard/test_'); re-measured with the same probe after that fix, all four positive controls and every path above resolve to 'bollard' with is_implementation_path True. This criterion exists so a future glob edit that re-breaks resolution fails loudly instead of silently un-gating the guards.",
+      "verifiable": true
+    },
+    {
+      "id": "C10",
+      "statement": "AllowlistGuard denies the PRD R13 quote-embedding shell-escalation evasion class through its real hook entry point, with no detection guard present.",
+      "verification": "Run bollard/guard_allowlist.py as a SUBPROCESS with a PreToolUse payload on stdin, with no other guard invoked in the same test, because a deny that only appears when the detection pair is also running does not satisfy PRD.md's own R13 requirement text. Assert stdout parses as JSON with hookSpecificOutput.permissionDecision == 'deny' for at least THREE distinct spellings of the same denied capability: the plain form, the quote-embedding form PRD.md R13 names, and one built by shell-level string concatenation. Three because a guard matching one hardcoded spelling passes a one-value test and fails in the field -- the same F6 blind spot R24's criteria were caught on. Then assert EMPTY stdout for a benign command, so a deny-everything allowlist fails this criterion too.",
+      "verifiable": true
+    },
+    {
+      "id": "C11",
+      "statement": "AllowlistGuard emits its deny even when its own body raises, and the test proving that discriminates against the repo's fail-open default rather than passing for any guard.",
+      "verification": "cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_allowlist -v exits 0. Every assertion below is json.loads() on captured stdout followed by FIELD EQUALITY, never a substring search, matching C10: a guard that prints a log line mentioning 'deny' and 'permissionDecision' without ever emitting a real hook envelope would satisfy a substring check while denying nothing at runtime. Three cases: (a) the guard's own classification function is monkeypatched to raise RuntimeError, the module's entry point is driven with a payload, and json.loads(stdout)['hookSpecificOutput']['permissionDecision'] == 'deny' and ['hookEventName'] == 'PreToolUse'; (b) unpatched, a benign payload must produce EMPTY stdout (stdout.strip() == ''), so the guard is not simply denying unconditionally; (c) THE DISCRIMINATOR -- the identical monkeypatch-to-raise applied to guard_destructive.py (a detection guard that correctly keeps hook_common.run()'s fail-open default) must produce EMPTY stdout. Without (c) the test would pass against a guard that fails open, because a crashing guard and a correctly-silent guard both emit nothing and only the third case tells them apart.",
+      "verifiable": true
+    },
+    {
+      "id": "C12",
+      "statement": "SemanticResolutionGuard alone catches a character-code-constructed destructive command, with the other three guards absent.",
+      "verification": "Run bollard/guard_semantic_resolution.py as a SUBPROCESS, no other guard invoked. Assert permissionDecision 'deny' for two distinct constructions of the same destructive token: character-code concatenation (the chr(a)+chr(b) shape PRD.md R15 names) and one other programmatic construction. Then the control that carries the criterion: assert EMPTY stdout for a benign command that ALSO uses character-code construction but resolves to a harmless token. Without that control the criterion is met by a guard that denies anything containing chr, which resolves nothing and would block ordinary work until it was disabled.",
+      "verifiable": true
+    },
+    {
+      "id": "C13",
+      "statement": "SemanticResolutionGuard classifies constructed commands without executing them, and the scan proving that is itself proven to fire.",
+      "verification": "cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_semantic_resolution -v exits 0. An ast.parse walk over guard_semantic_resolution.py asserts the module contains no execution path, and NAME-MATCHING ALONE IS NOT SUFFICIENT: a dynamically resolved call (getattr(__builtins__, 'ev' + 'al')(tok), globals()['exec'], or the same shape through locals()) produces no Call node literally named eval and would pass a name-only scan while reintroducing F12. The walk must therefore flag BOTH (i) any Call whose callee resolves by name to eval, exec, compile, __import__, os.system, os.popen or any subprocess member, AND (ii) any Call whose callee or any argument traces through getattr, __builtins__, globals() or locals(). The same test must then run the identical walk over TWO fixture files and assert it flags each: one that calls eval directly, and one that reaches eval by dynamic resolution through getattr/__builtins__. A scan never shown to fire on both positives is not evidence of absence for either. Rationale: a resolver that runs attacker-controlled input to see what it produces is a worse hole than the evasion it closes.",
+      "verifiable": true
+    },
+    {
+      "id": "C14",
+      "statement": "lib/deny_capability.sb and lib/capability_scope.sh deny a named capability at the OS level, and the denial is attributable to the deny rule rather than to a path or permissions confound.",
+      "verification": "A test driving the REAL bollard/lib/capability_scope.sh (not a toy profile) three times, asserting raw exit codes and stderr: (a) POSITIVE -- a command that does not touch the denied capability exits 0 under the profile; (b) TRAP -- a command that does touch it exits nonzero with the kernel not-permitted stderr shape, so the wrapped process started and was denied from inside rather than refused before launch; (c) NEGATIVE CONTROL -- the identical trap command under a profile with the deny rule removed exits 0. (c) is what attributes the trap failure to the deny rule; without it a broken path or a missing binary produces the same nonzero exit and the criterion passes on a confound. Same three-case shape DEVH-63 and DEVH-64 both ran against a scratch profile, now required against the shipped artifact.",
+      "verifiable": true
+    },
+    {
+      "id": "C15",
+      "statement": "OSSandboxGuard rewrites only inside its declared capability class and stays silent outside it, so registering it does not suppress the operator's permission prompts on ordinary commands.",
+      "verification": "Run bollard/guard_os_sandbox.py as a SUBPROCESS. (a) For a command inside the declared class, json.loads(stdout)['hookSpecificOutput']['permissionDecision'] == 'allow' AND ['updatedInput']['command'] both begins with the sandbox-exec invocation naming lib/deny_capability.sb AND contains the ORIGINAL tool_input.command verbatim as its wrapped suffix. The verbatim-suffix half is not decoration: a rewrite that emits a correct sandbox-exec prefix followed by a fixed dummy command would pass a prefix-only check while silently discarding the real input. (b) THE LOAD-BEARING CASE -- assert stdout is EMPTY (stdout.strip() == ''), not an 'allow', for AT LEAST FOUR distinct commands outside the declared class, of which at least one must sit adversarially close to the class boundary (same binary or same verb as an in-class command, differing only in the argument that puts it outside). One hand-picked outside example is not enough: a guard whose capability class is far too broad but which happens to exclude that single example passes, and then allows -- and thereby removes the permission layer for -- most real Bash traffic, which is exactly the F9 failure this case exists to catch. Measured live on Claude Code 2.1.258 (PRD-DELTA-R14-R15.md section 2): a hook returning permissionDecision 'allow' executes a command the workspace's own permission rules would otherwise have blocked. (c) The declared class must be a module-level constant the test enumerates by importing it, so widening the class shows up as a diff in this criterion's own fixture rather than as a silent behavior change.",
+      "verifiable": true
+    },
+    {
+      "id": "C16",
+      "statement": "With both detection guards absent from a live hook registration, the capability-removal pair still denies -- and OSSandboxGuard's own kernel-level denial is verified alone, not masked by AllowlistGuard -- against the real harness rather than by driving the guards directly.",
+      "verification": "THREE runs of the installed harness non-interactively (claude -p) in a THROWAWAY project directory with its own .claude/settings.json, never the repo's shared config. The prompt in every run asks for a command whose sole effect is writing a marker file inside a directory lib/deny_capability.sb denies, and that command MUST be chosen to fall outside AllowlistGuard's own pattern set (assert that separately by driving guard_allowlist.py as a subprocess against it and requiring EMPTY stdout), so the three runs isolate each guard's contribution instead of measuring their union. Run 1 registers only guard_os_sandbox.py and guard_allowlist.py; assert the marker is ABSENT. Run 2 registers ONLY guard_os_sandbox.py, AllowlistGuard absent; assert the marker is ABSENT -- this is the run that actually tests R14a's claim, OS-kernel-level denial robust to any string obfuscation, since without it a completely non-functional OSSandboxGuard stub passes run 1 on AllowlistGuard's work alone. Run 3 is the discriminator: identical directory and prompt with NO guards registered; assert the marker IS present, because an absent marker is otherwise equally explained by the model declining to run the command, which would score a guard that does nothing as a pass. Record the harness version from claude --version in the evidence, because this criterion depends on hook behavior that is version-specific (see PRD-DELTA-R14-R15.md section 7.3).",
+      "verifiable": true
+    }
+  ],
+
+  "failure_criteria": [
+    {
+      "id": "F8",
+      "statement": "Criteria are frozen, the ceremony completes, and ARCHITECTURE.md's component map still resolves none of the four new guard_*.py files -- so goals_freeze_gate returns on its not-implementation-path branch and gates nothing this work creates. The freeze reads as protection and provides none.",
+      "detection": "C9. This was a live defect on 2026-09-02, not a hypothetical: all four new guard paths and the already-shipped bollard/test_guard_destructive.py resolved to None. Closed by DEVH-72 and re-measured green. C9 keeps it closed."
+    },
+    {
+      "id": "F9",
+      "statement": "OSSandboxGuard ships as a PreToolUse rewrite hook that returns permissionDecision 'allow' on every Bash call in order to carry updatedInput. Sandboxing looks added; the operator's permission prompts are gone, and nobody notices because their absence is silent.",
+      "detection": "C15 case (b): a command outside the declared capability class must produce EMPTY stdout, not 'allow'."
+    },
+    {
+      "id": "F10",
+      "statement": "AllowlistGuard is written the same way as the existing guards, inheriting hook_common.run()'s deliberate repo-wide fail-open. Its own internal bug then allows the tool call through silently, and the layer PRD.md R13 says carries the guarantee is the one that fails open.",
+      "detection": "C11 case (a), with case (c) proving the test tells fail-closed from fail-open rather than passing for both."
+    },
+    {
+      "id": "F11",
+      "statement": "All four guards are enabled in every test, the suite is green, and the capability-removal pair is never exercised alone. The detection pair is doing the work; the guarantee PRD.md R13 states is unverified and would fail the day a detection guard is disabled.",
+      "detection": "C10, C12 and C16 each require the other guards ABSENT, not merely present-and-quiet."
+    },
+    {
+      "id": "F12",
+      "statement": "SemanticResolutionGuard resolves a constructed command by evaluating it. It catches the chr-built case, passes C12, and is a remote-code-execution path reachable from any command string the agent proposes.",
+      "detection": "C13's AST scan, plus C13's own requirement that the scan be shown to fire on a fixture that does call eval."
+    },
+    {
+      "id": "F13",
+      "statement": "PatternFeedGuard duplicates guard_destructive.py's DESTRUCTIVE_PATTERNS instead of subsuming or disjointing it. Two matchers own the same shape, neither authoritatively, and a pattern retired from one keeps firing from the other.",
+      "detection": "R15b requires the relationship to be declared explicitly. A test asserting the two pattern sets are disjoint, or that the old list is gone, is the mechanical form; this failure criterion is what that test exists for."
+    },
+    {
+      "id": "F14",
+      "statement": "The live-harness measurements (updatedInput honored, deny beats allow in the same round) are carried forward as settled after a harness upgrade, and option C's whole invocation seam rests on behavior that changed underneath it.",
+      "detection": "C16 records claude --version in its evidence, and PRD-DELTA-R14-R15.md section 7.3 names the upgrade as the re-run trigger."
+    }
+  ],
+
+  "out_of_scope_additions": [
+    "Anomaly detection and the LLM judge, R13's two other named detection candidates. Additive to a layer that is already additive.",
+    "Changing hook_common.py's shared fail-open default. Real question, raised by DEVH-62, owned by whoever owns that module next. R14b deviates guard-locally and does not pre-empt it.",
+    "Runtime ordering of the guards for latency. Correctness no longer depends on it: deny wins in both registration orders, measured 2026-09-02.",
+    "Fixing ARCHITECTURE.md's component map. Architecture-stage artifact; this stage discloses the gap and C9 fails until it is closed.",
+    "The already-inert bollard/test_*.py glob. Same architecture-stage fix, disclosed in PRD-DELTA-R14-R15.md section 4, not repaired here."
+  ],
+
+  "constraints_additions": [
+    "OSSandboxGuard extends the proven mechanism (lib/deny_keychain.sb, lib/neutralize_credentials.sh) rather than introducing a second sandboxing approach. New artifacts are lib/deny_capability.sb and lib/capability_scope.sh, named in ARCHITECTURE.md:280.",
+    "OSSandboxGuard's declared capability class is a module-level constant, not an inline literal or an inferred set. Widening it must be a visible diff.",
+    "AllowlistGuard's fail-closed behavior is guard-local (its own try/except to deny). hook_common.py is not modified by this work.",
+    "SemanticResolutionGuard classifies by static inspection only. No eval, exec, compile, __import__, os.system, os.popen or subprocess anywhere in its resolution path.",
+    "No component in {OSSandboxGuard, AllowlistGuard} may read, depend on, or treat as evidence of safety the presence, absence, firing or crashing of {SemanticResolutionGuard, PatternFeedGuard}.",
+    "Live-harness criteria (C16) run in a throwaway project directory with its own .claude/settings.json. The repo's shared, gitignored .claude/settings.json is never mutated for a test, because a concurrent session may be relying on it."
+  ],
+
+  "scope_estimate_after_merge": {
+    "components": 1,
+    "interfaces": 3,
+    "interfaces_note": "Was 2. The third is bollard's side of the capability_scope.sh / deny_capability.sb wrapper contract, which did not exist before: a nonzero exit plus errno-shaped stderr discovered at execution time, structurally unlike the PreToolUse JSON decision contract (DEVH-63). Counted separately because a consumer cannot tell 'capability denied' from 'the command had an ordinary bug' without it.",
+    "test_criteria": 16,
+    "test_criteria_note": "Was 8. Growth is the eight criteria above and is recorded as an amendment, not a silent addition."
+  }
+}
