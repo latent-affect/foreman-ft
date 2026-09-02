@@ -5,8 +5,9 @@
 **Date:** 2026-09-02
 **Input:** `/Users/m5/Downloads/dev-harness-BUILD-BRIEF_2.md` (293 lines, corrected edition)
 **Scope:** R1 through R22 of that brief, plus DEVH-2 and two gaps found while verifying it.
-**Out of this document's scope:** R0 (Run 1's item, and still open. Cited here, never reopened
-or re-scoped by this document. See section 8).
+**Out of this document's scope:** R0 (Run 1's item. Its ticket closed 2026-09-02 after this
+document's correction; the underlying measurement remains unsettled. Cited here, never reopened
+or re-scoped by this document. See section 8.1).
 **Next stage:** `foreman:architecture` (Clint Eastwood), then `foreman:design-and-scope` (Priya).
 
 ---
@@ -29,7 +30,7 @@ claims and a second session re-checked the artifact behind it.
 | R16 | Un-defer ATLAS D5 (model column) | D5's stated reason is *no data source*: `sessions.jsonl` carries no model field (`docs/atlas-architecture.md:63`, DDL comment at line 600) | Two-part requirement; the data source is the blocking half |
 | R18 | Churn reads 1 almost everywhere; probably an ATLAS gap | No analyzed source file has more than one commit touching it. `get_git_churn` counts all history with no window, so churn of 1 is arithmetically correct | Not an ATLAS gap. The real defect is downstream: see R18 |
 | — | not in the brief | The three report scripts every number here rests on are untracked (`??`) in git, and one of them overwrites its own prior output on reuse | New requirement R23, sequenced first |
-| R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` reads `open` in TESSERA. Two scoped numbers disagree, 0.96x and 1.16x, neither with surviving raw output | Corrected in 8.1 after the concept gate challenged it |
+| R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` read `open` in TESSERA when checked; closed 2026-09-02, after this correction. Two scoped numbers still disagree, 0.96x and 1.16x, neither with surviving raw output | Corrected in 8.1 after the concept gate challenged it |
 
 Confidence notation follows the operator's standing rule: **High** = verified against an
 independent artifact; **Medium** = internally consistent, not independently confirmed;
@@ -606,9 +607,10 @@ work being checked.
 
 Each with the reason, because an unnamed non-goal is scope creep with a head start.
 
-- **R0, context-size reduction.** Run 1's item, not this document's, and still open (DEVH-3,
-  verified `open` in TESSERA 2026-09-02). Out of scope here because it belongs to another run,
-  not because it is finished. Its original 2.3x-3.1x claim is separately and genuinely
+- **R0, context-size reduction.** Run 1's item, not this document's. DEVH-3 is now `closed`
+  (verified 2026-09-02T09:32Z), transitioned by the Run 1 session after this document's
+  correction reached it. Out of scope here because it belongs to another run. Note the ticket
+  closing is not the same as the measurement resolving; see 8.1. Its original 2.3x-3.1x claim is separately and genuinely
   retracted. Section 8 states the real status.
 - **The Alice/Bob QA architecture.** A separate project, gated on this one. R13 is
   command-string evasion defense and is adjacent, not the same system, and the architecture stage
@@ -691,15 +693,24 @@ implementation still satisfy the stated verification? Findings, and what was cha
 | R15 | Absorbed into R14, pending the existence question in 0.1 | This document |
 | DEVH-4, DEVH-5 | Two script bugs filed during Run 1. Both still `open` | TESSERA, verified 2026-09-02 |
 
-### 8.1 R0 is not closed. Correcting this document's own earlier claim.
+### 8.1 R0's ticket was open, not closed. Correcting this document's own earlier claim.
 
 An earlier revision of this PRD recorded R0 as "Closed by Run 1," sourced to a Run 1 exit report
 that said so in prose. The concept gate challenged it and was right. I verified the ticket
-myself rather than accept either account: `DEVH-3` reads **`open`** in TESSERA
+myself rather than accept either account: `DEVH-3` read **`open`** in TESSERA
 (`/Users/m5/dev/ticket-system/data/tessera.db`, queried read-only 2026-09-02). A run reporting
 itself finished is not a transition, and I should have checked before writing the row. This is
 the same self-report-versus-artifact gap section 0.1 exists to warn about, appearing in my own
 document, which is the reason it gets a correction here rather than a silent edit.
+
+**Subsequent update, 2026-09-02T09:32Z.** The Run 1 session was told about this and transitioned
+`DEVH-3` to `closed`, with a comment recording what actually produced the retracted number. The
+ticket status above is left as it was found, because it is the evidence for the correction, not a
+live status field. Verified independently by re-querying rather than taken from that session's
+own report of having done it — which is the whole point of this subsection. **`DEVH-4` and
+`DEVH-5` remain `open`**, and that matters more than DEVH-3's state: they are the two bugs that
+make the surviving 1.16x figure untrustworthy, so closing R0's ticket did not resolve R0's
+measurement. A closed ticket and a settled number are different things here.
 
 The honest status is not "closed" and not "no data exists." It is unsettled across two
 incomplete framings.
@@ -770,10 +781,11 @@ and it is the highest-severity open item in this document.
    anything in this document's scope, since nothing here depends on FCLB. Recorded so it is not
    lost.
 5. **Whether R0 blocks the start of an autonomous pass.** The brief's own fourth open question.
-   An earlier revision of this document called it moot on the strength of R0 having closed. R0
-   has not closed (section 8.1), so it is live again. Settled for this run by decision rather
-   than by resolution: the operator gave explicit go-ahead for Run 2 with R0 open. That answers
-   it once, not as a standing rule, so it stays on the list.
+   An earlier revision called it moot because R0 had closed, which was wrong at the time. R0's
+   ticket has since genuinely closed (2026-09-02T09:32Z), but its measurement has not settled and
+   DEVH-4/DEVH-5 are still open, so the question was never actually answered on the merits. It
+   was settled for this run by decision: the operator gave explicit go-ahead for Run 2 with R0
+   unresolved. That answers it once, not as a standing rule, so it stays on the list.
 
 ---
 
