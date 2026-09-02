@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "DEVH",
+  "component": "skills",
+  "scope_version": 1,
+  "created": "2026-09-02T08:55:00Z",
+  "criteria_frozen_at": "2026-09-02T08:05:41Z",
+  "done_state": "The configuration an installer actually receives from this repo registers every security guard this repo claims to ship, and every command path that configuration names resolves to a real, runnable hook after install-time token substitution.",
+  "requirement": "PRD.md R24 (DEVH-2), the skills-component share of it. First design-and-scope pass for this component; it had no GOALS.json at all, so every write under skills/ was denied by goals_freeze_gate.",
+  "scope_note": "A real pass, not a citation anchor, but scoped to the configuration surface R24 concerns: skills/foreman/config/. The packaged skill subset itself (foreman/, code-safety/, research-lifecycle/ skill bodies) is deliberately out of scope here and named as such below -- it is a distribution copy of files whose source of record lives elsewhere, and inventing criteria for it to look thorough is the padding this stage's own guardrails forbid.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "settings.json.template's PreToolUse block registers all three security guards, each under the matcher its own design requires.",
+      "verification": "Parse skills/foreman/config/settings.json.template as JSON -- parse, never grep, because a grep matches a malformed or commented-out entry and a JSON parse does not. Assert that within hooks.PreToolUse there is an entry whose command path ends in guard_destructive.py under a matcher containing Bash; one ending in guard_prodconfig.py under a matcher containing Edit and Write; and one ending in guard_untrusted_web.py under the matcher covering this harness's outbound-fetch surface. The template currently registers six design gates and zero guards, confirmed by reading it directly on 2026-09-02.",
+      "verifiable": true,
+      "added": "2026-09-02T08:55:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "Every hook command path named anywhere in the template resolves to a real file after install-time token substitution, not only the three guards this requirement adds.",
+      "verification": "Run scripts/install-dev-harness.sh's own substitute_tokens over the template into a temp directory with a temp HOME and temp destination roots. Parse the substituted output as JSON, walk every hooks entry in every event block, extract the script path from each command string, and assert os.path.isfile for each. Applies to all entries, not just the new ones: a guard registered under a path that does not exist is precisely the class of failure R24 exists to fix, and it would be an unusually poor outcome to reintroduce it inside the fix.",
+      "verifiable": true,
+      "added": "2026-09-02T08:55:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "Each guard the template registers is a runnable hook rather than a stub or a file with a broken import.",
+      "verification": "For each of the three substituted guard paths, run it as a subprocess with an empty JSON object on stdin. Assert exit status 0 and empty stdout -- the DENY-or-nothing convention hook_common.py already enforces, under which a hook with nothing to say emits nothing. A stub that raises on import exits non-zero and fails; a file that prints anything on a payload it should ignore also fails, which keeps a guard from degrading into an advisory that never blocks.",
+      "verifiable": true,
+      "added": "2026-09-02T08:55:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "statement": "The guards are added to the template by string append, leaving it syntactically valid to a grep but not parseable as JSON, or valid JSON with the guards nested under the wrong event block. A presence check passes and the installed configuration registers nothing that fires.",
+      "detection": "C1 parses the file as JSON and asserts position within hooks.PreToolUse, not mere substring presence."
+    },
+    {
+      "id": "F2",
+      "statement": "A guard is registered under a command path that does not survive token substitution, or points at a filename that was never added to bollard/. The template looks correct in the repository and the installed harness silently registers a hook that cannot run.",
+      "detection": "C2 substitutes tokens first, then asserts os.path.isfile for every extracted path."
+    },
+    {
+      "id": "F3",
+      "statement": "Empty or stubbed guard files are created so the template's paths resolve, satisfying every file-existence and registration check while denying nothing. This is muse's own objection to M1: a guard existing and being listed is a different claim from a guard working.",
+      "detection": "C3 executes each registered guard and requires a clean exit; bollard's own C5 through C8 require real denials through the same entry point."
+    },
+    {
+      "id": "F4",
+      "statement": "A guard is wired to emit `ask` rather than `deny`, or a PostToolUse warning envelope. It appears active in the ledger, produces visible output, and never actually blocks a destructive command -- the exact detection-instead-of-prevention shape this whole PRD is about.",
+      "detection": "bollard C8 asserts the decision envelope is `deny` specifically, and that no non-matching payload produces any output at all."
+    }
+  ],
+  "out_of_scope": [
+    "The packaged skill bodies under skills/foreman/, skills/code-safety/ and skills/research-lifecycle/. They are a distribution copy whose source of record is the operator's own ~/.claude/skills/ tree; criteria asserting their content here would be asserting something this repository does not own.",
+    "Whether the packaged subset is the RIGHT subset. A real question, and a scoping one, not a verification one -- it belongs to whoever revisits the distribution's contents, not to R24.",
+    "GOALS.template.json and the other files under skills/foreman/config/ that R24 does not touch. Adding criteria for them would inflate scope_estimate.test_criteria, which is meant to be a real ceiling later growth is measured against.",
+    "The behaviour of the three guards themselves. That is bollard's component and bollard's GOALS.json; this component only guarantees they are correctly registered and runnable.",
+    "The install script's own fail-closed preflight. That is scripts/GOALS.json C4 and C5."
+  ],
+  "constraints": [
+    "The template must stay valid JSON at every step. It is consumed by substitute_tokens and then by Claude Code itself, neither of which tolerates a syntax error, and a broken settings file disables every hook rather than one.",
+    "Guard entries use the same /path/to/... token convention as the existing six gate entries, so install-time substitution reaches them identically. A hardcoded absolute path would work on the build machine and nowhere else.",
+    "Do not reorder or alter the six existing gate entries while adding the three guards. This freeze covers the addition only.",
+    "This file sits at skills/GOALS.json because component_root('skills') resolves to 'skills/'. Verified by running the resolver. Criteria here cover R24's configuration share only."
+  ],
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 3,
+    "frozen_at": "2026-09-02T08:05:41Z"
+  },
+  "results": [],
+  "amendments": [],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:bd178f1bd05e05319df9f26b149c4ff4576144669362f699eb401e6d52966272",
+    "match": null
+  }
+}

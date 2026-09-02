@@ -3,8 +3,8 @@
   "component": "scripts",
   "scope_version": 1,
   "created": "2026-08-29T00:00:00Z",
-  "criteria_frozen_at": "2026-08-29T00:00:00Z",
-  "done_state": "install-dev-harness.sh installs a working hooks/skills/agents set into a fresh machine's ~/.claude/ tree, substitutes every /path/to/... token with the real local path, and fails closed (nonzero exit, no partial install left in place) if any required file is missing from the source tree -- including every real persona file in agents/, not a hardcoded subset of it.",
+  "criteria_frozen_at": "2026-09-02T08:05:41Z",
+  "done_state": "install-dev-harness.sh installs a working hooks/skills/agents set into a fresh machine's ~/.claude/ tree, substitutes every /path/to/... token with the real local path, and fails closed (nonzero exit, no partial install left in place) if any required file is missing from the source tree -- including every real persona file in agents/, not a hardcoded subset of it. AND (R24, DEVH-2): the preflight refuses to install a tree missing any one of the three security guards, and a guard installed by that installer denies a destructive command from its installed location, not merely from the build tree.",
   "criteria": [
     {
       "id": "C1",
@@ -26,6 +26,20 @@
       "verification": "python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_required_agents_covers_every_real_agent_file exits 0.",
       "verifiable": true,
       "added": "2026-08-29T00:00:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "install-dev-harness.sh's REQUIRED_HOOKS preflight names all three guards, and removing any one of them individually causes the installer to refuse to install.",
+      "verification": "Three separate trials, one per guard, not one trial deleting all three -- a preflight that special-cases a single filename would pass a combined test. For each guard: copy the repository to a temp directory, delete that one guard file, run install-dev-harness.sh with HOOKS_DST, SKILLS_DST and AGENTS_DST pointed at temp paths, and assert a non-zero exit whose stderr names the missing file. Then assert an unmodified copy installs successfully, so the criterion cannot be satisfied by an installer that refuses everything.",
+      "verifiable": true,
+      "added": "2026-09-02T09:00:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "A guard installed by the installer actually denies a destructive command from its installed location.",
+      "verification": "muse's fourth verification leg, and the one that separates this from a file-existence check. Run a full install into a temp HOME. Then drive the INSTALLED copy of guard_destructive.py -- the file under the temp HOOKS_DST, not the repository source -- as a subprocess with a destructive PreToolUse payload on stdin, and assert permissionDecision == 'deny'. This is what proves the installed artifact works rather than the one in the build tree, and it catches token substitution that corrupts a guard's imports on the way in.",
+      "verifiable": true,
+      "added": "2026-09-02T09:00:00Z"
     }
   ],
   "failure_criteria": [
@@ -40,6 +54,16 @@
       "signature": 1,
       "statement": "A partial install is left on disk after a fail-closed exit (files already copied before the check that fails are not cleaned up).",
       "detection": "Not currently tested. Known gap: REQUIRED_HOOKS/REQUIRED_AGENTS checks run before any copy loop starts (source-tree validation), so today's fail-closed paths never leave a partial install -- but this isn't asserted by a test, it's true by the current code's ordering, which could regress silently."
+    },
+    {
+      "id": "F3",
+      "statement": "The three guards are appended to REQUIRED_HOOKS but the preflight loop is only reached on some paths, or a later change reorders it after the copy step. Installation of a guard-free tree still succeeds and the fail-closed claim is false while the list looks right.",
+      "detection": "C4 runs the real installer against a real tree with a real file removed, three times, and requires a non-zero exit each time."
+    },
+    {
+      "id": "F4",
+      "statement": "Guards are copied in but token substitution breaks their imports, so they exist at the destination and crash when invoked. Every install-time check passes and the harness runs with three hooks that raise on every call.",
+      "detection": "C5 executes the installed copy from its installed location."
     }
   ],
   "out_of_scope": [
@@ -71,16 +95,26 @@
       "recorded": "2026-08-29T00:00:00Z"
     }
   ],
-  "amendments": [],
+  "amendments": [
+    {
+      "criterion_id": null,
+      "change": "criteria appended (C4-C5), scope widened to R24",
+      "from": "Three criteria covering the install playbook, all MET, hash_at_completion equal to hash_at_freeze.",
+      "to": "Five criteria, adding R24's fail-closed preflight for the three guards and an end-to-end denial probe against the installed copy.",
+      "reason": "PRD.md R24 / DEVH-2. Appended rather than replaced so the completed record's results[] keeps pointing at the criteria it evidences. integrity.criteria_hash_at_completion is left untouched as the historical attestation for C1-C3; match is set to null because it can be neither true nor false for the widened scope until C4 and C5 also complete.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T09:00:00Z"
+    }
+  ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:96bb0856f27c67b4aca0169c512b385cd2c5e0b8f6460f047f9aeade8c56b223",
+    "criteria_hash_at_freeze": "sha256:19d416c72bdb0239c60b3f364a56ce40ed438740357b4ff44a37e0766359612f",
     "criteria_hash_at_completion": "sha256:96bb0856f27c67b4aca0169c512b385cd2c5e0b8f6460f047f9aeade8c56b223",
-    "match": true
+    "match": null
   },
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 3,
-    "frozen_at": "2026-08-29T00:00:00Z"
+    "test_criteria": 5,
+    "frozen_at": "2026-09-02T08:05:41Z"
   }
 }

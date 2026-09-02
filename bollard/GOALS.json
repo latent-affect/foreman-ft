@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "project": "FORE",
-  "component": "preflight_blocking_gate",
+  "component": "bollard",
   "scope_version": 1,
   "created": "2026-08-24T05:58:00Z",
-  "criteria_frozen_at": "2026-08-24T06:10:00Z",
-  "done_state": "When preflight_blocking_gate.py would DENY because tessera_resolver.resolve returned ambiguous or unreachable, an Edit, Write, or Bash call whose sole write target resolves to {project_root}/.foreman/tessera-prefix is not denied; every other Edit, Write, or Bash call in that state is still denied.",
+  "criteria_frozen_at": "2026-09-02T08:05:41Z",
+  "done_state": "When preflight_blocking_gate.py would DENY because tessera_resolver.resolve returned ambiguous or unreachable, an Edit, Write, or Bash call whose sole write target resolves to {project_root}/.foreman/tessera-prefix is not denied; every other Edit, Write, or Bash call in that state is still denied. AND (R24, DEVH-2): bollard ships guard_destructive.py, guard_prodconfig.py and guard_untrusted_web.py, each of which, driven as a subprocess through its real hook entry point, emits a PreToolUse deny on the traffic it exists to block and emits nothing at all on everything else.",
   "criteria": [
     {
       "id": "C1",
@@ -34,6 +34,34 @@
       "verification": "Same module: 'echo FORE > .foreman/tessera-prefix && echo x > README.md' against mocked ambiguous AND unreachable; deny called once each.",
       "verifiable": true,
       "added": "2026-08-24T05:58:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "guard_destructive.py denies a destructive Bash command when driven through its real hook entry point, and stays silent on a benign one.",
+      "verification": "Run bollard/guard_destructive.py as a SUBPROCESS with a PreToolUse payload on stdin -- not by importing and calling an internal function, because a guard whose logic is correct but which is never wired to its entry point denies nothing in production. Assert stdout parses as JSON with hookSpecificOutput.permissionDecision == 'deny' for at least three distinct destructive shapes, not one: a plain recursive delete against a real path, a second unrelated destructive form (a force-clean or a device-level overwrite), and one string-obfuscated variant of the first. Three shapes because a guard matching a single hardcoded string passes a one-value test and fails in the field. Then assert a benign command (a plain listing) produces EMPTY stdout, so a deny-everything guard fails this criterion too.",
+      "verifiable": true,
+      "added": "2026-09-02T09:00:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "guard_prodconfig.py denies an Edit or Write to a production-config-shaped path through its real entry point, and stays silent otherwise.",
+      "verification": "Subprocess with PreToolUse payloads. Assert permissionDecision == 'deny' for both an Edit and a Write against at least two distinct production-config path shapes. Assert EMPTY stdout for an ordinary source-file path under the same tool names, so the criterion distinguishes a path-aware guard from one that denies all Edit and Write traffic.",
+      "verifiable": true,
+      "added": "2026-09-02T09:00:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "guard_untrusted_web.py denies on its declared outbound-fetch surface through its real entry point, and stays silent otherwise.",
+      "verification": "Subprocess with payloads for whichever tool names this harness's outbound-fetch surface actually uses, resolved by reading the matcher the settings template declares rather than assumed from the guard's name. Assert deny on the untrusted case and EMPTY stdout on a payload outside that surface.",
+      "verifiable": true,
+      "added": "2026-09-02T09:00:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "All three guards obey DENY-or-nothing: on any payload they do not act against, they exit 0 and emit nothing, and when they do act the decision is 'deny' rather than 'ask' or a PostToolUse warning.",
+      "verification": "For each guard, feed an empty JSON object and a payload for an unrelated tool; assert exit 0 and empty stdout in every case. For each guard's positive case, assert the emitted envelope's hookEventName is 'PreToolUse' and permissionDecision is exactly 'deny'. An 'ask' or a warn envelope fails: it would leave a guard that looks live in the verdict ledger while blocking nothing, which is the detection-instead-of-prevention failure this requirement exists to close.",
+      "verifiable": true,
+      "added": "2026-09-02T09:00:00Z"
     }
   ],
   "failure_criteria": [
@@ -57,6 +85,21 @@
       "signature": 1,
       "statement": "Carve-out reuses component_coupling._is_control or exempts all of .foreman/ (or any command whose text contains tessera-prefix). The named file becomes writable, so the intended fix looks done, but .claude/settings.json and other .foreman/ files open too.",
       "detection": "C3 must deny Write of .claude/settings.json and Write of .foreman/other; C4 must deny a two-target Bash. Passing C1/C2 alone is not done."
+    },
+    {
+      "id": "F5",
+      "statement": "The guards are implemented as importable functions with correct logic but are never wired to a __main__ entry point, or read their payload from the wrong place. Unit tests that import and call the function pass; the installed hook receives a payload on stdin and does nothing.",
+      "detection": "C5 through C7 drive each guard as a subprocess over stdin, which is how Claude Code invokes it."
+    },
+    {
+      "id": "F6",
+      "statement": "A guard matches one hardcoded destructive string. The single test case in the criteria passes, and any variant spelling in the field goes through untouched -- the same single-value blind spot the R23 criteria were caught on.",
+      "detection": "C5 requires three distinct destructive shapes including one obfuscated variant."
+    },
+    {
+      "id": "F7",
+      "statement": "A guard denies everything on its matcher. Every positive case passes, the guard looks maximally safe, and it is disabled within a day because it blocks ordinary work.",
+      "detection": "C5 through C7 each require an explicit benign control producing empty stdout."
     }
   ],
   "out_of_scope": [
@@ -81,10 +124,39 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 2,
-    "test_criteria": 4,
-    "frozen_at": "2026-08-24T06:10:00Z"
+    "test_criteria": 8,
+    "frozen_at": "2026-09-02T08:05:41Z"
   },
-  "results": [],
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_preflight_blocking_gate -v\ntest_allows_sole_remedy_bash_redirect ... ok\ntest_allows_sole_remedy_edit_or_write ... ok\ntest_denies_non_remedy_writes ... ok\ntest_remedy_path_uses_override_filename ... ok\nRan 4 tests in 0.008s\nOK",
+      "recorded": "2026-09-02T09:00:00Z",
+      "note": "Recorded retroactively by the design-and-scope session from a live run, not by the original implementer. The freeze predates this record by nine days."
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_preflight_blocking_gate -v\ntest_allows_sole_remedy_bash_redirect ... ok\ntest_allows_sole_remedy_edit_or_write ... ok\ntest_denies_non_remedy_writes ... ok\ntest_remedy_path_uses_override_filename ... ok\nRan 4 tests in 0.008s\nOK",
+      "recorded": "2026-09-02T09:00:00Z",
+      "note": "Recorded retroactively by the design-and-scope session from a live run, not by the original implementer. The freeze predates this record by nine days."
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_preflight_blocking_gate -v\ntest_allows_sole_remedy_bash_redirect ... ok\ntest_allows_sole_remedy_edit_or_write ... ok\ntest_denies_non_remedy_writes ... ok\ntest_remedy_path_uses_override_filename ... ok\nRan 4 tests in 0.008s\nOK",
+      "recorded": "2026-09-02T09:00:00Z",
+      "note": "Recorded retroactively by the design-and-scope session from a live run, not by the original implementer. The freeze predates this record by nine days."
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_preflight_blocking_gate -v\ntest_allows_sole_remedy_bash_redirect ... ok\ntest_allows_sole_remedy_edit_or_write ... ok\ntest_denies_non_remedy_writes ... ok\ntest_remedy_path_uses_override_filename ... ok\nRan 4 tests in 0.008s\nOK",
+      "recorded": "2026-09-02T09:00:00Z",
+      "note": "Recorded retroactively by the design-and-scope session from a live run, not by the original implementer. The freeze predates this record by nine days."
+    }
+  ],
   "amendments": [
     {
       "criterion_id": "C1",
@@ -125,10 +197,38 @@
       "requested_by": "clint-eastwood",
       "ratified_by": "grok-4.6",
       "at": "2026-08-24T06:10:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "results recorded retroactively for C1-C4",
+      "from": "results[] was empty: the preflight_blocking_gate remedy carve-out was frozen 2026-08-24 and never had a completion record written, so a reader could not tell whether it shipped.",
+      "to": "C1 through C4 recorded MET with the unittest evidence produced in this session.",
+      "reason": "Verified before touching anything else: all four tests pass today. Recording this first, and appending R24's criteria rather than replacing C1-C4, keeps results[] pointing at the criteria it actually evidences. Replacing them would have re-mapped the carve-out's evidence onto R24's guard criteria.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T09:00:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "component name",
+      "from": "\"component\": \"preflight_blocking_gate\", a work-unit name rather than a declared component.",
+      "to": "\"component\": \"bollard\", matching the component ARCHITECTURE.md declares and goals_freeze_gate resolves.",
+      "reason": "component_root('bollard') resolves here regardless of this field, so the mismatch was cosmetic to the gate and misleading to a reader.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T09:00:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "criteria appended (C5-C8), scope widened to R24",
+      "from": "Four criteria covering the preflight remedy carve-out only.",
+      "to": "Eight criteria: the carve-out, plus R24's three guards driven through their real hook entry points.",
+      "reason": "PRD.md R24 / DEVH-2. One GOALS.json per component means bollard's file carries both work units; scope_estimate.test_criteria moves 4 to 8, which is the growth this mechanism exists to surface rather than hide.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T09:00:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:22af280b95e06b5396ca1f430eb308bba613366133de2eb9e7211010ee11f3df",
+    "criteria_hash_at_freeze": "sha256:f362ee737ad1920a01c6c7663bb0000b8893a98ecc37a7c32caca7b99f7f831f",
     "match": null
-  }
+  },
+  "scope_note": "This file now carries two work units and, unusually, two TESSERA projects: the original preflight remedy carve-out under project FORE, and R24 under DEVH. The 'project' field is left as FORE because that is what the completed C1-C4 work was filed under; R24's own ticket is DEVH-2. One GOALS.json per component makes this unavoidable today and it is disclosed rather than tidied away."
 }
