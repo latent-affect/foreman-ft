@@ -4,35 +4,35 @@
   "component": "root-docs-and-scratch",
   "scope_version": 1,
   "created": "2026-09-02T07:20:00Z",
-  "criteria_frozen_at": "2026-09-02T07:05:32Z",
+  "criteria_frozen_at": "2026-09-02T07:14:44Z",
   "done_state": "The three measurement scripts every quantitative claim in PRD.md traces to exist in this repository, are tracked by git, emit provenance (tool commit, tree commit, formula version) inside every report they write, and cannot destroy a prior run's output when re-run from the same working directory.",
   "requirement": "PRD.md R23 (R23a provenance, R23b evidence destruction). Sequenced first by concept-gate condition C3.",
   "criteria": [
     {
       "id": "C1",
       "statement": "foreman_quality_baseline.py, token_bloat_diagnostic.py and security_privacy_convergence.py exist at the root of this repository, are tracked by git, and each one actually runs to completion and produces a parseable report.",
-      "verification": "git -C /Users/m5/dev/dev-harness-run2 ls-files -- foreman_quality_baseline.py token_bloat_diagnostic.py security_privacy_convergence.py prints exactly those three paths and nothing else. Then each script is executed with /Users/m5/.venv/bin/python3 from a fresh empty directory, exits 0, and the JSON report it writes parses with json.load and contains a non-empty top-level object. A tracked file that does not run does not satisfy this criterion.",
+      "verification": "git -C /Users/m5/dev/dev-harness-run2 ls-files -- foreman_quality_baseline.py token_bloat_diagnostic.py security_privacy_convergence.py prints exactly those three paths and nothing else. Then each script is executed with /Users/m5/.venv/bin/python3 from a fresh empty directory and exits 0. Its JSON report must then satisfy content assertions a silently-broken analysis pass cannot produce, not merely parse as a non-empty object: foreman_quality_baseline reports files_analyzed >= 150 and functions_analyzed >= 900 (this tree holds 172 .py files before R23 adds three, measured 2026-09-02), and its hotspots array contains an entry for tessera/store/store.py with max_cc >= 30 and MI < 10 -- known-real values from the measured baseline, 32 and 4.78. security_privacy_convergence reports files_scanned >= 150 and at least 30 dependency pins actually queried. token_bloat_diagnostic reports session_files > 0 and a project_hint equal to the one passed on the command line. A script that exits 0 having analyzed nothing fails every one of these.",
       "verifiable": true,
       "added": "2026-09-02T07:20:00Z"
     },
     {
       "id": "C2",
       "statement": "Every report written by each of the three scripts carries tool_git_sha, tree_git_sha and formula_version, and the first two match the live repository state at the time of the run rather than a stored or placeholder value.",
-      "verification": "Run each script, load its JSON report, and assert all three keys are present and non-empty. Assert report['tool_git_sha'] equals the independently computed output of git log -1 --format=%H -- <that script's path>, and report['tree_git_sha'] equals git rev-parse HEAD, both computed by the test itself and not read from the report. Then commit an unrelated change and re-run: tree_git_sha must differ from the previous run's value. A hardcoded, cached, or 'unknown' value fails on the second half.",
+      "verification": "Run each script, load its JSON report, and assert tool_git_sha, tree_git_sha and formula_version are present and non-empty. Assert report['tool_git_sha'] equals the independently computed output of git log -1 --format=%H -- <that script's path>, and report['tree_git_sha'] equals git rev-parse HEAD, both computed by the test itself and not read from the report. Then commit an unrelated change and re-run: tree_git_sha must differ from the previous run's value. formula_version must likewise be checked against live state, not merely for presence: assert the radon version it reports equals importlib.metadata.version('radon') as queried by the test itself (6.0.1 as installed 2026-09-02). A hardcoded literal such as 'radon-6.0.1' passes a presence check forever and goes on passing after a version bump, which defeats the entire reason the field exists -- making a dependency change that moves every number in a report visible without a tool SHA change or a tree diff.",
       "verifiable": true,
       "added": "2026-09-02T07:20:00Z"
     },
     {
       "id": "C3",
       "statement": "Two consecutive runs with different arguments, executed from one single working directory, leave the first run's own report readable and unchanged.",
-      "verification": "From one directory: run token_bloat_diagnostic.py --project-hint dev-harness --days 30, record the absolute path and sha256 of every file it wrote. Then, from that same directory with no cd, run token_bloat_diagnostic.py --days 30 with no --project-hint. Re-read every path recorded from the first run: each must still exist, still parse as JSON, still hash to its recorded sha256, and still carry project_hint == 'dev-harness'. Both a run-scoped-filename fix and a refuse-to-overwrite fix satisfy this; overwriting in place, and writing a run-scoped file while still clobbering a fixed-name latest copy that the first run's recorded path points at, both fail it.",
+      "verification": "From one directory, snapshot the full directory listing with per-file sha256 BEFORE the first run -- an independent snapshot taken by the test, not a list the tool reports about itself. Run token_bloat_diagnostic.py --project-hint dev-harness --days 30. Snapshot again: the diff of the two snapshots is the true set of files the run created or modified, whether or not the tool disclosed them. Then, from that same directory with no cd, run token_bloat_diagnostic.py --days 30 with no --project-hint. Every file in that true created set must still exist, still parse as JSON where it parsed before, still hash to its recorded sha256, and still carry project_hint == 'dev-harness'. Both a run-scoped-filename fix and a refuse-to-overwrite fix satisfy this. Overwriting in place fails; writing a run-scoped file while clobbering a fixed-name copy fails; and clobbering an undisclosed legacy companion file the tool never reports about itself also fails, which a self-reported path list would have missed.",
       "verifiable": true,
       "added": "2026-09-02T07:20:00Z"
     },
     {
       "id": "C4",
-      "statement": "A dev-harness-scoped token_bloat_diagnostic run produces a durable artifact that survives a subsequent broader run, closing the specific evidence loss recorded in PRD.md section 8.1.",
-      "verification": "Reproduce section 8.1's exact sequence: a --project-hint dev-harness run followed by a wider run from the same directory. Afterwards a file whose parsed project_hint == 'dev-harness' still exists and contains the full report body, not only a console summary. This criterion asserts persistence only. It makes no claim about whether the ratio in that report is correct, which DEVH-4 and DEVH-5 govern and which this freeze explicitly does not touch.",
+      "statement": "The non-clobbering behaviour generalizes across scopes rather than being keyed to this project's own recovery narrative: it holds for a project hint other than 'dev-harness', and for a sequence whose FIRST run carries no hint at all.",
+      "verification": "Repeat C3's independent-snapshot procedure twice more from a single directory each time, with no cd between runs in a pair. Pair one: first run --project-hint tessera --days 30, second run --project-hint atlas --days 30; the tessera run's true created set must survive intact with project_hint == 'tessera'. Pair two, hint order inverted: first run --days 30 with NO --project-hint, second run --project-hint dev-harness --days 30; the unhinted run's true created set must survive intact with its own project_hint value. Neither pair mentions 'dev-harness' as the protected first run. An implementation that special-cases the literal string 'dev-harness', or that protects only hinted runs, passes C1 through C3 green and fails here.",
       "verifiable": true,
       "added": "2026-09-02T07:20:00Z"
     }
@@ -62,6 +62,26 @@
       "id": "F5",
       "statement": "Provenance is backfilled onto the report files already sitting in /Users/m5/dev/dev-harness, making historical reports look traceable when the tool state that produced them was never recorded. This would manufacture exactly the false confidence PRD.md section 0.1 exists to warn about.",
       "detection": "Backfilling historical reports is named in out_of_scope. C2 verifies provenance only on reports generated by a run the test itself performs."
+    },
+    {
+      "id": "F6",
+      "statement": "The fix is keyed to the literal project hint 'dev-harness' -- an if project_hint == 'dev-harness' special case, or protection that applies only when the first run carries a hint at all. C1 through C3 go green because every one of them uses dev-harness as the protected first run, the PRD's own recovery narrative looks closed, and any two scoped runs from one directory can still destroy each other's evidence for every other project on the machine.",
+      "detection": "C4 runs two further pairs, neither using dev-harness as the protected run, one of them starting with no hint at all."
+    },
+    {
+      "id": "F7",
+      "statement": "A script's per-file analysis silently breaks while the script still exits 0 and writes a well-formed report, for example {'files_analyzed': 0}. A criterion asking only for a non-empty top-level object passes, and R3's before/after comparison is run against a report that measured nothing.",
+      "detection": "C1 asserts content a working analysis must produce and a broken one cannot: file and function floors, and store.py present in the hotspots with its known max_cc and MI."
+    },
+    {
+      "id": "F8",
+      "statement": "formula_version is a hardcoded literal. It is present and non-empty, so a presence check passes, and it goes on passing unchanged after a radon upgrade silently moves every maintainability number in every report -- the exact drift the field was added to make visible.",
+      "detection": "C2 compares the reported radon version against importlib.metadata.version('radon') queried by the test itself."
+    },
+    {
+      "id": "F9",
+      "statement": "The disclosed output file is protected while an undisclosed companion file the tool never reports about itself is still clobbered. A verification built on the tool's own self-reported list of what it wrote cannot see this, because the tool defines the evidence used to judge it.",
+      "detection": "C3 and C4 both take an independent before/after directory snapshot with per-file sha256 and diff them, so the true created set is established by the test rather than reported by the subject."
     }
   ],
   "out_of_scope": [
@@ -83,12 +103,49 @@
     "components": 1,
     "interfaces": 0,
     "test_criteria": 4,
-    "frozen_at": "2026-09-02T07:05:32Z"
+    "frozen_at": "2026-09-02T07:14:44Z"
   },
   "results": [],
-  "amendments": [],
+  "amendments": [
+    {
+      "criterion_id": "C4",
+      "change": "statement and verification",
+      "from": "Asserted that a --project-hint dev-harness run survives a subsequent broader run -- the same protected hint C3 already uses, so C4 could not fail unless C3 also failed, and neither criterion ever tested another scope.",
+      "to": "Rewritten as the generalization criterion: two further pairs, one using tessera then atlas, one starting with no hint at all, neither using dev-harness as the protected run.",
+      "reason": "dev-harness-32 blind falsification pass. Arrived cold, with no prior briefing, and found four gaming vectors that would pass the original criteria all green. This finding subsumes a separate concern the criteria author had already self-reported to the orchestrator (that C4 could not fail independently of C3, and was therefore padding against scope_estimate.test_criteria). That self-report was deliberately withheld from the falsification pass to keep it blind; the pass arrived cold and found the sharper version of the same weakness unaided. One rewrite closes both: C4 now fails independently AND closes the special-casing vector.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T07:40:00Z"
+    },
+    {
+      "criterion_id": "C1",
+      "change": "verification",
+      "from": "Required only that each report 'parses with json.load and contains a non-empty top-level object', which a script that analyzed nothing can satisfy.",
+      "to": "Adds content assertions a silently-broken analysis cannot produce: file and function floors, store.py present in the hotspots with its known max_cc and MI, dependency pins actually queried, project_hint echoed.",
+      "reason": "dev-harness-32 blind falsification pass. Arrived cold, with no prior briefing, and found four gaming vectors that would pass the original criteria all green. F3 as originally written did not add coverage here -- it asserted the same exit-0-and-parses check C1 already made.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T07:40:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "change": "verification",
+      "from": "Checked tool_git_sha and tree_git_sha against independently computed git values, but checked formula_version only for presence and non-emptiness.",
+      "to": "Also asserts the reported radon version equals importlib.metadata.version('radon') as queried by the test itself.",
+      "reason": "dev-harness-32 blind falsification pass. Arrived cold, with no prior briefing, and found four gaming vectors that would pass the original criteria all green. A hardcoded literal passed a presence check forever, including across the version bumps the field exists to surface.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T07:40:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "change": "verification",
+      "from": "Recorded 'the absolute path and sha256 of every file it wrote' -- a set self-reported by the tool under test.",
+      "to": "Establishes the true created set from an independent before/after directory snapshot with per-file sha256, taken by the test.",
+      "reason": "dev-harness-32 blind falsification pass. Arrived cold, with no prior briefing, and found four gaming vectors that would pass the original criteria all green. A subject that defines the evidence used to judge it can protect the file it discloses while clobbering one it does not.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T07:40:00Z"
+    }
+  ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:db6db08c0fe3afb697732a6049b4631da794656800514fc15ae150bcddaf739a",
+    "criteria_hash_at_freeze": "sha256:22e571357a7154b0c8cdceb98fcced6262674210dde640c70080b571753435eb",
     "match": null
   }
 }

@@ -448,3 +448,46 @@ account for.
   may have already diverged, per this project's own previously-named registry-sync gap.
 - **`repo_context_part_*.txt`'s exact provenance is inferred from its own section headers, not
   confirmed against a specific commit or session that generated it.**
+
+## Addendum — found during design-and-scope, 2026-09-02
+
+Not a rewrite of anything above; this document is already locked and DEVH-6 implementation has
+started. Purely additive, per the same practice the rest of this pipeline has used tonight
+(falsification fixes, muse's findings) — append findings, don't silently rewrite frozen
+conclusions.
+
+**Gap:** running `is_implementation_path()` for real during design-and-scope (Priya, not read
+from this document's prose) found that `PRD.md` and `DESIGN-AND-SCOPE.md` both resolve to
+`component=None` from `component_of()` — neither is covered by any declared component's glob.
+Confirmed independently in this pass: `is_implementation_path()` returns `(False, None)` for both,
+identically to `ARCHITECTURE.md`/`SCOPE.md`/`GOALS.json` — but for a different reason. The control
+files are *deliberately* exempted via `CONTROL_FILENAMES`
+(`bollard/component_coupling.py:57`); `PRD.md`/`DESIGN-AND-SCOPE.md` land in the same place *by
+accident of no glob matching*, not by declared intent. Today the observable behavior is identical,
+which is exactly why this was easy to miss — the gap is in what's declared, not (yet) in what's
+enforced.
+
+**The call:** add `PRD.md` and `DESIGN-AND-SCOPE.md` to `CONTROL_FILENAMES`. They are Foreman
+stage-gate pipeline documents, structurally the same kind as `ARCHITECTURE.md`/`SCOPE.md` —
+produced and gated by their own dedicated stage hooks (`concept_gate.py` for `PRD.md`'s downstream
+gate; design-and-scope's own gate for `DESIGN-AND-SCOPE.md`), not owned by any single component
+and not subject to `goals_freeze_gate`'s per-component discipline. Declaring the exemption makes
+it match its actual reason instead of coinciding with it, which matters the moment any future
+component's glob is broad enough to accidentally start matching a root filename.
+
+**Found while deciding the fix, not asked for:** this compounds with R19. `review_notify.py`'s
+matcher, as specified above ("`Edit|Write` on any declared component path"), would derive its
+trigger from the same `component_of()`/`is_implementation_path()` machinery — meaning it would
+never fire on an edit to `PRD.md`, `ARCHITECTURE.md`, or `DESIGN-AND-SCOPE.md` either way, whether
+they're accidentally uncovered or deliberately exempted via `CONTROL_FILENAMES`. That is
+backwards: governance-document edits (a PRD correction, an architecture addendum like this one)
+are exactly the writes R19 exists to get reviewed, not the ones it should skip. Revised R19
+requirement: `review_notify.py`'s trigger must be "`Edit|Write` on any declared component path
+**or** any of `PRD.md`, `ARCHITECTURE.md`, `SCOPE.md`, `DESIGN-AND-SCOPE.md`" — an explicit
+inclusion, not derived solely from `is_implementation_path()`.
+
+**Not implemented here.** `bollard` is a frozen, implementing component (DEVH-6 in progress) —
+this is a design call, not a live patch to code under implementation. Two DEVH tickets needed,
+distinct per this project's own R20 (one ticket per requirement), not folded into R19 or R24:
+one for the `CONTROL_FILENAMES` addition, one for `review_notify.py`'s trigger correction (which
+may fold into R19's own ticket if R19 hasn't been written yet — a call for whoever authors it).
