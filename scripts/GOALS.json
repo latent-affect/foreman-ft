@@ -114,11 +114,11 @@
     },
     {
       "criterion_id": "C5",
-      "status": "NOT MET",
-      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed\nRan 9 tests in 1.361s\nOK\n\nCovering tests:\ntest_installed_guard_destructive_denies_a_real_destructive_command ... ok",
-      "recorded": "2026-09-02T12:45:00Z",
-      "verified_by": "priya-desai, re-run in this session",
-      "note": "Covers guard_destructive.py only. C5 was widened in this same pass to require all three installed guards, so it is now unsatisfied: no equivalent test exists for guard_prodconfig.py or guard_untrusted_web.py. Recorded NOT MET rather than closing the criterion around the test that happens to exist. Remaining work filed as a ticket."
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed\nRan 14 tests in 1.452s\nOK\n\nCovering tests, all six driving the INSTALLED copy under the temp HOME:\ntest_installed_guard_destructive_denies_a_real_destructive_command ... ok\ntest_installed_guard_destructive_is_silent_on_a_benign_command ... ok\ntest_installed_guard_prodconfig_denies_a_real_production_config_write ... ok\ntest_installed_guard_prodconfig_is_silent_on_an_ordinary_source_file ... ok\ntest_installed_guard_untrusted_web_denies_an_ssrf_target ... ok\ntest_installed_guard_untrusted_web_is_silent_on_an_ordinary_public_url ... ok",
+      "recorded": "2026-09-02T13:10:00Z",
+      "verified_by": "priya-desai, re-run and source-read in this session",
+      "note": "Verified by reading the implementation, not only by the passing count. Each probe resolves self.home / 'hooks' / guard_*.py -- the installed artifact, not the repository source -- and asserts is_file() first so a silently missing install fails rather than skipping. The untrusted_web probe resolves its tool name from the INSTALLED template via declared_tool_name_from_installed_template rather than hardcoding it, which is the same resolve-from-the-declared-matcher property bollard C7 requires. The assertion pair is discriminating by construction: an always-silent guard fails the deny case on json.loads of empty stdout, and a deny-everything guard fails the silence case on non-empty stdout. Implemented by dev-harness-33 under DEVH-38 after this criterion was widened and recorded NOT MET."
     }
   ],
   "amendments": [
@@ -148,6 +148,15 @@
       "reason": "dev-harness-33 falsification. Widened rather than disclosed as a limit, because the property C5 exists to establish -- that installation does not corrupt a guard -- is per file: apply_tokens_tree rewrites each file separately, so one guard surviving says nothing about the others. Narrowing done_state instead would have documented the hole rather than closed it. Confirmed by reading scripts/test_install_fail_closed.py directly: the three deletion trials at lines 123-130 do cover all three guards, but the installed-denial test at line 161 exists only for guard_destructive. C5 is consequently recorded NOT MET.",
       "requested_by": "dev-harness-33 (found), priya-desai (scoped)",
       "at": "2026-09-02T12:45:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "change": "result upgraded NOT MET -> MET",
+      "from": "One installed-guard probe existed, covering guard_destructive only, so the widened criterion was unsatisfied.",
+      "to": "Six probes, a denial and a silence control for each of the three installed guards.",
+      "reason": "DEVH-38, implemented by dev-harness-33. Re-run here (14 tests, 1.452s, OK) rather than recorded from its report, and the implementation read directly to confirm the probes drive the installed copies rather than the repository sources, which is the whole property C5 exists to establish.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T13:10:00Z"
     }
   ],
   "integrity": {
