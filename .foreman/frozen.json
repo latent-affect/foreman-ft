@@ -1,0 +1,17 @@
+{
+  "edges": [
+    {
+      "name": "monitoring_to_atlas",
+      "producer": "atlas",
+      "consumer": "monitoring",
+      "surface": "atlas.query.facade.QueryFacade"
+    }
+  ],
+  "graph_hash": "sha256:722be80c834f672a2811b8612f3c56e021bb9df82322a53ffbe492828d109a70",
+  "frozen_at": "2026-09-02T13:32:29Z",
+  "graph_hash_method": "sha256 of json.dumps({'components': {name: sorted(globs)}, 'edges': [sorted by name]}, sort_keys=True, separators=(',',':')). Components are read with component_coupling.parse_component_map -- the same parser goals_freeze_gate uses, not a second reader of the same block, so this marker and that gate cannot disagree about what a component is. Interfaces are read with an equivalent narrow regex over the ```yaml interfaces block, because no parser for that block exists anywhere in bollard; it is declared for humans and for this marker, and no gate reads it today. Recomputable by rerunning the derivation against ARCHITECTURE.md.",
+  "component_count": 10,
+  "edge_count": 1,
+  "status": "Record of intent, not an enforced re-entry boundary. foreman:validate states the fuller freeze/re-qualification gate this marker feeds is not wired live in this build, so nothing currently reads this file or denies on a graph_hash mismatch. Written so that when such a gate is wired, there is a real prior graph to compare against rather than a first observation being treated as a baseline.",
+  "written_by": "priya-desai (design-and-scope / freeze holder), dev-harness-run2"
+}
