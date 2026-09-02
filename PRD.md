@@ -27,7 +27,7 @@ claims and a second session re-checked the artifact behind it.
 | R13(4) | OS sandboxing is "deepest fix, most cost" | `bollard/lib/deny_keychain.sb` plus `neutralize_credentials.sh` already implement a working, empirically verified Seatbelt deny-profile on this machine | Cost estimate is too high; a reference implementation exists |
 | R14/R15 | Validate `layered_command_guard.py` | Neither the file nor any of its four named classes exists anywhere on this machine, across two independent searches | Both requirements blocked on an existence question, not a path question. See 0.1 |
 | R16 | Un-defer ATLAS D5 (model column) | D5's stated reason is *no data source*: `sessions.jsonl` carries no model field (`docs/atlas-architecture.md:63`, DDL comment at line 600) | Two-part requirement; the data source is the blocking half |
-| R18 | Churn reads 1 almost everywhere; probably an ATLAS gap | The repo has 7 commits total. `get_git_churn` counts all history with no window. Churn of 1 is arithmetically correct | Not an ATLAS gap. The real defect is downstream: see R18 |
+| R18 | Churn reads 1 almost everywhere; probably an ATLAS gap | No analyzed source file has more than one commit touching it. `get_git_churn` counts all history with no window, so churn of 1 is arithmetically correct | Not an ATLAS gap. The real defect is downstream: see R18 |
 | — | not in the brief | The three report scripts every number here rests on are untracked (`??`) in git, and one of them overwrites its own prior output on reuse | New requirement R23, sequenced first |
 | R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` reads `open` in TESSERA. Two scoped numbers disagree, 0.96x and 1.16x, neither with surviving raw output | Corrected in 8.1 after the concept gate challenged it |
 
@@ -398,26 +398,36 @@ present. No new ingestion.
 **R18 — Fix the hotspot signal, not ATLAS. The churn reading is correct.**
 
 Settled this pass, and the brief's proposed direction was wrong. `get_git_churn`
-(`foreman_quality_baseline.py:218`) runs `git log --pretty=format: --name-only` over all
-history with no window and counts occurrences. This repository has **7 commits total**;
-`git log -- tessera/store/store.py` returns 1. A churn of 1 is the correct answer for a squashed
+(`foreman_quality_baseline.py:218`) runs `git log --pretty=format: --name-only` over all history
+with no window and counts occurrences. A churn of 1 is the correct answer for a squashed
 distribution tree, not a defect, and not an ATLAS capability gap. ATLAS does not compute this
 number at all.
 
+The finding is stated as an invariant rather than a commit count, because a commit count is a
+moving target and this document's own commits move it. **No analyzed Python source file in this
+tree has more than one commit touching it.** The three highest-churn paths in the whole
+repository are `scripts/install-dev-harness.sh`, `README.md` and `PRD.md`, at 3 each, all
+documents or release plumbing, none of them analyzed source. `tessera/store/store.py` reads 1.
+That invariant, not the tree's total, is what the requirement rests on, and it holds across
+every re-measurement so far.
+
 The real defect is one line downstream. `hotspot_signal = max_cc * git_commits_touching_file`
-(line 405). With churn pinned at 1 across the tree, the signal reduces to `max_cc`. The ranking
-is presented as "complexity x git churn" and is single-signal underneath. R1's selection rests
-on that ranking.
+(line 405). With churn pinned at 1 across every analyzed file, the signal reduces to `max_cc`.
+The ranking is presented as "complexity x git churn" and is single-signal underneath. R1's
+selection rests on that ranking.
 
 - **Requirement:** either churn shall be sourced from a repository where this code has real
   history, or the churn factor shall be dropped and the output relabelled to state that the
   ranking is complexity-only on repositories with degenerate history. A signal that names two
   inputs shall not silently carry one.
-- **Verification:** either the report shows churn values greater than 1, or the report header and
-  the JSON field name state complexity-only, and a test asserts the relabelling holds when every
-  file has churn 1.
-- **Confidence: High** (`git log --oneline | wc -l` = 7; per-file counts read directly; the
-  multiplication read at line 405).
+- **Verification:** either the report shows churn values greater than 1 for analyzed source, or
+  the report header and the JSON field name state complexity-only, and a test asserts the
+  relabelling holds when every file has churn 1.
+- **Confidence: High.** Per-file counts read directly and the multiplication read at line 405.
+  Re-measured three times as the tree grew (7, then 9 at the concept gate, then 10), and
+  `store.py` read 1 every time. The concept gate independently confirmed the same conclusion at
+  9 commits. **Snapshot values in this document are stale by design**; the invariant is the
+  claim.
 
 ### Process
 
@@ -460,6 +470,12 @@ Zero references to `SendMessage` or `ListAgents` exist anywhere in this reposito
   choices are the same choice.
 - **Depends on:** R23 and R18. A KPI series built on an untracked tool with a degenerate signal
   would formalize the wrong number.
+- **And on two open bugs closing first (concept gate condition C3).** `DEVH-4` (UTC day
+  bucketing) and `DEVH-5` (day-over-day ratio comparing a fixed historical day against an
+  in-progress today) are both `open` against `token_bloat_diagnostic.py`, one of the three
+  scripts a KPI series would be built on. R21 shall not formalize anything on that tool while
+  either is open. Section 8.1 shows what that costs when ignored: a surviving figure generated
+  by the exact computation DEVH-5 names as unstable.
 - **Confidence: Medium** (the requirement is clear; the metric shape is genuinely undecided).
 
 ### New requirements found while verifying the brief
@@ -710,9 +726,15 @@ Five, three of which block something. The first is for the operator, not the arc
 and it is the highest-severity open item in this document.
 
 1. **HIGH — Was `layered_command_guard.py` ever written?** Blocks R14 and R15 entirely, and
-   sets how much of R12-R15 can be trusted while planning. Not answerable by search; two
-   independent passes over five terms already returned nothing. Needs the operator's own recall
-   or a pointer to a machine that was not searched. Full statement in section 0.1.
+   sets how much of R12-R15 can be trusted while planning. Not answerable by search: four
+   independent passes over five terms have now returned nothing, the fourth run by the concept
+   gate in a context that authored neither this PRD nor the brief. Needs the operator's own
+   recall or a pointer to a machine nobody has searched. Full statement in section 0.1.
+   **Default if unanswered by architecture freeze, set by the concept gate (C1) and adopted
+   here:** treat it as never written. R14 and R15 become build-from-nothing requirements sized
+   at design-and-scope, and every R12-R15 technical claim resting only on the brief's narration
+   gets re-derived rather than inherited. The default exists so an unanswered question cannot
+   silently become an assumed yes.
 2. **R1's target number.** Blocks R1 implementation. Coupled to R21's static-versus-per-category
    choice; the same decision made once.
 3. **A current measured count for R9.** Blocks sizing. The 477 figure is unverified here.
@@ -733,12 +755,23 @@ and it is the highest-severity open item in this document.
 explicitly marked blocked with a reason. The out-of-scope section is non-empty. The falsification
 pass in section 7 has run and changed four requirements.
 
-**Concept gate: GO with three conditions.** One was this document's: an unverified "R0 closed by
-Run 1" row in section 8. Corrected in 8.1, with the ticket status checked directly against
-TESSERA rather than taken from either the Run 1 report or the gate's account of it. Four other
-statements resting on that assumption were tracked down and fixed in the same pass (the header,
-the out-of-scope entry, the section 8 table, and section 9's disposal of the brief's fourth open
-question, which is now item 5 and live again).
+**Concept gate: GO with three conditions.** Package at
+`/Users/m5/dev/dev-harness-run2/.foreman/tpm-gate-concept.json`, revision 2, graded against
+commit `808558c`. All three conditions are discharged in this document: C1's default is adopted
+verbatim at section 9 item 1, C2's correction is section 8.1, C3's sequencing is R23's
+sequencing clause and its two-open-bugs dependency is on R21.
+
+C2 was this document's own error: an unverified "R0 closed by Run 1" row in section 8. Corrected
+with the ticket status checked directly against TESSERA rather than taken from the Run 1 report
+or from the gate's account of it. Four other statements resting on that assumption were tracked
+down and fixed in the same pass (the header, the out-of-scope entry, the section 8 table, and
+section 9's disposal of the brief's fourth open question, which is now item 5 and live again).
+
+The gate also caught a stale number: section 0 stated a 7-commit tree, already 9 when the gate
+read it and 10 now, three of those this document's own. R18 is rewritten to rest on an invariant
+that survives the drift (no analyzed source file has more than one commit touching it) rather
+than on a snapshot count. Other snapshot figures in this document are stale by the same
+mechanism and should be read that way.
 
 Worth recording rather than quietly fixing: the error was mine, it was the one class of error
 this document's own section 0.1 was written to warn about, and it took an outside context to
