@@ -78,6 +78,15 @@
       "reason": "DEVH-28. The stopgap's own note said a real pass was this stage's call, and the reason it is not optional is that docs/ is not documentation: docs/atlas-architecture.md section 16 is the warehouse schema's source of record, extracted and executed by atlas/warehouse/ddl.py at import time, so an edit there is a schema change. Writing the criteria surfaced a real fail-open, recorded as C3 and F1 and currently expected to fail: extract_schema_and_seed_sql() scans text[heading_idx:] to end of file and takes the first two sql fences, which is unbounded past section 16 -- and section 16 is not the last section, 17 and a Confidence section follow. It is correct today only because the document happens to hold exactly two sql fences in total. Fourth instance of the first-match family found tonight, after component_of's glob prefix, parse_component_map's first-fence break and verify_settings_shape's exact matcher -- this one in the schema source of record.",
       "requested_by": "priya-desai",
       "at": "2026-09-02T13:40:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "results recorded for C1-C5",
+      "from": "results[] empty; C3 was expected to fail pending DEVH-40.",
+      "to": "All five MET, each from a check this session ran rather than from a report of one.",
+      "reason": "DEVH-40 fixed elsewhere (b116c92). Re-verified here by running what each criterion actually requires rather than only the two the fix touched -- a freeze holder recording results[] attests to the whole set, not to the delta. C1, C2, C4 and C5 were never claimed before and are now evidenced.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T14:05:00Z"
     }
   ],
   "done_state": "docs/atlas-architecture.md section 16 is the warehouse schema's source of record, executed by extraction rather than read by people, and the extraction contract holds: the SQL that atlas/warehouse/ddl.py pulls out is bounded to section 16, matches the schema a freshly created database actually has, and cannot be silently changed by an edit elsewhere in the document.",
@@ -114,5 +123,41 @@
     "A change to section 16 is a schema change and is reviewed as one, not as a documentation edit.",
     "Fixing C3 must not narrow extraction to hardcoded line numbers -- ddl.py's docstring rejects that explicitly, because an unrelated edit elsewhere would then silently point extraction at the wrong block. Bound the search to section 16's own extent instead, by locating the next heading of equal level."
   ],
-  "results": []
+  "results": [
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 scratchpad/verify_docs_criteria.py\nbaseline ddl_sha256 = b676cf47e5789f49\nall five criteria MET, exit 0\n$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 146 tests in 1.273s\nOK\n\npayload_redacted row = (13, 'payload_redacted', 'INTEGER', 1, '0', 0) -- cid 13, type INTEGER, notnull=1, default '0', read from PRAGMA table_info on a database created from the extracted schema. Matches the criterion's own self-corrected cid of 13.",
+      "recorded": "2026-09-02T14:05:00Z",
+      "verified_by": "priya-desai, independently re-derived in this session"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 scratchpad/verify_docs_criteria.py\nbaseline ddl_sha256 = b676cf47e5789f49\nall five criteria MET, exit 0\n$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 146 tests in 1.273s\nOK\n\naudit_payload_credential_scan severity='contract'. Every other check's severity matches EXPECTED_CHECKS, and dq_check holds 19 rows against 19 expected, so no other seed row moved.",
+      "recorded": "2026-09-02T14:05:00Z",
+      "verified_by": "priya-desai, independently re-derived in this session"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 scratchpad/verify_docs_criteria.py\nbaseline ddl_sha256 = b676cf47e5789f49\nall five criteria MET, exit 0\n$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 146 tests in 1.273s\nOK\n\nCase A, the regression guard: a fenced sql block appended in a new section 18 leaves schema_sql and seed_sql byte-identical and ddl_sha256 unchanged. Case B, the DEVH-40 defect: section 16's seed fence stripped and a fenced block added later now raises DdlExtractionError('expected at least 2 fenced sql blocks after \\'## 16. Warehouse DDL\\', found 1'). That message is itself evidence the fix bounds the search to section 16 -- it counts 1 fence where the unbounded version counted 2 and silently returned the decoy.",
+      "recorded": "2026-09-02T14:05:00Z",
+      "verified_by": "priya-desai, independently re-derived in this session"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 scratchpad/verify_docs_criteria.py\nbaseline ddl_sha256 = b676cf47e5789f49\nall five criteria MET, exit 0\n$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 146 tests in 1.273s\nOK\n\nExtracted schema applied to a fresh sqlite3 connection: 21 tables and 18 views, both compared as SETS in both directions against EXPECTED_TABLES and EXPECTED_VIEWS rather than by count or subset. Seed applied: 19 dq_check rows against 19 expected.",
+      "recorded": "2026-09-02T14:05:00Z",
+      "verified_by": "priya-desai, independently re-derived in this session"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 scratchpad/verify_docs_criteria.py\nbaseline ddl_sha256 = b676cf47e5789f49\nall five criteria MET, exit 0\n$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 146 tests in 1.273s\nOK\n\nBoth directions required and both hold: appending a non-SQL section outside 16 leaves ddl_sha256 unchanged, and renaming a table inside section 16's schema fence moves it. A hash that never changed would have passed the first half alone.",
+      "recorded": "2026-09-02T14:05:00Z",
+      "verified_by": "priya-desai, independently re-derived in this session"
+    }
+  ]
 }
