@@ -216,6 +216,18 @@ class TestGuardOsSandboxRefusesUnusableProfile(unittest.TestCase):
         self.assertEqual(hso["permissionDecision"], "deny")
         self.assertNotIn("updatedInput", hso)
 
+    def test_profile_with_commented_out_deny_rule_denies_rather_than_rewrites(self):
+        # Case (d), Priya's own finding against the shipped code: a Seatbelt ';' comment still
+        # contains the literal substring "(deny" and would pass a raw-text search that doesn't
+        # know what a comment is -- reachable through the exact door C19 exists to close.
+        commented = self.scratch / "commented_deny.sb"
+        commented.write_text("(version 1)\n(allow default)\n\n; (deny file-write*)\n")
+        proc = self._run_with_override(commented)
+        out = json.loads(proc.stdout)
+        hso = out["hookSpecificOutput"]
+        self.assertEqual(hso["permissionDecision"], "deny")
+        self.assertNotIn("updatedInput", hso)
+
     def test_nonexistent_profile_path_denies_rather_than_rewrites(self):
         proc = self._run_with_override(self.scratch / "does-not-exist.sb")
         out = json.loads(proc.stdout)

@@ -70,12 +70,19 @@ def _profile_can_deny(profile_path: Path) -> bool:
     substituting a profile that cannot deny anything is strictly worse than not registering this
     guard at all, since the upstream layer that would have blocked the unwrapped command is
     bypassed and nothing replaces it (F17).
+
+    Strips Seatbelt ';' line comments before matching (C19 case (d), Priya's own finding against
+    the shipped code): a profile whose only deny rule reads `; (deny file-write*)` still contains
+    the literal substring "(deny" and would pass a raw-text search, which is exactly the door
+    F17 exists to close -- a commented-out deny rule is indistinguishable from a real one to a
+    search that doesn't know what a comment is.
     """
     try:
         text = profile_path.read_text()
     except OSError:
         return False
-    return bool(re.search(r"\(deny\b", text))
+    active_text = "\n".join(line.split(";", 1)[0] for line in text.splitlines())
+    return bool(re.search(r"\(deny\b", active_text))
 
 
 def _in_capability_class(command: str):
