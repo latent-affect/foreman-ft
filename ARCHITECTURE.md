@@ -141,16 +141,42 @@ root-docs-and-scratch: ["README.md", "README.agents.md", "ACKNOWLEDGEMENTS.md", 
 ```
 
 ```yaml interfaces
-{}
+monitoring_to_atlas: {"producer": "atlas", "consumer": "monitoring", "surface": "atlas.query.facade.QueryFacade"}
 ```
 
-Declared empty for the same reason `agent-remediation`'s own `ARCHITECTURE.md` declares it empty:
-none of the three real couplings described in prose above is a clean, directional
-producer/consumer pair between two components both declared above with a matching schema — #1 and
-#2 are both intra-`bollard` (a library module and a routing table consumed by sibling files in the
-same component), and #3's real counterpart on the `tessera`/`atlas` side is data read via files/CLI,
-not a declared interface those components themselves expose. An honest empty block is correct
-here; a fabricated direction is not.
+**Corrected 2026-09-02, `foreman:integration-test` execution (Dana Okafor persona, session
+`dev-harness-9b`).** Declared `{}` originally; that was wrong, not a defensible omission. The
+integration-test pass built the real cross-component import graph over all 194 Python files using
+this project's own `component_of()`/`parse_component_map()` resolvers, not a reimplementation, and
+found `monitoring/foreman-status/foreman_status_dashboard_data.py:34` imports
+`atlas.query.facade.QueryFacade` directly. Verified by execution, not inference: the import resolves
+in-tree to `atlas/query/facade.py` (not an installed path), and `QueryFacade`'s own declared
+failure contract (`QueryFacadeUnavailable` on a missing warehouse) executes correctly. This is a
+real, directional producer/consumer pair between two declared components — exactly the shape this
+block exists to record — and the prior text's stated reason for omitting it (coupling #3's
+`tessera`/`atlas` side being "data read via files/CLI, not a declared interface") was correct for
+the `tessera` half and wrong for the `atlas` half: this is a Python import of an exported class, not
+a file or CLI read. Full evidence, including what could and could not be executed end-to-end in
+this worktree (`TESSERA_DB` and the warehouse db are environment gaps, not code defects) and the
+three deployment-only couplings that were checked and correctly excluded, is in
+`INTEGRATION-TEST-REPORT.md`.
+
+The other two prose couplings (#1 `tessera_resolver`, #2 `cross_project_routing`) are still
+correctly excluded: both remain intra-`bollard`, no cross-component producer/consumer pair to
+declare.
+
+**Deployment couplings, recorded but not in the `yaml interfaces` block.** The same pass found
+three imports (`skills/code-safety/.../posttooluse_hook.py` → `verdict_ledger`,
+`skills/foreman/scripts/foreman_init.py` → `tessera_resolver` and → `component_coupling`) that
+resolve outside this repository at install time (`~/.claude/hooks`, via `HOOKS_DIR`/`_hooks_dir()`
+substitution), not to any in-tree component. Correctly excluded from the interfaces block — that
+block declares couplings between components *this repository's own globs describe*, and these
+targets aren't in this tree. But they're real: `skills/` genuinely depends on artifacts *built
+from* `bollard/` functioning correctly post-install, mediated by the install step rather than a
+Python import at rest here. Leaving them completely unrecorded anywhere risks the exact shape
+Addendum 3 already found once tonight — a real coupling silently absent rather than explicitly
+noted as out-of-scope-and-why. Recorded here for that reason, not added to the interfaces block
+itself, which stays reserved for in-tree, Python-level producer/consumer pairs.
 
 ## Remediation architecture — Run 2 (PRD.md R1-R24)
 
@@ -491,3 +517,116 @@ this is a design call, not a live patch to code under implementation. Two DEVH t
 distinct per this project's own R20 (one ticket per requirement), not folded into R19 or R24:
 one for the `CONTROL_FILENAMES` addition, one for `review_notify.py`'s trigger correction (which
 may fold into R19's own ticket if R19 hasn't been written yet — a call for whoever authors it).
+
+## Addendum 2 — atlas's component granularity was wrong from the backfill, not from tonight
+
+Found while resolving a gap Priya surfaced while freezing R8: `component_root('atlas')` resolves
+to `atlas/`, so `goals_freeze_gate.py` only ever reads `atlas/GOALS.json` for any write anywhere
+under `atlas/**`. Checked what that actually orphans before deciding anything, not assumed:
+`atlas/ingest/GOALS.json` (11,928 bytes), `atlas/warehouse/GOALS.json` (7,186 bytes),
+`atlas/snapshot/GOALS.json`, `atlas/resolve/GOALS.json`, `atlas/hookclient/GOALS.json`,
+`atlas/query/GOALS.json` (8.6–11.6 KB each) all exist, all real. `ingest`'s and `warehouse`'s were
+read in full: both are complete, frozen (`criteria_frozen_at` 2026-08-21/22), `MET` across every
+criterion with real test evidence, and `ingest`'s own record includes a real production run
+against all 35 live TESSERA-registered projects, not a fixture. Both declare `"components": 1`
+for themselves — this component was built and shipped at per-subdirectory granularity from the
+start. `atlas/mcp/` has no `GOALS.json` at all and never did — consistent with R7's disposition
+(narrowed to a risk-register item, no implementation required).
+
+**The call: these are not orphaned files to delete, they're real historical design-and-scope
+records that a wrong component declaration made unreachable.** The original backfill's "atlas...
+described here at the directory level only" was already inaccurate the day it was written —
+5 days after `ingest` and `warehouse` had already been built and frozen at their own component
+granularity. Fix: declare `atlas-ingest`, `atlas-warehouse`, `atlas-snapshot`, `atlas-resolve`,
+`atlas-hookclient`, `atlas-query` as their own components (`atlas/ingest/**` etc.), matching what
+already shipped; keep `atlas` itself as a narrower catch-all for `atlas/__init__.py` and
+`atlas/mcp/**`, the one real subdirectory with no existing design-and-scope record — `mcp/` needs
+its own GOALS.json before anything under it can be gated at all, not inherited coverage from the
+catch-all. `component_of()`'s longest-prefix-wins matching (`component_coupling.py:130`) makes
+this resolve correctly without touching the matching logic itself, only the declaration.
+
+**Time-sensitive, not queue-behind-not-urgent like Addendum 1.** Priya's `atlas/GOALS.json`,
+frozen minutes ago for R8, sits exactly where this fix moves coverage away from: R8's
+architecture places `audit_scrub.py` in `atlas/ingest/`, which once subcomponents are declared
+resolves to `atlas-ingest`, not `atlas`. Left as-is, the subcomponent fix would silently orphan a
+freeze that was just correctly done. The right sequencing is not "declare subcomponents, then
+separately notice R8 broke" — it's one change: declare the subcomponents **and**, in the same
+motion, relocate R8's six criteria from `atlas/GOALS.json` onto `atlas/ingest/GOALS.json` as an
+amendment (that file's own `amendments[]` convention already exists and was already used once,
+for its own C2). `atlas/GOALS.json` itself then either gets deleted (nothing real component-level
+lands directly under `atlas/` root — only `__init__.py`) or stays as `mcp/`'s eventual home once
+that subdirectory gets its own design-and-scope pass — a naming call for whoever does that work,
+not decided here. This is Priya's artifact and her stage; recommending the relocation, not
+performing it — same discipline as Addendum 1, but flagged as blocking-adjacent given DEVH-6 is
+active and R8 implementation may start writing to `atlas/ingest/` before this resolves.
+
+**Correction, 2026-09-02, same day: the "one motion" sequencing above is wrong, superseded by
+Priya's mechanical check.** She ran `parse_component_map` rather than reading this prose, and
+found two things that break the plan as written. First, relocating before declaring causes
+exactly the orphaning it exists to prevent — the gate keeps reading `atlas/GOALS.json` until the
+subcomponent declaration actually lands, so a relocated-but-not-yet-covered freeze is worse than
+an unmoved one. Second, and this is the part this addendum didn't check: declaring the
+subcomponents splits R8 across three areas, not one — `atlas-ingest` (`audit_scrub.py`),
+`atlas-warehouse` (C5's contract promotion in `test_schema.py`), and `docs` (C6's possible DDL
+edit in `docs/atlas-architecture.md`) — and `docs/GOALS.json` does not exist, so that third of R8
+would be hard-denied outright the moment the split landed. She tried declaring it, confirmed this
+by running the resolver, and reverted. Right call: defer the subcomponent split until R8's
+criteria reach MET, then declare cleanly and archive R8's six criteria out — not two amended,
+hash-attested MET records plus a third new one, for nothing R8 currently needs. Under the current
+single `atlas` declaration, all three of R8's target areas correctly resolve to one file, which
+matches R8 being one requirement. The underlying finding (atlas's real per-subdirectory
+granularity, the six real completed records) stands; only the *timing* recommendation above was
+wrong, and is corrected here rather than left on record as if it still held.
+
+## Addendum 3 — requirement coverage sweep, run because nobody had run one until now
+
+A PRD-coverage spot-check (Jon, relayed via the orchestrator) found R2 has zero architectural
+treatment anywhere in this document. Verified by grep, then extended to every live R-number
+rather than checking R2 in isolation:
+
+```
+R1: 2   R2: 0   R3: 1   R4: 0   R5: 0   R6: 0   R7: 1   R8: 16  R9: 2   R10: 0  R11: 0  R12: 1
+R13: 5  R14: 5  R15: 6  R16: 2  R17: 1  R18: 2  R19: 5  R20: 1  R21: 1  R22: 3  R23: 6  R24: 4
+```
+
+R4, R5, R6, R10, R11 at zero are correct — PRD.md section 8 and section 0 already close all five
+before this stage, with no requirement text needing architecture at all. R1, R2, R3, and R20 are
+the real gap: each was silently absent, not explicitly dispositioned, and per the same standard
+this document already applies elsewhere (R1's target number, R16a's data source, R21's metric
+shape are all explicitly stated as open rather than left silent) — silence and "deliberately
+deferred" read identically to a reader, and three more instances of exactly that ambiguity were
+sitting in this document uncaught. Fixed here, not by rewriting the sections above:
+
+- **R1 — no architecture decision, and that's correct, now stated.** Refactoring an existing
+  file (`store.py`) to hit an MI target, and justifying or dropping the two R1b files, introduces
+  no new component, file, or interface. The only open question (the target number) is already
+  PRD.md's own blocking precondition, owned by design-and-scope's `GOALS.json`, not architecture.
+- **R2 — same shape, same conclusion.** Characterization tests proven to fail against a mutant
+  before a refactor commit lands is a verification *procedure* applied to whichever component R1
+  lands in (`tessera/store`), not a design decision — no new file, module, or cross-component
+  coupling. It belongs in that component's own `GOALS.json` criteria as a required pre-commit gate
+  on the R1 work, the same way R8's mutant/trap-control discipline (this document's own R8
+  section) already lives in `criteria`/`verification` fields rather than as a separate
+  architecture section, not because R2 is less important but because it's the same *kind* of
+  requirement.
+- **R3 — same shape.** A second baseline run from a non-authoring context, diffed against the
+  first, is a process requirement with a stated dependency on R23 (already covered above) and no
+  component/interface content of its own. Design-and-scope's job when R1's `GOALS.json` is
+  written, not architecture's.
+- **R20 — PRD.md already says so explicitly** ("Timing: design-and-scope, per R20's own text. Not
+  this stage") — architecture should still have echoed that rather than silently complying with
+  it, since a reader can't distinguish "read and correctly out of scope" from "not read."
+
+**Why this wasn't caught earlier, plainly, not defensively.** Three passes touched this document
+before Jon's spot-check found the gap: this pass's own origination, muse's collaboration, and
+`dev-harness-32`'s independent falsification. All three checked *correctness* — is a claim this
+document makes actually true — and none checked *completeness* — does this document say something
+about every live requirement, even "nothing needed here." `ARCHITECTURE-REVIEW.md`'s own stated
+scope confirms this: it lists what it verified and what it declined to re-verify, and a
+requirement-coverage sweep against PRD.md's full list is absent from both lists, meaning it was
+never framed as a check to run, not that it was run and passed. The mechanical version of that
+check is five minutes (the grep table above) and would have caught this immediately. Recommending
+to the orchestrator that a coverage sweep — every live PRD requirement has a disposition, even a
+one-line "no architecture needed, see design-and-scope" — become a standard, named step of this
+pipeline's falsification pass going forward, not a special case run only when someone happens to
+ask for one.

@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>dev-harness Run 2 build</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #12151c; --border: #232838; --text: #d8dee9; --muted: #7b8496;
+    --good: #3fb950; --bad: #f85149; --warn: #d29922; --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, "SF Mono", Menlo, monospace;
+    margin: 0; padding: 24px; max-width: 1180px; margin-inline: auto;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .sub { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .full { grid-column: 1 / -1; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .b-open { background: #1f6feb33; color: var(--accent); }
+  .b-closed { background: #3fb95033; color: var(--good); }
+  .b-yes { background: #3fb95033; color: var(--good); }
+  .b-no { background: #7b849633; color: var(--muted); }
+  .b-bad { background: #f8514933; color: var(--bad); }
+  .b-warn { background: #d2992233; color: var(--warn); }
+  .stages { display: flex; flex-wrap: wrap; gap: 6px; }
+  .stage { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 12px; min-width: 110px; position: relative; }
+  .stage.pass { border-color: var(--good); background: #3fb95015; }
+  .stage.progress { border-color: var(--warn); background: #d2992215; }
+  .stage.fail { border-color: var(--border); }
+  .stage.na { opacity: .55; }
+  .stage.current { box-shadow: 0 0 0 2px var(--accent); }
+  .stage .name { font-weight: 600; margin-bottom: 2px; }
+  .stage .current-tag { position: absolute; top: -9px; right: 6px; background: var(--accent); color: #0b0d12; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
+  .stall { font-size: 28px; font-weight: 700; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  .roster-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 13px; gap: 12px; }
+  .roster-row:last-child { border-bottom: none; }
+  .note { color: var(--muted); font-size: 12px; }
+  .err { color: var(--bad); }
+  a { color: var(--accent); }
+  code { background: #ffffff10; padding: 1px 5px; border-radius: 4px; }
+  .footer { color: var(--muted); font-size: 11px; margin-top: 24px; }
+  .comp-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+  .comp-card.shipped { border-color: var(--good); background: #3fb95010; }
+  .comp-card.progress { border-color: var(--warn); background: #d2992210; }
+  .comp-card.notfrozen { opacity: .6; }
+  .comp-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .comp-title { font-weight: 600; }
+  .bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin-top: 6px; }
+  .bar-fill { height: 100%; background: var(--good); }
+  .activity-chart { display: flex; align-items: flex-end; gap: 2px; height: 90px; margin: 10px 0 4px; }
+  .activity-bar-wrap { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+  .activity-bar { width: 100%; border-radius: 2px 2px 0 0; background: var(--good); min-height: 2px; }
+  .activity-bar.flat { background: var(--border); }
+  .activity-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+  .activity-summary { display: flex; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
+  .activity-stat { font-size: 12px; }
+  .activity-stat b { font-size: 18px; display: block; }
+</style>
+</head>
+<body>
+  <h1>dev-harness &mdash; Run 2 build monitor</h1>
+  <div class="sub" id="meta">loading&hellip;</div>
+
+  <div class="panel full" id="phase1-panel">
+    <h2>Phase 1 &mdash; closed prerequisite</h2>
+    <div id="phase1"></div>
+  </div>
+
+  <div class="panel full" id="heartbeat-panel">
+    <h2>Build clock &mdash; Phase 2</h2>
+    <div id="heartbeat"></div>
+  </div>
+
+  <div class="panel full">
+    <h2>Build components &mdash; Phase 2, <code id="tier-label"></code></h2>
+    <div id="build-components"></div>
+    <p class="note">Green = every criterion MET. Amber = criteria frozen, work in progress. Dim = no
+      GOALS.json yet for that component. Each card is read directly from its own GOALS.json on disk,
+      never inferred.</p>
+  </div>
+
+  <div class="panel full">
+    <h2>Build activity &mdash; live, not ATLAS-sourced (ATLASSN-45)</h2>
+    <div id="activity-chart" class="activity-chart"></div>
+    <div class="activity-axis"><span id="activity-axis-start"></span><span id="activity-axis-end"></span></div>
+    <div class="activity-summary" id="activity-summary"></div>
+    <p class="note">Each bar is a 15-minute window; height is the count of real events in it &mdash;
+      commits (git log), tickets opened/updated (TESSERA), and GOALS.json freezes/amendments &mdash;
+      read straight off disk. A flat grey bar is a real observation (nothing happened in that window),
+      not missing data. Sourced this way, not from ATLAS's own gated views, because those run on a
+      6-hourly batch pipeline that was found stale by hours during this exact build &mdash; see
+      <code>ATLASSN-45</code> (filed to add an on-demand sync trigger for exactly this case).</p>
+  </div>
+
+  <div class="panel full">
+    <h2>Report-cost reduction (REQ-51) &mdash; real transcript token counts, not estimated</h2>
+    <div id="report-cost"></div>
+    <p class="note">Real per-turn <code>output_tokens</code> read from each session's own transcript,
+      not a char-count approximation. "Before"/"after" splits at the timestamp REQ-51 was first
+      communicated to a peer. Small "after" sample &mdash; early signal, not a settled result. A single
+      long category-3 report (a real disagreement or FAIL finding) can swing a small-n session mean
+      upward by design &mdash; REQ-51 targets duplication, not length, so that isn't itself a defect.</p>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Gate sequence &mdash; <code id="tier-label-2"></code></h2>
+      <div class="stages" id="stages"></div>
+      <p class="note">Green = the exact artifact the real hook checks for exists on disk.
+        design-and-scope shows a real aggregate (components frozen / shipped) instead of a flat
+        placeholder, since this build has no single freeze file for that stage &mdash; each
+        component freezes its own <code>GOALS.json</code>.</p>
+      <p class="note" id="rework-note" style="color:var(--warn)" hidden></p>
+    </div>
+
+    <div class="panel">
+      <h2>Session roster (tonight, real)</h2>
+      <div id="roster"></div>
+      <p class="note">Every gate review runs in a session that never saw the builder's own reasoning
+        &mdash; personas applied by reading the persona file directly in a fresh peer session, not an
+        in-process subagent (agent_dispatch_gate.py blocks that path on this repo).</p>
+    </div>
+
+    <div class="panel full">
+      <h2>DEVH tickets (this build's real backlog)</h2>
+      <table id="tickets"><thead><tr><th>Ticket</th><th>Type</th><th>Status</th><th>Linked</th><th>Priority</th><th>Sev</th><th>Summary</th><th>Updated</th></tr></thead><tbody></tbody></table>
+      <p class="note">"Linked" means a real git commit on this branch mentions the ticket ID by
+        name &mdash; the direct fix for "it's all open, that doesn't show progress": an open ticket
+        with linked commits has real, checkable evidence behind it; an open ticket with none is
+        genuinely untouched backlog, not just unclosed paperwork. Sourced from git log, not ATLAS.</p>
+    </div>
+
+
+    <div class="panel">
+      <h2>Repo</h2>
+      <div class="kv" id="repo"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Other components in this worktree</h2>
+      <div id="other-components"></div>
+      <p class="note">Pre-existing GOALS.json files not part of this build's own requirements
+        (earlier tessera/atlas subcomponent work) &mdash; shown for context, never counted toward
+        this build's progress.</p>
+    </div>
+  </div>
+
+  <div class="footer" id="footer"></div>
+
+<script>
+function fmtAge(iso) {
+  if (!iso) return '&mdash;';
+  const d = new Date(iso);
+  const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  return Math.round(mins / 60 * 10) / 10 + 'h ago';
+}
+function badge(text, cls) { return `<span class="badge ${esc(cls)}">${esc(text)}</span>`; }
+function statusBadge(s) { return badge(s, s === 'closed' ? 'b-closed' : 'b-open'); }
+function esc(s) { return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+
+async function render() {
+  let snap;
+  try {
+    const res = await fetch('/data.json', {cache: 'no-store'});
+    snap = await res.json();
+    if (snap.error) throw new Error(snap.error);
+  } catch (e) {
+    document.getElementById('meta').innerHTML = `<span class="err">failed to load: ${esc(e.message)}</span>`;
+    return;
+  }
+
+  document.getElementById('meta').textContent =
+    `${snap.repo} • ${snap.shipped_count}/${snap.total_build_components} shipped, ${snap.in_progress_count} in progress • refreshed ${new Date(snap.generated_at).toLocaleTimeString()} (auto every 15s)`;
+
+  document.getElementById('tier-label').textContent = snap.tier_label || '';
+  document.getElementById('tier-label-2').textContent = snap.tier_label || '';
+
+  const p1 = snap.phase1 || {};
+  const p1el = document.getElementById('phase1');
+  if (!p1.available) {
+    p1el.innerHTML = `<p class="note">${esc(p1.reason || 'unavailable')}</p>`;
+  } else {
+    const t = p1.ticket || {};
+    p1el.innerHTML = `<div class="roster-row">
+      <span><code>${esc(t.ticket_id)}</code> ${esc(t.summary)}</span>
+      <span>${statusBadge(t.status)} <span class="note">${esc(p1.tier_label)}</span></span>
+    </div>
+    <p class="note">Closed prerequisite &mdash; bypassed architecture/design-and-scope entirely, per the real tier definition. Not part of Phase 2's own gate sequence below.</p>`;
+  }
+
+  const stallMin = snap.stall_minutes;
+  const stallCls = (stallMin === null || stallMin === undefined) ? 'b-no'
+    : (stallMin > 45) ? 'b-bad'
+    : (stallMin > 20) ? 'b-warn'
+    : 'b-yes';
+  const stallLabel = (stallMin === null || stallMin === undefined) ? 'no activity recorded'
+    : (stallMin > 45) ? 'possibly stalled'
+    : (stallMin > 20) ? 'slowing'
+    : 'active';
+  const stallDisplay = (stallMin === null || stallMin === undefined) ? '&mdash;' : (stallMin + ' min');
+  const stallParseErrorHtml = snap.stall_parse_error
+    ? `<p class="err">timestamp parse error: ${esc(snap.stall_parse_error)}</p>`
+    : '';
+  const elapsedMin = snap.build_elapsed_minutes;
+  const elapsedDisplay = (elapsedMin === null || elapsedMin === undefined) ? '&mdash;'
+    : (elapsedMin < 60) ? (elapsedMin + ' min')
+    : (Math.round(elapsedMin / 60 * 10) / 10 + ' h');
+  document.getElementById('heartbeat').innerHTML = `
+    <div class="kv">
+      <dt>elapsed since build start</dt><dd class="stall">${elapsedDisplay}</dd>
+      <dt>since last DEVH ticket activity</dt><dd class="stall">${stallDisplay} ${badge(stallLabel, stallCls)}</dd>
+    </div>
+    ${stallParseErrorHtml}
+    <p class="note">These are two different clocks &mdash; total build time vs. how recently something last happened. A small "since last activity" number does not mean the build just started.</p>
+  `;
+
+  const bc = document.getElementById('build-components');
+  bc.innerHTML = (snap.build_components || []).map(c => {
+    if (!c.exists) {
+      return `<div class="comp-card notfrozen"><div class="comp-head"><span class="comp-title">${esc(c.label)}</span><span class="note">${esc(c.requirement)}</span></div><p class="note">no GOALS.json yet at <code>${esc(c.relpath)}</code></p></div>`;
+    }
+    if (c.error) {
+      return `<div class="comp-card notfrozen"><div class="comp-head"><span class="comp-title">${esc(c.label)}</span><span class="note">${esc(c.requirement)}</span></div><p class="err">${esc(c.error)}</p></div>`;
+    }
+    const total = c.criteria_total || 0, met = c.criteria_met || 0, gap = c.criteria_met_with_gap || 0;
+    const pct = total ? Math.round(100 * met / total) : 0;
+    const shipped = total > 0 && met === total;
+    const cls = shipped ? 'shipped' : (c.frozen_at ? 'progress' : 'notfrozen');
+    const statusLabel = shipped ? badge(gap ? 'shipped, disclosed gap' : 'shipped', gap ? 'b-warn' : 'b-yes') : (c.frozen_at ? badge('in progress', 'b-warn') : badge('not frozen', 'b-no'));
+    const amendNote = c.amendments ? `<span class="note">${c.amendments} amendment(s)</span>` : '';
+    const gapNote = gap ? `<p class="note">${gap} of ${met} MET result(s) carry a disclosed reproduction_gap &mdash; not independently re-verified, original claim stands with a caveat.</p>` : '';
+    return `<div class="comp-card ${cls}">
+      <div class="comp-head">
+        <span class="comp-title">${esc(c.label)} <span class="note">${esc(c.relpath)}</span></span>
+        <span>${statusLabel} <span class="note">${esc(c.requirement)}</span></span>
+      </div>
+      <div>${met}/${total} criteria MET ${amendNote}</div>
+      <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <p class="note">frozen ${fmtAge(c.frozen_at)}</p>
+      ${gapNote}
+    </div>`;
+  }).join('') || '<p class="note">no build components configured</p>';
+
+  const stagesEl = document.getElementById('stages');
+  stagesEl.innerHTML = (snap.gate_artifacts || []).map(g => {
+    const statusCls = g.status === 'done' ? 'pass' : g.status === 'in-progress' ? 'progress'
+      : (g.artifact ? 'fail' : 'na');
+    const cls = statusCls + (g.stage === snap.current_stage ? ' current' : '');
+    const sub = g.note ? g.note : (g.artifact ? (g.present ? fmtAge(g.mtime) : 'not yet') : 'tracked per-component above');
+    const tag = g.stage === snap.current_stage ? '<span class="current-tag">current</span>' : '';
+    return `<div class="stage ${cls}">${tag}<div class="name">${esc(g.stage)}</div><div class="note">${esc(sub)}</div></div>`;
+  }).join('');
+
+  const reworkEl = document.getElementById('rework-note');
+  if (snap.stage_rework_note) {
+    reworkEl.textContent = snap.stage_rework_note;
+    reworkEl.hidden = false;
+  } else {
+    reworkEl.hidden = true;
+  }
+
+  document.getElementById('roster').innerHTML = (snap.session_roster || []).map(r =>
+    `<div class="roster-row"><span>${esc(r.role)} &mdash; ${esc(r.model)}</span><span class="note">${esc(r.note)}</span></div>`
+  ).join('');
+
+  const activity = snap.activity || {};
+  const linkedByTicket = {};
+  (activity.ticket_activity || []).forEach(a => { linkedByTicket[a.ticket_id] = a; });
+
+  const tbody = document.querySelector('#tickets tbody');
+  const rows = snap.tessera.tickets || [];
+  tbody.innerHTML = rows.map(t => {
+    const act = linkedByTicket[t.ticket_id];
+    const linkedCell = act && act.linked_commits > 0
+      ? badge(act.linked_commits + ' commit' + (act.linked_commits > 1 ? 's' : ''), 'b-yes')
+      : badge('none', 'b-no');
+    return `<tr>
+    <td>${esc(t.ticket_id)}</td><td>${esc(t.type)}</td><td>${statusBadge(t.status)}</td>
+    <td>${linkedCell}</td>
+    <td>${t.priority ?? '&mdash;'}</td><td>${t.severity ?? '&mdash;'}</td>
+    <td>${esc(t.summary)}</td><td class="note">${fmtAge(t.updated_at)}</td>
+  </tr>`;
+  }).join('') || '<tr><td colspan="8" class="note">no tickets yet</td></tr>';
+
+  const buckets = activity.buckets || [];
+  const maxCount = Math.max(1, ...buckets.map(b => b.count));
+  document.getElementById('activity-chart').innerHTML = buckets.map(b => {
+    const h = Math.round((b.count / maxCount) * 100);
+    const flat = b.count === 0 ? ' flat' : '';
+    const types = Object.entries(b.by_type || {}).map(([k, v]) => `${k}:${v}`).join(', ') || 'nothing';
+    return `<div class="activity-bar-wrap" title="${esc(new Date(b.start).toLocaleTimeString())} — ${esc(String(b.count))} event(s) — ${esc(types)}">
+      <div class="activity-bar${flat}" style="height:${Math.max(h, b.count > 0 ? 4 : 2)}%"></div>
+    </div>`;
+  }).join('') || '<p class="note">no activity data</p>';
+  document.getElementById('activity-axis-start').textContent = buckets.length ? new Date(buckets[0].start).toLocaleTimeString() : '';
+  document.getElementById('activity-axis-end').textContent = buckets.length ? new Date(buckets[buckets.length - 1].start).toLocaleTimeString() + ' (now)' : '';
+
+  const flatBuckets = buckets.filter(b => b.count === 0).length;
+  document.getElementById('activity-summary').innerHTML = `
+    <div class="activity-stat"><b>${activity.total_events ?? '&mdash;'}</b>real events, this build</div>
+    <div class="activity-stat"><b>${flatBuckets}/${buckets.length}</b>15-min windows with zero activity</div>
+    <div class="activity-stat"><b>${activity.tickets_with_linked_commits ?? '&mdash;'}</b>open+closed tickets with a linked commit</div>
+    <div class="activity-stat"><b>${activity.tickets_open_no_linked_commit ?? '&mdash;'}</b>open tickets with no linked commit yet</div>
+  `;
+
+  const repo = document.getElementById('repo');
+  const g = snap.git || {};
+  repo.innerHTML = g.error ? `<p class="err">${esc(g.error)}</p>` : `
+    <dt>branch</dt><dd><code>${esc(g.branch)}</code></dd>
+    <dt>HEAD</dt><dd><code>${esc(g.sha)}</code></dd>
+    <dt>commits</dt><dd>${esc(g.commit_count)}</dd>
+    <dt>subject</dt><dd>${esc(g.subject)}</dd>
+    <dt>working tree</dt><dd>${g.dirty ? badge('uncommitted changes', 'b-warn') : badge('clean', 'b-yes')}</dd>
+  `;
+
+  const oc = document.getElementById('other-components');
+  const others = (snap.other_components || []).filter(c => c.exists);
+  oc.innerHTML = others.length ? others.map(c => {
+    const total = c.criteria_total || 0, met = c.criteria_met || 0;
+    return `<div class="roster-row"><span><code>${esc(c.relpath)}</code></span><span class="note">${met}/${total} MET</span></div>`;
+  }).join('') : '<p class="note">none</p>';
+
+  const rc = snap.report_cost || {};
+  const rcEl = document.getElementById('report-cost');
+  if (!rc.fleet_mean_before_tokens) {
+    rcEl.innerHTML = '<p class="note">no "before" data yet</p>';
+  } else {
+    const pct = rc.fleet_pct_change;
+    const pctCls = pct === null ? 'b-no' : pct <= 0 ? 'b-yes' : 'b-warn';
+    const rows = (rc.per_session || []).map(s => {
+      if (s.error) return `<div class="roster-row"><span>${esc(s.session)}</span><span class="err">${esc(s.error)}</span></div>`;
+      const b = s.mean_before ?? '&mdash;', a = s.mean_after ?? '&mdash;';
+      return `<div class="roster-row"><span>${esc(s.session)}</span><span class="note">${b} &rarr; ${a} tokens/msg (n=${s.before.n}&rarr;${s.after.n})</span></div>`;
+    }).join('');
+    rcEl.innerHTML = `
+      <div class="activity-summary">
+        <div class="activity-stat"><b>${rc.fleet_mean_before_tokens}</b>fleet mean tokens/report, before</div>
+        <div class="activity-stat"><b>${rc.fleet_mean_after_tokens ?? '&mdash;'}</b>fleet mean tokens/report, after</div>
+        <div class="activity-stat"><b>${badge((pct>0?'+':'')+pct+'%', pctCls)}</b>actual change, measured</div>
+        <div class="activity-stat"><b>-${rc.projected_reduction_pct}%</b>projected target (Priya's own estimate)</div>
+      </div>
+      <div style="margin-top:10px">${rows}</div>
+    `;
+  }
+
+  document.getElementById('footer').textContent =
+    'TESSERA is source of truth for tickets; filesystem for GOALS.json/gate artifacts. Nothing here is fabricated when a source is unavailable -- it says so.';
+}
+
+render();
+setInterval(render, 15000);
+</script>
+</body>
+</html>

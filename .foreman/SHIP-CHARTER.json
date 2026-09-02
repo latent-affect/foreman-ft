@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-09-02T17:51:31Z",
+  "commit_hash": "d34b490abe215c5a8099e0282846cf8548aceadf",
+  "go_type": "dogfood",
+  "gate_owner_persona": "Marcus Webb",
+  "reviewer_session": "dev-harness-7f",
+  "verdict": "go",
+  "supersedes": "prior charter at commit 24bfb74, verdict hold (blocker: DEVH-56)",
+  "review_scope_note": "Per REQ-57/FORE-269, this pass was bounded per that process correction: (1) a real, executed spot-check of DEVH-56's specific fix, and (2) the blast radius of what that fix touched (config.py, install-dev-harness.sh). test_suite_green and no_open_s0_s1 were re-confirmed fresh as part of that scope since they are the mechanical, cheap-to-check consequences of the held item closing. stretch_test and limitations_disclosed carry forward from the prior full pass except where reasoning changed below, per REQ-57's own distinction between a real new gap and a first-pass scope question.",
+  "checks": {
+    "no_open_s0_s1": {
+      "pass": true,
+      "evidence": "Fresh query, 2026-09-02T17:5x: tessera list --project DEVH --compact -- 56 total, 47 open / 9 closed, 0 open S0/S1. DEVH-56 confirmed closed for real: spot-checked myself in a genuinely fresh shell (`env -u TESSGUARD_DB_PATH .githooks/commit-msg`, from this exact worktree) -- a no-ticket message blocks with the real, specific reason (not the old generic placeholder failure), a DEVH-56-citing message passes, exit 0. Marker file /Users/m5/dev/dev-harness-run2/.foreman/tessguard-db-path holds the real resolved path (/Users/m5/dev/ticket-system/data/tessera.db), not a fake test value, confirmed by direct read before and after a full test run."
+    },
+    "test_suite_green": {
+      "pass": true,
+      "evidence": "Re-run fresh against current HEAD (d34b490): python3 -m unittest discover -p 'test_*.py' from repo root -- 372 tests (up from 369 -- the +3 is DEVH-56's new TessguardDbPathFallbackTests), OK, 0 failures, 0 errors. Separately re-ran scripts.test_install_fail_closed directly (the specific regression suite for this fix's blast radius): 15/15 pass, including test_c6_marker_file_written_with_real_resolved_path and the re-isolated test_tokens_replaced_on_install -- confirmed this test no longer clobbers this repo's own real marker file (checked directly, file unchanged and correct after the run)."
+    },
+    "stretch_test": {
+      "pass": true,
+      "evidence": "Carried forward, unchanged reasoning from prior pass (this fix's blast radius did not touch stretch coverage beyond adding its own): atlas/ingest/tests/test_audit_scrub.py's adversarial coverage and DEVH-54's real git-worktree WorktreeFallbackTests both still committed and passing. This pass adds TessguardDbPathFallbackTests, which builds a from-scratch subprocess environment with no TESSGUARD_DB_PATH key at all (not a deleted dict key) and includes a real negative control against the pre-fix module -- genuine adversarial coverage for exactly the gap this charter is closing. Caveat unchanged: DEVH-6/R23 itself still has no committed test (DEVH-30, open, low severity, not blocking)."
+    },
+    "limitations_disclosed": {
+      "pass": true,
+      "evidence": "Reassessed, not merely carried forward: the prior FALSE on this check was specifically because DEVH-52/56 were live, undisclosed defects -- both are now fixed, not merely disclosed. Remaining known items (DEVH-44, DEVH-47, DEVH-30) are each disclosed in real, detailed, shipped review documents (INTEGRATION-TEST-REPORT.md names DEVH-44/47 with explicit trigger conditions; DEVH-30 is a real, open, low-severity ticket about test-coverage completeness, not a runtime behavior gap). Genuine, non-blocking caveat: README.md's 'Honest number' section (47-REQ/13-closed framing) is stale relative to DEVH's own current ticket count and was never meant to track this build's DEVH tickets in the first place (DEVH-1 explicitly scopes dev-harness as a sync/packaging mirror, not independent tracking) -- this is a real gap worth closing before a PRODUCTION charter, where an external reader has no other source of truth, but does not block a DOGFOOD charter where the operator has direct knowledge of the build's real state via TESSERA and this session's own reports."
+    },
+    "dogfood_pass": {
+      "pass": true,
+      "evidence": "Evaluated per REQ-42's rule: no currently-known, undisclosed defect exists that a first real usage pass would immediately trip. The one item that concretely failed this test twice in a row -- a human making a normal commit in a fresh shell -- is now genuinely fixed and independently re-verified by this reviewer in an actually-fresh environment, not a manually-primed test session. Everything else currently open (DEVH-44/47, environment-gated; DEVH-30, test-coverage-only) does not fit the shape of something a first usage pass trips over. This can legitimately evaluate true with zero additional humans having touched the build yet -- per the skill's own text, that is the intended outcome of this check, not a loophole."
+    }
+  },
+  "known_open_items": {
+    "blocking_for_go": [],
+    "disclosed_not_blocking": ["DEVH-44", "DEVH-47", "DEVH-30"],
+    "closed_across_this_review_thread": ["DEVH-3", "DEVH-6", "DEVH-13", "DEVH-49", "DEVH-50", "DEVH-51", "DEVH-52", "DEVH-54", "DEVH-56"]
+  },
+  "before_a_production_charter": [
+    "README.md's 'Honest number' section needs a real update or an explicit statement that it tracks the original dev-harness PRD, not dev-harness-run2's own DEVH ticket set -- flagged as a dogfood-non-blocker above, but it will not survive a production-charter's external-reader standard.",
+    "The full DF-to-Prod promotion criteria at /Users/m5/dev/dev-harness-run2/DF-TO-PROD-CRITERIA.md must actually be satisfied (ticket-rate trend, quality-score monotonic non-decrease, security findings closed-and-not-reopened, real user testing as its own evidence type) -- none of that is evaluated by this dogfood charter and none of it is met yet by definition, since the dogfood period this charter authorizes hasn't run."
+  ]
+}

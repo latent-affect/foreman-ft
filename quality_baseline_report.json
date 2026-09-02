@@ -1,0 +1,6292 @@
+{
+  "meta": {
+    "root": "/Users/m5/dev/dev-harness-run2",
+    "python_files_analyzed": 197,
+    "total_functions_analyzed": 1423,
+    "thresholds_source": {
+      "cyclomatic_complexity": "McCabe 1976 / NIST 500-235; bands: 1-10 low, 11-20 moderate, 21-50 high, 50+ very high/untestable",
+      "maintainability_index": "radon's documented mi_rank(): A>=20, 10<=B<20, C<10 (0-100 scale) -- see radon.readthedocs.io",
+      "health_score_1_to_10": "standalone approximation for THIS script only, not a CodeScene score"
+    },
+    "hotspot_signal_degenerate_churn": false
+  },
+  "aggregate": {
+    "simple_average_health_1_to_10": 8.3,
+    "sloc_weighted_average_health_1_to_10": 7.12,
+    "note": "CodeScene's own docs warn simple averages misrepresent a codebase (their published example: 7.33 simple vs 2.18 weighted, same repo). Trust the weighted number more."
+  },
+  "hotspots_top15": [
+    {
+      "file_path": "token_bloat_diagnostic.py",
+      "hotspot_signal": 60,
+      "max_cc": 20,
+      "git_commits": 3,
+      "mi_score": 28.83,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "bollard/component_coupling.py",
+      "hotspot_signal": 54,
+      "max_cc": 27,
+      "git_commits": 2,
+      "mi_score": 41.21,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "tessera/api/cli.py",
+      "hotspot_signal": 51,
+      "max_cc": 51,
+      "git_commits": 1,
+      "mi_score": 33.1,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "foreman_quality_baseline.py",
+      "hotspot_signal": 44,
+      "max_cc": 22,
+      "git_commits": 2,
+      "mi_score": 38.85,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "skills/foreman/scripts/foreman_init.py",
+      "hotspot_signal": 40,
+      "max_cc": 20,
+      "git_commits": 2,
+      "mi_score": 43.55,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "monitoring/compliance-cron/skill_broadscan.py",
+      "hotspot_signal": 36,
+      "max_cc": 36,
+      "git_commits": 1,
+      "mi_score": 51.35,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "atlas/ingest/run_pull.py",
+      "hotspot_signal": 34,
+      "max_cc": 17,
+      "git_commits": 2,
+      "mi_score": 59.38,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "security_privacy_convergence.py",
+      "hotspot_signal": 32,
+      "max_cc": 16,
+      "git_commits": 2,
+      "mi_score": 32.25,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "monitoring/foreman-status/foreman_status_dashboard_data.py",
+      "hotspot_signal": 30,
+      "max_cc": 15,
+      "git_commits": 2,
+      "mi_score": 63.36,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "bollard/architecture_gate.py",
+      "hotspot_signal": 28,
+      "max_cc": 14,
+      "git_commits": 2,
+      "mi_score": 69.83,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "tessera/tessguard/transcript.py",
+      "hotspot_signal": 25,
+      "max_cc": 25,
+      "git_commits": 1,
+      "mi_score": 64.32,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "tessera/store/store.py",
+      "hotspot_signal": 24,
+      "max_cc": 8,
+      "git_commits": 3,
+      "mi_score": 22.3,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+      "hotspot_signal": 22,
+      "max_cc": 22,
+      "git_commits": 1,
+      "mi_score": 62.58,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/scripts/posttooluse_hook.py",
+      "hotspot_signal": 20,
+      "max_cc": 20,
+      "git_commits": 1,
+      "mi_score": 65.53,
+      "mi_rank": "A"
+    },
+    {
+      "file_path": "tessera/api/sql_query.py",
+      "hotspot_signal": 19,
+      "max_cc": 19,
+      "git_commits": 1,
+      "mi_score": 57.56,
+      "mi_rank": "A"
+    }
+  ],
+  "worst_maintainability_top15": [
+    {
+      "file_path": "tessera/store/store.py",
+      "mi_score": 22.3,
+      "mi_rank": "A",
+      "sloc": 937
+    },
+    {
+      "file_path": "monitoring/build_dashboard_data.py",
+      "mi_score": 26.26,
+      "mi_rank": "A",
+      "sloc": 441
+    },
+    {
+      "file_path": "token_bloat_diagnostic.py",
+      "mi_score": 28.83,
+      "mi_rank": "A",
+      "sloc": 422
+    },
+    {
+      "file_path": "security_privacy_convergence.py",
+      "mi_score": 32.25,
+      "mi_rank": "A",
+      "sloc": 441
+    },
+    {
+      "file_path": "tessera/api/cli.py",
+      "mi_score": 33.1,
+      "mi_rank": "A",
+      "sloc": 381
+    },
+    {
+      "file_path": "tessera/api/http_api.py",
+      "mi_score": 35.82,
+      "mi_rank": "A",
+      "sloc": 458
+    },
+    {
+      "file_path": "atlas/warehouse/dq_runner.py",
+      "mi_score": 37.44,
+      "mi_rank": "A",
+      "sloc": 414
+    },
+    {
+      "file_path": "foreman_quality_baseline.py",
+      "mi_score": 38.85,
+      "mi_rank": "A",
+      "sloc": 403
+    },
+    {
+      "file_path": "tessera/api/tests/test_http_api.py",
+      "mi_score": 40.9,
+      "mi_rank": "A",
+      "sloc": 417
+    },
+    {
+      "file_path": "bollard/component_coupling.py",
+      "mi_score": 41.21,
+      "mi_rank": "A",
+      "sloc": 227
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/scripts/scan.py",
+      "mi_score": 42.19,
+      "mi_rank": "A",
+      "sloc": 328
+    },
+    {
+      "file_path": "skills/foreman/scripts/foreman_init.py",
+      "mi_score": 43.55,
+      "mi_rank": "A",
+      "sloc": 361
+    },
+    {
+      "file_path": "tessera/api/tests/test_cli.py",
+      "mi_score": 43.97,
+      "mi_rank": "A",
+      "sloc": 288
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_transcript.py",
+      "mi_score": 46.17,
+      "mi_rank": "A",
+      "sloc": 62
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_audit.py",
+      "mi_score": 46.36,
+      "mi_rank": "A",
+      "sloc": 195
+    }
+  ],
+  "worst_functions_by_cc_top20": [
+    {
+      "file_path": "tessera/api/cli.py",
+      "function_name": "dispatch_internal",
+      "nloc": 146,
+      "cyclomatic_complexity": 51,
+      "cc_band": "Very high risk / untestable",
+      "parameter_count": 4,
+      "start_line": 337,
+      "end_line": 482
+    },
+    {
+      "file_path": "monitoring/compliance-cron/skill_broadscan.py",
+      "function_name": "main",
+      "nloc": 94,
+      "cyclomatic_complexity": 36,
+      "cc_band": "High risk",
+      "parameter_count": 0,
+      "start_line": 69,
+      "end_line": 171
+    },
+    {
+      "file_path": "bollard/component_coupling.py",
+      "function_name": "extract_bash_write_targets",
+      "nloc": 57,
+      "cyclomatic_complexity": 27,
+      "cc_band": "High risk",
+      "parameter_count": 2,
+      "start_line": 406,
+      "end_line": 519
+    },
+    {
+      "file_path": "monitoring/build_dashboard_data.py",
+      "function_name": "report_cost_metric",
+      "nloc": 37,
+      "cyclomatic_complexity": 26,
+      "cc_band": "High risk",
+      "parameter_count": 0,
+      "start_line": 494,
+      "end_line": 535
+    },
+    {
+      "file_path": "tessera/tessguard/transcript.py",
+      "function_name": "scan_internal",
+      "nloc": 54,
+      "cyclomatic_complexity": 25,
+      "cc_band": "High risk",
+      "parameter_count": 2,
+      "start_line": 43,
+      "end_line": 108
+    },
+    {
+      "file_path": "foreman_quality_baseline.py",
+      "function_name": "build_report",
+      "nloc": 105,
+      "cyclomatic_complexity": 22,
+      "cc_band": "High risk",
+      "parameter_count": 1,
+      "start_line": 383,
+      "end_line": 508
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+      "function_name": "main",
+      "nloc": 53,
+      "cyclomatic_complexity": 22,
+      "cc_band": "High risk",
+      "parameter_count": 0,
+      "start_line": 66,
+      "end_line": 138
+    },
+    {
+      "file_path": "token_bloat_diagnostic.py",
+      "function_name": "parse_transcripts",
+      "nloc": 50,
+      "cyclomatic_complexity": 20,
+      "cc_band": "Moderate risk",
+      "parameter_count": 1,
+      "start_line": 87,
+      "end_line": 144
+    },
+    {
+      "file_path": "skills/foreman/scripts/foreman_init.py",
+      "function_name": "verify_hooks_live_mid_build",
+      "nloc": 97,
+      "cyclomatic_complexity": 20,
+      "cc_band": "Moderate risk",
+      "parameter_count": 1,
+      "start_line": 227,
+      "end_line": 368
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/scripts/posttooluse_hook.py",
+      "function_name": "main",
+      "nloc": 76,
+      "cyclomatic_complexity": 20,
+      "cc_band": "Moderate risk",
+      "parameter_count": 0,
+      "start_line": 123,
+      "end_line": 215
+    },
+    {
+      "file_path": "token_bloat_diagnostic.py",
+      "function_name": "detect_invalidation_spikes",
+      "nloc": 43,
+      "cyclomatic_complexity": 19,
+      "cc_band": "Moderate risk",
+      "parameter_count": 1,
+      "start_line": 163,
+      "end_line": 212
+    },
+    {
+      "file_path": "tessera/api/sql_query.py",
+      "function_name": "run_readonly_query",
+      "nloc": 46,
+      "cyclomatic_complexity": 19,
+      "cc_band": "Moderate risk",
+      "parameter_count": 2,
+      "start_line": 152,
+      "end_line": 241
+    },
+    {
+      "file_path": "token_bloat_diagnostic.py",
+      "function_name": "write_txt_summary",
+      "nloc": 87,
+      "cyclomatic_complexity": 18,
+      "cc_band": "Moderate risk",
+      "parameter_count": 2,
+      "start_line": 424,
+      "end_line": 514
+    },
+    {
+      "file_path": "monitoring/build_dashboard_data.py",
+      "function_name": "build_activity_timeline",
+      "nloc": 49,
+      "cyclomatic_complexity": 18,
+      "cc_band": "Moderate risk",
+      "parameter_count": 4,
+      "start_line": 361,
+      "end_line": 420
+    },
+    {
+      "file_path": "atlas/ingest/run_pull.py",
+      "function_name": "run",
+      "nloc": 83,
+      "cyclomatic_complexity": 17,
+      "cc_band": "Moderate risk",
+      "parameter_count": 4,
+      "start_line": 134,
+      "end_line": 238
+    },
+    {
+      "file_path": "security_privacy_convergence.py",
+      "function_name": "cross_reference_code_findings",
+      "nloc": 29,
+      "cyclomatic_complexity": 16,
+      "cc_band": "Moderate risk",
+      "parameter_count": 3,
+      "start_line": 346,
+      "end_line": 380
+    },
+    {
+      "file_path": "bollard/cross_project_routing/routing_table.py",
+      "function_name": "classify",
+      "nloc": 23,
+      "cyclomatic_complexity": 16,
+      "cc_band": "Moderate risk",
+      "parameter_count": 2,
+      "start_line": 51,
+      "end_line": 87
+    },
+    {
+      "file_path": "security_privacy_convergence.py",
+      "function_name": "write_txt_summary",
+      "nloc": 53,
+      "cyclomatic_complexity": 15,
+      "cc_band": "Moderate risk",
+      "parameter_count": 2,
+      "start_line": 507,
+      "end_line": 559
+    },
+    {
+      "file_path": "token_bloat_diagnostic.py",
+      "function_name": "analyze_launch_clusters",
+      "nloc": 33,
+      "cyclomatic_complexity": 15,
+      "cc_band": "Moderate risk",
+      "parameter_count": 1,
+      "start_line": 273,
+      "end_line": 319
+    },
+    {
+      "file_path": "monitoring/build_dashboard_data.py",
+      "function_name": "build_snapshot",
+      "nloc": 48,
+      "cyclomatic_complexity": 15,
+      "cc_band": "Moderate risk",
+      "parameter_count": 0,
+      "start_line": 538,
+      "end_line": 596
+    }
+  ],
+  "duplicate_blocks_heuristic": [
+    {
+      "lines": 6,
+      "occurrences": 12,
+      "locations": [
+        "tessera/api/tests/test_sse.py:13",
+        "tessera/store/tests/test_projection.py:9",
+        "tessera/store/tests/test_sql_identifier_safety.py:40",
+        "tessera/store/tests/test_column_descriptions.py:9",
+        "tessera/store/tests/test_schema.py:12",
+        "tessera/store/tests/test_stage_heads.py:9",
+        "tessera/store/tests/test_workflow.py:11",
+        "tessera/store/tests/test_transactions.py:12",
+        "tessera/store/tests/test_backup.py:11",
+        "tessera/store/tests/test_fields.py:9",
+        "tessera/store/tests/test_comments.py:10",
+        "tessera/store/tests/test_attachments.py:11"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 12,
+      "locations": [
+        "tessera/api/tests/test_sse.py:14",
+        "tessera/store/tests/test_projection.py:10",
+        "tessera/store/tests/test_sql_identifier_safety.py:41",
+        "tessera/store/tests/test_column_descriptions.py:10",
+        "tessera/store/tests/test_schema.py:13",
+        "tessera/store/tests/test_stage_heads.py:10",
+        "tessera/store/tests/test_workflow.py:12",
+        "tessera/store/tests/test_transactions.py:13",
+        "tessera/store/tests/test_backup.py:12",
+        "tessera/store/tests/test_fields.py:10",
+        "tessera/store/tests/test_comments.py:11",
+        "tessera/store/tests/test_attachments.py:12"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 12,
+      "locations": [
+        "tessera/api/tests/test_sse.py:15",
+        "tessera/store/tests/test_projection.py:11",
+        "tessera/store/tests/test_sql_identifier_safety.py:42",
+        "tessera/store/tests/test_column_descriptions.py:11",
+        "tessera/store/tests/test_schema.py:14",
+        "tessera/store/tests/test_stage_heads.py:11",
+        "tessera/store/tests/test_workflow.py:13",
+        "tessera/store/tests/test_transactions.py:14",
+        "tessera/store/tests/test_backup.py:13",
+        "tessera/store/tests/test_fields.py:11",
+        "tessera/store/tests/test_comments.py:12",
+        "tessera/store/tests/test_attachments.py:13"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 11,
+      "locations": [
+        "tessera/store/tests/test_projection.py:2",
+        "tessera/store/tests/test_idempotency.py:4",
+        "tessera/store/tests/test_sql_identifier_safety.py:33",
+        "tessera/store/tests/test_datasets.py:2",
+        "tessera/store/tests/test_column_descriptions.py:2",
+        "tessera/store/tests/test_stage_heads.py:2",
+        "tessera/store/tests/test_hotlists.py:2",
+        "tessera/store/tests/test_transactions.py:5",
+        "tessera/store/tests/test_backup.py:4",
+        "tessera/store/tests/test_fields.py:2",
+        "tessera/store/tests/test_comments.py:3"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 9,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_refusal.py:4",
+        "atlas/resolve/tests/test_override.py:4",
+        "atlas/resolve/tests/test_matching.py:4",
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:4",
+        "atlas/ingest/tests/test_rotation.py:4",
+        "atlas/ingest/tests/test_crash_resume.py:4",
+        "atlas/warehouse/tests/test_credential_scan.py:9",
+        "atlas/warehouse/tests/test_dq_runner.py:4",
+        "atlas/warehouse/tests/test_trust_gate.py:5"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 8,
+      "locations": [
+        "tessera/store/tests/test_projection.py:1",
+        "tessera/store/tests/test_sql_identifier_safety.py:32",
+        "tessera/store/tests/test_datasets.py:1",
+        "tessera/store/tests/test_column_descriptions.py:1",
+        "tessera/store/tests/test_stage_heads.py:1",
+        "tessera/store/tests/test_hotlists.py:1",
+        "tessera/store/tests/test_fields.py:1",
+        "tessera/store/tests/test_comments.py:2"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 7,
+      "locations": [
+        "tests/test_hotspot_signal_relabel.py:10",
+        "tests/test_measurement_provenance.py:19",
+        "scripts/test_install_fail_closed.py:6",
+        "tessera/tessguard/tests/test_gitgate.py:2",
+        "tessera/api/tests/test_sse.py:2",
+        "skills/foreman/config/test_settings_template.py:11",
+        "bollard/test_pre_implementation_brief_gate.py:20"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 6,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:4",
+        "atlas/snapshot/tests/test_index_shape.py:4",
+        "atlas/snapshot/tests/test_unresolved_shards.py:8",
+        "atlas/snapshot/tests/test_shard_sharing.py:4",
+        "atlas/ingest/tests/test_audit_mapper.py:8",
+        "atlas/ingest/tests/test_malformed_lines.py:4"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 6,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:5",
+        "atlas/snapshot/tests/test_index_shape.py:5",
+        "atlas/snapshot/tests/test_unresolved_shards.py:9",
+        "atlas/snapshot/tests/test_shard_sharing.py:5",
+        "atlas/ingest/tests/test_audit_mapper.py:9",
+        "atlas/ingest/tests/test_malformed_lines.py:5"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 6,
+      "locations": [
+        "atlas/resolve/tests/test_override.py:19",
+        "atlas/ingest/tests/test_stream_identity.py:41",
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:17",
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:44",
+        "atlas/ingest/tests/test_rotation.py:17",
+        "atlas/ingest/tests/test_malformed_lines.py:18"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 5,
+      "locations": [
+        "tests/test_hotspot_signal_relabel.py:9",
+        "tests/test_measurement_provenance.py:18",
+        "scripts/test_install_fail_closed.py:5",
+        "bollard/test_ship_readiness_gate.py:9",
+        "bollard/test_pre_implementation_brief_gate.py:19"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 5,
+      "locations": [
+        "tessera/store/store.py:470",
+        "tessera/store/store.py:497",
+        "tessera/store/store.py:514",
+        "tessera/store/store.py:540",
+        "tessera/store/store.py:558"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:6",
+        "atlas/snapshot/tests/test_index_shape.py:6",
+        "atlas/snapshot/tests/test_unresolved_shards.py:10",
+        "atlas/snapshot/tests/test_shard_sharing.py:6"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:7",
+        "atlas/snapshot/tests/test_index_shape.py:7",
+        "atlas/snapshot/tests/test_unresolved_shards.py:11",
+        "atlas/snapshot/tests/test_shard_sharing.py:7"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:8",
+        "atlas/snapshot/tests/test_index_shape.py:8",
+        "atlas/snapshot/tests/test_unresolved_shards.py:12",
+        "atlas/snapshot/tests/test_shard_sharing.py:8"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:16",
+        "atlas/snapshot/tests/test_index_shape.py:27",
+        "atlas/snapshot/tests/test_unresolved_shards.py:24",
+        "atlas/snapshot/tests/test_shard_sharing.py:16"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:17",
+        "atlas/snapshot/tests/test_index_shape.py:28",
+        "atlas/snapshot/tests/test_unresolved_shards.py:25",
+        "atlas/snapshot/tests/test_shard_sharing.py:17"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:18",
+        "atlas/snapshot/tests/test_index_shape.py:29",
+        "atlas/snapshot/tests/test_unresolved_shards.py:26",
+        "atlas/snapshot/tests/test_shard_sharing.py:18"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/snapshot/tests/test_publish_atomicity.py:19",
+        "atlas/snapshot/tests/test_index_shape.py:30",
+        "atlas/snapshot/tests/test_unresolved_shards.py:27",
+        "atlas/snapshot/tests/test_shard_sharing.py:19"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/resolve/run.py:9",
+        "atlas/ingest/stream.py:42",
+        "atlas/ingest/run_pull.py:48",
+        "atlas/warehouse/dq_runner.py:28"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/ingest/tests/test_audit_scrub.py:47",
+        "atlas/ingest/tests/test_audit_mapper.py:23",
+        "atlas/warehouse/tests/test_credential_scan.py:31",
+        "atlas/warehouse/tests/test_dq_runner.py:76"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:14",
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:41",
+        "atlas/ingest/tests/test_rotation.py:14",
+        "atlas/ingest/tests/test_malformed_lines.py:15"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:15",
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:42",
+        "atlas/ingest/tests/test_rotation.py:15",
+        "atlas/ingest/tests/test_malformed_lines.py:16"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:16",
+        "atlas/ingest/tests/test_growth_and_partial_lines.py:43",
+        "atlas/ingest/tests/test_rotation.py:16",
+        "atlas/ingest/tests/test_malformed_lines.py:17"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "bollard/preflight_blocking_gate.py:16",
+        "bollard/architecture_gate.py:21",
+        "bollard/local_review/local_review_accountable.py:21",
+        "bollard/local_review/local_review_grounded.py:18"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "bollard/architecture_gate.py:23",
+        "bollard/concept_gate.py:31",
+        "bollard/ship_readiness_gate.py:32",
+        "bollard/goals_freeze_gate.py:22"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "bollard/architecture_gate.py:95",
+        "bollard/concept_gate.py:117",
+        "bollard/pre_implementation_brief_gate.py:147",
+        "bollard/goals_freeze_gate.py:91"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "bollard/architecture_gate.py:96",
+        "bollard/concept_gate.py:118",
+        "bollard/pre_implementation_brief_gate.py:148",
+        "bollard/goals_freeze_gate.py:92"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "bollard/architecture_gate.py:97",
+        "bollard/concept_gate.py:119",
+        "bollard/pre_implementation_brief_gate.py:149",
+        "bollard/goals_freeze_gate.py:93"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "bollard/architecture_gate.py:98",
+        "bollard/concept_gate.py:120",
+        "bollard/pre_implementation_brief_gate.py:150",
+        "bollard/goals_freeze_gate.py:94"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 4,
+      "locations": [
+        "bollard/architecture_gate.py:99",
+        "bollard/concept_gate.py:121",
+        "bollard/pre_implementation_brief_gate.py:151",
+        "bollard/goals_freeze_gate.py:95"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "tests/test_hotspot_signal_relabel.py:7",
+        "bollard/test_ship_readiness_gate.py:7",
+        "bollard/test_pre_implementation_brief_gate.py:17"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "tests/test_hotspot_signal_relabel.py:8",
+        "bollard/test_ship_readiness_gate.py:8",
+        "bollard/test_pre_implementation_brief_gate.py:18"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "tessera/tessguard/tests/test_audit.py:71",
+        "tessera/tessguard/tests/test_audit.py:85",
+        "tessera/tessguard/tests/test_audit.py:102"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "tessera/tessguard/tests/test_audit.py:72",
+        "tessera/tessguard/tests/test_audit.py:86",
+        "tessera/tessguard/tests/test_audit.py:103"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "tessera/tessguard/tests/test_gitgate.py:68",
+        "tessera/tessguard/tests/test_gitgate.py:92",
+        "tessera/tessguard/tests/test_gitgate.py:118"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "tessera/tessguard/tests/test_gitgate.py:69",
+        "tessera/tessguard/tests/test_gitgate.py:93",
+        "tessera/tessguard/tests/test_gitgate.py:119"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "tessera/store/tests/test_projection.py:47",
+        "tessera/store/tests/test_projection.py:89",
+        "tessera/store/tests/test_reassign_project.py:84"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "skills/foreman/scripts/test_foreman_init.py:72",
+        "skills/foreman/scripts/test_foreman_init.py:84",
+        "skills/foreman/scripts/test_foreman_init.py:110"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/snapshot/tests/_helpers.py:2",
+        "atlas/resolve/tests/_helpers.py:2",
+        "atlas/query/tests/_helpers.py:2"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/snapshot/tests/_helpers.py:3",
+        "atlas/resolve/tests/_helpers.py:3",
+        "atlas/query/tests/_helpers.py:3"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/snapshot/tests/_helpers.py:40",
+        "atlas/resolve/tests/_helpers.py:13",
+        "atlas/ingest/tests/_helpers.py:16"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/hookclient/tests/test_failure_modes.py:14",
+        "atlas/hookclient/tests/test_project_resolution.py:57",
+        "atlas/hookclient/tests/test_freshness.py:14"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/ingest/tests/test_audit_mapper.py:20",
+        "atlas/warehouse/tests/test_credential_scan.py:28",
+        "atlas/warehouse/tests/test_dq_runner.py:73"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/ingest/tests/test_audit_mapper.py:21",
+        "atlas/warehouse/tests/test_credential_scan.py:29",
+        "atlas/warehouse/tests/test_dq_runner.py:74"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/ingest/tests/test_audit_mapper.py:22",
+        "atlas/warehouse/tests/test_credential_scan.py:30",
+        "atlas/warehouse/tests/test_dq_runner.py:75"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "atlas/warehouse/tests/test_trust_gate.py:86",
+        "atlas/warehouse/tests/test_trust_gate.py:125",
+        "atlas/warehouse/tests/test_trust_gate.py:158"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "bollard/preflight_blocking_gate.py:116",
+        "bollard/pre_implementation_brief_gate.py:152",
+        "bollard/goals_freeze_gate.py:96"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "bollard/preflight_blocking_gate.py:117",
+        "bollard/pre_implementation_brief_gate.py:153",
+        "bollard/goals_freeze_gate.py:97"
+      ]
+    },
+    {
+      "lines": 6,
+      "occurrences": 3,
+      "locations": [
+        "bollard/preflight_blocking_gate.py:177",
+        "bollard/ship_readiness_gate.py:211",
+        "bollard/dependency_provenance_gate/dependency_provenance_gate.py:271"
+      ]
+    }
+  ],
+  "per_file_detail": [
+    {
+      "file_path": "security_privacy_convergence.py",
+      "raw": {
+        "loc": 611,
+        "sloc": 441,
+        "comments": 34,
+        "blank": 79,
+        "comment_ratio_pct": 7.7
+      },
+      "maintainability_index": {
+        "score": 32.25,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1127.0,
+        "difficulty": 7.59,
+        "effort": 8549.6
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 16,
+        "avg": 7.53,
+        "function_count": 17
+      },
+      "approx_health_score_1_to_10": 5.11,
+      "hotspot_signal": 32
+    },
+    {
+      "file_path": "foreman_quality_baseline.py",
+      "raw": {
+        "loc": 616,
+        "sloc": 403,
+        "comments": 70,
+        "blank": 84,
+        "comment_ratio_pct": 17.4
+      },
+      "maintainability_index": {
+        "score": 38.85,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1184.0,
+        "difficulty": 9.75,
+        "effort": 11544.3
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 22,
+        "avg": 6.31,
+        "function_count": 16
+      },
+      "approx_health_score_1_to_10": 3.94,
+      "hotspot_signal": 44
+    },
+    {
+      "file_path": "token_bloat_diagnostic.py",
+      "raw": {
+        "loc": 570,
+        "sloc": 422,
+        "comments": 33,
+        "blank": 65,
+        "comment_ratio_pct": 7.8
+      },
+      "maintainability_index": {
+        "score": 28.83,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 2776.1,
+        "difficulty": 11.66,
+        "effort": 32361.4
+      },
+      "git_commits_touching_file": 3,
+      "cyclomatic_complexity": {
+        "max": 20,
+        "avg": 11.73,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 4.94,
+      "hotspot_signal": 60
+    },
+    {
+      "file_path": "report_provenance.py",
+      "raw": {
+        "loc": 80,
+        "sloc": 35,
+        "comments": 1,
+        "blank": 16,
+        "comment_ratio_pct": 2.9
+      },
+      "maintainability_index": {
+        "score": 86.6,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 24.0,
+        "difficulty": 1.5,
+        "effort": 36.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 2.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.33,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "tests/test_hotspot_signal_relabel.py",
+      "raw": {
+        "loc": 138,
+        "sloc": 100,
+        "comments": 2,
+        "blank": 28,
+        "comment_ratio_pct": 2.0
+      },
+      "maintainability_index": {
+        "score": 57.45,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 127.4,
+        "difficulty": 2.67,
+        "effort": 339.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.89,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 7.87,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "tests/test_measurement_provenance.py",
+      "raw": {
+        "loc": 287,
+        "sloc": 180,
+        "comments": 27,
+        "blank": 48,
+        "comment_ratio_pct": 15.0
+      },
+      "maintainability_index": {
+        "score": 58.09,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 283.4,
+        "difficulty": 2.12,
+        "effort": 600.1
+      },
+      "git_commits_touching_file": 3,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 2.91,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 7.9,
+      "hotspot_signal": 18
+    },
+    {
+      "file_path": "scripts/test_install_fail_closed.py",
+      "raw": {
+        "loc": 252,
+        "sloc": 192,
+        "comments": 1,
+        "blank": 32,
+        "comment_ratio_pct": 0.5
+      },
+      "maintainability_index": {
+        "score": 48.03,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1073.8,
+        "difficulty": 1.24,
+        "effort": 1327.2
+      },
+      "git_commits_touching_file": 4,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.23,
+        "function_count": 22
+      },
+      "approx_health_score_1_to_10": 7.4,
+      "hotspot_signal": 16
+    },
+    {
+      "file_path": "tessera/__init__.py",
+      "raw": {
+        "loc": 3,
+        "sloc": 1,
+        "comments": 0,
+        "blank": 1,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/tessguard/project_resolve.py",
+      "raw": {
+        "loc": 59,
+        "sloc": 22,
+        "comments": 0,
+        "blank": 11,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 80.09,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 36.5,
+        "difficulty": 2.33,
+        "effort": 85.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 2.67,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.0,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "tessera/tessguard/config.py",
+      "raw": {
+        "loc": 53,
+        "sloc": 21,
+        "comments": 7,
+        "blank": 10,
+        "comment_ratio_pct": 33.3
+      },
+      "maintainability_index": {
+        "score": 91.52,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 6.3,
+        "difficulty": 0.5,
+        "effort": 3.2
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 3.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 9.58,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "tessera/tessguard/audit.py",
+      "raw": {
+        "loc": 207,
+        "sloc": 113,
+        "comments": 10,
+        "blank": 31,
+        "comment_ratio_pct": 8.8
+      },
+      "maintainability_index": {
+        "score": 65.17,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 420.1,
+        "difficulty": 5.45,
+        "effort": 2291.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 8,
+        "avg": 5.4,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.26,
+      "hotspot_signal": 8
+    },
+    {
+      "file_path": "tessera/tessguard/transcript.py",
+      "raw": {
+        "loc": 146,
+        "sloc": 81,
+        "comments": 4,
+        "blank": 19,
+        "comment_ratio_pct": 4.9
+      },
+      "maintainability_index": {
+        "score": 64.32,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 612.7,
+        "difficulty": 7.2,
+        "effort": 4411.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 25,
+        "avg": 5.5,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 5.22,
+      "hotspot_signal": 25
+    },
+    {
+      "file_path": "tessera/tessguard/gitutil.py",
+      "raw": {
+        "loc": 24,
+        "sloc": 9,
+        "comments": 0,
+        "blank": 4,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 93.54,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 3.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 9.68,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "tessera/tessguard/event_activity.py",
+      "raw": {
+        "loc": 67,
+        "sloc": 35,
+        "comments": 2,
+        "blank": 9,
+        "comment_ratio_pct": 5.7
+      },
+      "maintainability_index": {
+        "score": 80.04,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 121.0,
+        "difficulty": 3.86,
+        "effort": 466.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 11,
+        "avg": 4.67,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 7.5,
+      "hotspot_signal": 11
+    },
+    {
+      "file_path": "tessera/tessguard/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/tessguard/gitgate.py",
+      "raw": {
+        "loc": 235,
+        "sloc": 146,
+        "comments": 3,
+        "blank": 40,
+        "comment_ratio_pct": 2.1
+      },
+      "maintainability_index": {
+        "score": 63.29,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 276.7,
+        "difficulty": 5.5,
+        "effort": 1522.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 7,
+        "avg": 3.71,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.16,
+      "hotspot_signal": 7
+    },
+    {
+      "file_path": "tessera/tessguard/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_shim_hashes.py",
+      "raw": {
+        "loc": 17,
+        "sloc": 14,
+        "comments": 0,
+        "blank": 3,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 66.58,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 13.9,
+        "difficulty": 0.5,
+        "effort": 7.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 2.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 8.33,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_audit.py",
+      "raw": {
+        "loc": 230,
+        "sloc": 195,
+        "comments": 19,
+        "blank": 17,
+        "comment_ratio_pct": 9.7
+      },
+      "maintainability_index": {
+        "score": 46.36,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1027.3,
+        "difficulty": 2.26,
+        "effort": 2322.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.33,
+        "function_count": 12
+      },
+      "approx_health_score_1_to_10": 7.32,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+      "raw": {
+        "loc": 43,
+        "sloc": 31,
+        "comments": 3,
+        "blank": 9,
+        "comment_ratio_pct": 9.7
+      },
+      "maintainability_index": {
+        "score": 79.09,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.75,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.95,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_transcript.py",
+      "raw": {
+        "loc": 73,
+        "sloc": 62,
+        "comments": 0,
+        "blank": 11,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 46.17,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 185.4,
+        "difficulty": 1.04,
+        "effort": 192.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 7.31,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_event_activity.py",
+      "raw": {
+        "loc": 63,
+        "sloc": 48,
+        "comments": 5,
+        "blank": 11,
+        "comment_ratio_pct": 10.4
+      },
+      "maintainability_index": {
+        "score": 77.72,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.17,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.89,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/tessguard/tests/fixtures.py",
+      "raw": {
+        "loc": 64,
+        "sloc": 42,
+        "comments": 3,
+        "blank": 14,
+        "comment_ratio_pct": 7.1
+      },
+      "maintainability_index": {
+        "score": 82.42,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.17,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 9.12,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/tessguard/tests/test_gitgate.py",
+      "raw": {
+        "loc": 288,
+        "sloc": 231,
+        "comments": 25,
+        "blank": 31,
+        "comment_ratio_pct": 10.8
+      },
+      "maintainability_index": {
+        "score": 48.04,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 387.4,
+        "difficulty": 1.5,
+        "effort": 581.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.53,
+        "function_count": 15
+      },
+      "approx_health_score_1_to_10": 7.4,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "tessera/common/git_sha.py",
+      "raw": {
+        "loc": 34,
+        "sloc": 14,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 90.44,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 18.1,
+        "difficulty": 1.0,
+        "effort": 18.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 2.5,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 9.52,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "tessera/common/timestamps.py",
+      "raw": {
+        "loc": 6,
+        "sloc": 3,
+        "comments": 0,
+        "blank": 2,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/common/__init__.py",
+      "raw": {
+        "loc": 4,
+        "sloc": 3,
+        "comments": 0,
+        "blank": 1,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/common/hashing.py",
+      "raw": {
+        "loc": 27,
+        "sloc": 10,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/common/tests/test_git_sha.py",
+      "raw": {
+        "loc": 21,
+        "sloc": 15,
+        "comments": 0,
+        "blank": 6,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/common/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/common/tests/test_timestamps.py",
+      "raw": {
+        "loc": 18,
+        "sloc": 13,
+        "comments": 0,
+        "blank": 5,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 62.63,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 41.2,
+        "difficulty": 2.0,
+        "effort": 82.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 8.13,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/common/tests/test_hashing.py",
+      "raw": {
+        "loc": 41,
+        "sloc": 32,
+        "comments": 0,
+        "blank": 9,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 62.88,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.14,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/common/tests/check_stdlib_only.py",
+      "raw": {
+        "loc": 53,
+        "sloc": 42,
+        "comments": 2,
+        "blank": 8,
+        "comment_ratio_pct": 4.8
+      },
+      "maintainability_index": {
+        "score": 66.24,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 133.0,
+        "difficulty": 4.75,
+        "effort": 631.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 12,
+        "avg": 9.0,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 6.81,
+      "hotspot_signal": 12
+    },
+    {
+      "file_path": "tessera/api/docs_store.py",
+      "raw": {
+        "loc": 95,
+        "sloc": 61,
+        "comments": 0,
+        "blank": 18,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 70.64,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 124.9,
+        "difficulty": 2.65,
+        "effort": 330.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 2.0,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.53,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "tessera/api/sql_query.py",
+      "raw": {
+        "loc": 304,
+        "sloc": 137,
+        "comments": 72,
+        "blank": 34,
+        "comment_ratio_pct": 52.6
+      },
+      "maintainability_index": {
+        "score": 57.56,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 311.2,
+        "difficulty": 6.94,
+        "effort": 2158.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 19,
+        "avg": 5.11,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 6.38,
+      "hotspot_signal": 19
+    },
+    {
+      "file_path": "tessera/api/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/api/http_api.py",
+      "raw": {
+        "loc": 646,
+        "sloc": 458,
+        "comments": 55,
+        "blank": 108,
+        "comment_ratio_pct": 12.0
+      },
+      "maintainability_index": {
+        "score": 35.82,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 961.3,
+        "difficulty": 5.34,
+        "effort": 5130.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 10,
+        "avg": 2.26,
+        "function_count": 57
+      },
+      "approx_health_score_1_to_10": 6.79,
+      "hotspot_signal": 10
+    },
+    {
+      "file_path": "tessera/api/sse.py",
+      "raw": {
+        "loc": 36,
+        "sloc": 14,
+        "comments": 2,
+        "blank": 5,
+        "comment_ratio_pct": 14.3
+      },
+      "maintainability_index": {
+        "score": 81.19,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 91.4,
+        "difficulty": 4.44,
+        "effort": 406.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 7,
+        "avg": 4.0,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 9.06,
+      "hotspot_signal": 7
+    },
+    {
+      "file_path": "tessera/api/cli.py",
+      "raw": {
+        "loc": 486,
+        "sloc": 381,
+        "comments": 32,
+        "blank": 55,
+        "comment_ratio_pct": 8.4
+      },
+      "maintainability_index": {
+        "score": 33.1,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 999.1,
+        "difficulty": 6.97,
+        "effort": 6961.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 51,
+        "avg": 15.0,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 2.16,
+      "hotspot_signal": 51
+    },
+    {
+      "file_path": "tessera/api/main.py",
+      "raw": {
+        "loc": 27,
+        "sloc": 21,
+        "comments": 0,
+        "blank": 6,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 66.15,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 8.31,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/api/discrepancy.py",
+      "raw": {
+        "loc": 124,
+        "sloc": 68,
+        "comments": 4,
+        "blank": 14,
+        "comment_ratio_pct": 5.9
+      },
+      "maintainability_index": {
+        "score": 70.85,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 195.0,
+        "difficulty": 3.57,
+        "effort": 696.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 4.0,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.54,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "tessera/api/tests/test_http_api.py",
+      "raw": {
+        "loc": 535,
+        "sloc": 417,
+        "comments": 45,
+        "blank": 72,
+        "comment_ratio_pct": 10.8
+      },
+      "maintainability_index": {
+        "score": 40.9,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 147.2,
+        "difficulty": 2.44,
+        "effort": 359.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 1.63,
+        "function_count": 30
+      },
+      "approx_health_score_1_to_10": 7.04,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "tessera/api/tests/test_sse.py",
+      "raw": {
+        "loc": 50,
+        "sloc": 33,
+        "comments": 8,
+        "blank": 9,
+        "comment_ratio_pct": 24.2
+      },
+      "maintainability_index": {
+        "score": 80.34,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 41.5,
+        "difficulty": 1.5,
+        "effort": 62.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 2.67,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.02,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "tessera/api/tests/test_docs.py",
+      "raw": {
+        "loc": 62,
+        "sloc": 45,
+        "comments": 5,
+        "blank": 12,
+        "comment_ratio_pct": 11.1
+      },
+      "maintainability_index": {
+        "score": 69.67,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 57.1,
+        "difficulty": 2.0,
+        "effort": 114.2
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 2.0,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.48,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "tessera/api/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/api/tests/test_discrepancy.py",
+      "raw": {
+        "loc": 213,
+        "sloc": 170,
+        "comments": 4,
+        "blank": 32,
+        "comment_ratio_pct": 2.4
+      },
+      "maintainability_index": {
+        "score": 49.74,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 165.7,
+        "difficulty": 2.44,
+        "effort": 403.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 21
+      },
+      "approx_health_score_1_to_10": 7.49,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/api/tests/test_sql_query.py",
+      "raw": {
+        "loc": 260,
+        "sloc": 181,
+        "comments": 46,
+        "blank": 34,
+        "comment_ratio_pct": 25.4
+      },
+      "maintainability_index": {
+        "score": 62.27,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 43.0,
+        "difficulty": 2.0,
+        "effort": 86.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.48,
+        "function_count": 23
+      },
+      "approx_health_score_1_to_10": 8.11,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "tessera/api/tests/test_cli.py",
+      "raw": {
+        "loc": 362,
+        "sloc": 288,
+        "comments": 15,
+        "blank": 61,
+        "comment_ratio_pct": 5.2
+      },
+      "maintainability_index": {
+        "score": 43.97,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 112.4,
+        "difficulty": 2.83,
+        "effort": 318.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 7,
+        "avg": 2.17,
+        "function_count": 12
+      },
+      "approx_health_score_1_to_10": 7.2,
+      "hotspot_signal": 7
+    },
+    {
+      "file_path": "tessera/reviewui/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/reviewui/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/reviewui/tests/test_headers.py",
+      "raw": {
+        "loc": 35,
+        "sloc": 30,
+        "comments": 0,
+        "blank": 5,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 56.48,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 36.0,
+        "difficulty": 1.33,
+        "effort": 48.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 2.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 7.82,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/gitops/gitops.py",
+      "raw": {
+        "loc": 237,
+        "sloc": 153,
+        "comments": 25,
+        "blank": 20,
+        "comment_ratio_pct": 16.3
+      },
+      "maintainability_index": {
+        "score": 59.43,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 453.8,
+        "difficulty": 5.57,
+        "effort": 2528.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 7,
+        "avg": 3.42,
+        "function_count": 12
+      },
+      "approx_health_score_1_to_10": 7.97,
+      "hotspot_signal": 7
+    },
+    {
+      "file_path": "tessera/gitops/__init__.py",
+      "raw": {
+        "loc": 3,
+        "sloc": 2,
+        "comments": 0,
+        "blank": 1,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/gitops/exceptions.py",
+      "raw": {
+        "loc": 16,
+        "sloc": 4,
+        "comments": 0,
+        "blank": 6,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/gitops/tests/test_stages.py",
+      "raw": {
+        "loc": 214,
+        "sloc": 159,
+        "comments": 29,
+        "blank": 27,
+        "comment_ratio_pct": 18.2
+      },
+      "maintainability_index": {
+        "score": 58.17,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 178.8,
+        "difficulty": 1.86,
+        "effort": 332.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.06,
+        "function_count": 16
+      },
+      "approx_health_score_1_to_10": 7.91,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/gitops/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/store/store.py",
+      "raw": {
+        "loc": 1345,
+        "sloc": 937,
+        "comments": 143,
+        "blank": 138,
+        "comment_ratio_pct": 15.3
+      },
+      "maintainability_index": {
+        "score": 22.3,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1455.6,
+        "difficulty": 7.58,
+        "effort": 11038.4
+      },
+      "git_commits_touching_file": 3,
+      "cyclomatic_complexity": {
+        "max": 8,
+        "avg": 2.03,
+        "function_count": 99
+      },
+      "approx_health_score_1_to_10": 6.12,
+      "hotspot_signal": 24
+    },
+    {
+      "file_path": "tessera/store/replay_handlers.py",
+      "raw": {
+        "loc": 345,
+        "sloc": 245,
+        "comments": 27,
+        "blank": 62,
+        "comment_ratio_pct": 11.0
+      },
+      "maintainability_index": {
+        "score": 67.46,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 85.8,
+        "difficulty": 2.15,
+        "effort": 184.9
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.32,
+        "function_count": 28
+      },
+      "approx_health_score_1_to_10": 8.37,
+      "hotspot_signal": 8
+    },
+    {
+      "file_path": "tessera/store/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/store/project_reassignment.py",
+      "raw": {
+        "loc": 172,
+        "sloc": 123,
+        "comments": 1,
+        "blank": 19,
+        "comment_ratio_pct": 0.8
+      },
+      "maintainability_index": {
+        "score": 74.47,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 79.2,
+        "difficulty": 3.0,
+        "effort": 237.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 10,
+        "avg": 5.5,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 8.72,
+      "hotspot_signal": 10
+    },
+    {
+      "file_path": "tessera/store/exceptions.py",
+      "raw": {
+        "loc": 40,
+        "sloc": 9,
+        "comments": 0,
+        "blank": 16,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/store/schema.py",
+      "raw": {
+        "loc": 354,
+        "sloc": 293,
+        "comments": 28,
+        "blank": 37,
+        "comment_ratio_pct": 9.6
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.5,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/ticket_operations.py",
+      "raw": {
+        "loc": 280,
+        "sloc": 215,
+        "comments": 21,
+        "blank": 23,
+        "comment_ratio_pct": 9.8
+      },
+      "maintainability_index": {
+        "score": 50.1,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 963.9,
+        "difficulty": 6.38,
+        "effort": 6151.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 12,
+        "avg": 7.22,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 6.0,
+      "hotspot_signal": 12
+    },
+    {
+      "file_path": "tessera/store/tests/test_projection.py",
+      "raw": {
+        "loc": 141,
+        "sloc": 102,
+        "comments": 25,
+        "blank": 14,
+        "comment_ratio_pct": 24.5
+      },
+      "maintainability_index": {
+        "score": 70.88,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 27.0,
+        "difficulty": 1.0,
+        "effort": 27.0
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.62,
+        "function_count": 8
+      },
+      "approx_health_score_1_to_10": 8.54,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "tessera/store/tests/test_idempotency.py",
+      "raw": {
+        "loc": 71,
+        "sloc": 57,
+        "comments": 3,
+        "blank": 11,
+        "comment_ratio_pct": 5.3
+      },
+      "maintainability_index": {
+        "score": 67.98,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.6,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.4,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "tessera/store/tests/test_sql_identifier_safety.py",
+      "raw": {
+        "loc": 75,
+        "sloc": 28,
+        "comments": 6,
+        "blank": 10,
+        "comment_ratio_pct": 21.4
+      },
+      "maintainability_index": {
+        "score": 78.77,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.94,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/store/tests/test_datasets.py",
+      "raw": {
+        "loc": 61,
+        "sloc": 47,
+        "comments": 3,
+        "blank": 11,
+        "comment_ratio_pct": 6.4
+      },
+      "maintainability_index": {
+        "score": 65.84,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 27.0,
+        "difficulty": 1.0,
+        "effort": 27.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 1.71,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.29,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "tessera/store/tests/test_reassign_project.py",
+      "raw": {
+        "loc": 93,
+        "sloc": 77,
+        "comments": 0,
+        "blank": 16,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 47.21,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 38.1,
+        "difficulty": 2.0,
+        "effort": 76.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.29,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 7.36,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/tests/test_column_descriptions.py",
+      "raw": {
+        "loc": 48,
+        "sloc": 37,
+        "comments": 0,
+        "blank": 11,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 56.24,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 7.81,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/store/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "tessera/store/tests/test_schema.py",
+      "raw": {
+        "loc": 75,
+        "sloc": 64,
+        "comments": 0,
+        "blank": 11,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 52.03,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 27.0,
+        "difficulty": 1.0,
+        "effort": 27.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.17,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 7.6,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/tests/test_v_flat.py",
+      "raw": {
+        "loc": 24,
+        "sloc": 20,
+        "comments": 0,
+        "blank": 4,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 70.56,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 2.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 8.53,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/tests/test_stage_heads.py",
+      "raw": {
+        "loc": 52,
+        "sloc": 39,
+        "comments": 2,
+        "blank": 11,
+        "comment_ratio_pct": 5.1
+      },
+      "maintainability_index": {
+        "score": 71.09,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.55,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/store/tests/test_workflow.py",
+      "raw": {
+        "loc": 109,
+        "sloc": 82,
+        "comments": 10,
+        "blank": 17,
+        "comment_ratio_pct": 12.2
+      },
+      "maintainability_index": {
+        "score": 68.78,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.12,
+        "function_count": 8
+      },
+      "approx_health_score_1_to_10": 8.44,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/tests/test_hotlists.py",
+      "raw": {
+        "loc": 79,
+        "sloc": 64,
+        "comments": 2,
+        "blank": 13,
+        "comment_ratio_pct": 3.1
+      },
+      "maintainability_index": {
+        "score": 60.97,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.25,
+        "function_count": 8
+      },
+      "approx_health_score_1_to_10": 8.05,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/tests/test_transactions.py",
+      "raw": {
+        "loc": 88,
+        "sloc": 72,
+        "comments": 4,
+        "blank": 12,
+        "comment_ratio_pct": 5.6
+      },
+      "maintainability_index": {
+        "score": 62.95,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 41.5,
+        "difficulty": 1.5,
+        "effort": 62.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 1.67,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.15,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "tessera/store/tests/test_backup.py",
+      "raw": {
+        "loc": 61,
+        "sloc": 44,
+        "comments": 5,
+        "blank": 13,
+        "comment_ratio_pct": 11.4
+      },
+      "maintainability_index": {
+        "score": 71.38,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 36.5,
+        "difficulty": 1.5,
+        "effort": 54.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 2.25,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.57,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "tessera/store/tests/test_fields.py",
+      "raw": {
+        "loc": 226,
+        "sloc": 169,
+        "comments": 30,
+        "blank": 27,
+        "comment_ratio_pct": 17.8
+      },
+      "maintainability_index": {
+        "score": 61.57,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 46.6,
+        "difficulty": 2.0,
+        "effort": 93.2
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.27,
+        "function_count": 15
+      },
+      "approx_health_score_1_to_10": 8.08,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/tests/test_comments.py",
+      "raw": {
+        "loc": 100,
+        "sloc": 81,
+        "comments": 1,
+        "blank": 18,
+        "comment_ratio_pct": 1.2
+      },
+      "maintainability_index": {
+        "score": 56.74,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.11,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 7.84,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "tessera/store/tests/test_attachments.py",
+      "raw": {
+        "loc": 58,
+        "sloc": 40,
+        "comments": 7,
+        "blank": 11,
+        "comment_ratio_pct": 17.5
+      },
+      "maintainability_index": {
+        "score": 77.14,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 38.0,
+        "difficulty": 1.14,
+        "effort": 43.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.86,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "tessera/store/tests/test_project_metadata.py",
+      "raw": {
+        "loc": 91,
+        "sloc": 59,
+        "comments": 20,
+        "blank": 14,
+        "comment_ratio_pct": 33.9
+      },
+      "maintainability_index": {
+        "score": 73.87,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 84.0,
+        "difficulty": 1.0,
+        "effort": 84.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.67,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.69,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "skills/foreman/config/test_settings_template.py",
+      "raw": {
+        "loc": 134,
+        "sloc": 101,
+        "comments": 1,
+        "blank": 23,
+        "comment_ratio_pct": 1.0
+      },
+      "maintainability_index": {
+        "score": 55.6,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 253.3,
+        "difficulty": 3.1,
+        "effort": 785.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 2.0,
+        "function_count": 12
+      },
+      "approx_health_score_1_to_10": 7.78,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "skills/foreman/scripts/test_foreman_init.py",
+      "raw": {
+        "loc": 163,
+        "sloc": 109,
+        "comments": 7,
+        "blank": 23,
+        "comment_ratio_pct": 6.4
+      },
+      "maintainability_index": {
+        "score": 67.21,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 218.6,
+        "difficulty": 1.11,
+        "effort": 242.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 8.36,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "skills/foreman/scripts/foreman_init.py",
+      "raw": {
+        "loc": 626,
+        "sloc": 361,
+        "comments": 64,
+        "blank": 77,
+        "comment_ratio_pct": 17.7
+      },
+      "maintainability_index": {
+        "score": 43.55,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1964.6,
+        "difficulty": 8.01,
+        "effort": 15737.2
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 20,
+        "avg": 9.33,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 5.68,
+      "hotspot_signal": 40
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+      "raw": {
+        "loc": 142,
+        "sloc": 84,
+        "comments": 12,
+        "blank": 25,
+        "comment_ratio_pct": 14.3
+      },
+      "maintainability_index": {
+        "score": 62.58,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 656.1,
+        "difficulty": 8.54,
+        "effort": 5604.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 22,
+        "avg": 10.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 5.13,
+      "hotspot_signal": 22
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/seeded/sample_service.py",
+      "raw": {
+        "loc": 75,
+        "sloc": 40,
+        "comments": 16,
+        "blank": 23,
+        "comment_ratio_pct": 40.0
+      },
+      "maintainability_index": {
+        "score": 82.27,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 28.5,
+        "difficulty": 1.5,
+        "effort": 42.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 1.7,
+        "function_count": 10
+      },
+      "approx_health_score_1_to_10": 9.11,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/scripts/posttooluse_hook.py",
+      "raw": {
+        "loc": 219,
+        "sloc": 112,
+        "comments": 30,
+        "blank": 32,
+        "comment_ratio_pct": 26.8
+      },
+      "maintainability_index": {
+        "score": 65.53,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 243.0,
+        "difficulty": 4.29,
+        "effort": 1041.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 20,
+        "avg": 8.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 6.78,
+      "hotspot_signal": 20
+    },
+    {
+      "file_path": "skills/code-safety/skills/adversarial-code-review/scripts/scan.py",
+      "raw": {
+        "loc": 527,
+        "sloc": 328,
+        "comments": 49,
+        "blank": 65,
+        "comment_ratio_pct": 14.9
+      },
+      "maintainability_index": {
+        "score": 42.19,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1175.4,
+        "difficulty": 7.43,
+        "effort": 8731.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 13,
+        "avg": 5.32,
+        "function_count": 25
+      },
+      "approx_health_score_1_to_10": 5.61,
+      "hotspot_signal": 13
+    },
+    {
+      "file_path": "atlas/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/snapshot/clock.py",
+      "raw": {
+        "loc": 20,
+        "sloc": 10,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 98.51,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 9.93,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/snapshot/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/snapshot/builder.py",
+      "raw": {
+        "loc": 121,
+        "sloc": 85,
+        "comments": 1,
+        "blank": 19,
+        "comment_ratio_pct": 1.2
+      },
+      "maintainability_index": {
+        "score": 68.73,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 142.6,
+        "difficulty": 4.21,
+        "effort": 600.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 10,
+        "avg": 4.4,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.44,
+      "hotspot_signal": 10
+    },
+    {
+      "file_path": "atlas/snapshot/publisher.py",
+      "raw": {
+        "loc": 160,
+        "sloc": 96,
+        "comments": 6,
+        "blank": 28,
+        "comment_ratio_pct": 6.2
+      },
+      "maintainability_index": {
+        "score": 64.67,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 466.6,
+        "difficulty": 7.05,
+        "effort": 3291.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 9,
+        "avg": 4.5,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.23,
+      "hotspot_signal": 9
+    },
+    {
+      "file_path": "atlas/snapshot/tests/test_publish_atomicity.py",
+      "raw": {
+        "loc": 64,
+        "sloc": 44,
+        "comments": 2,
+        "blank": 16,
+        "comment_ratio_pct": 4.5
+      },
+      "maintainability_index": {
+        "score": 67.29,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 108.0,
+        "difficulty": 1.29,
+        "effort": 138.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.4,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.36,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/snapshot/tests/test_retention.py",
+      "raw": {
+        "loc": 66,
+        "sloc": 41,
+        "comments": 8,
+        "blank": 15,
+        "comment_ratio_pct": 19.5
+      },
+      "maintainability_index": {
+        "score": 80.33,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.83,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 9.02,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/snapshot/tests/test_index_shape.py",
+      "raw": {
+        "loc": 64,
+        "sloc": 47,
+        "comments": 0,
+        "blank": 14,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 64.55,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 85.8,
+        "difficulty": 1.5,
+        "effort": 128.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.33,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.23,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/snapshot/tests/test_publish_refusal.py",
+      "raw": {
+        "loc": 95,
+        "sloc": 61,
+        "comments": 8,
+        "blank": 22,
+        "comment_ratio_pct": 13.1
+      },
+      "maintainability_index": {
+        "score": 69.44,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 60.9,
+        "difficulty": 1.83,
+        "effort": 111.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.29,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.47,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/snapshot/tests/test_unresolved_shards.py",
+      "raw": {
+        "loc": 62,
+        "sloc": 42,
+        "comments": 2,
+        "blank": 12,
+        "comment_ratio_pct": 4.8
+      },
+      "maintainability_index": {
+        "score": 75.44,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 84.0,
+        "difficulty": 1.0,
+        "effort": 84.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.2,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.77,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/snapshot/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/snapshot/tests/test_shard_sharing.py",
+      "raw": {
+        "loc": 55,
+        "sloc": 38,
+        "comments": 1,
+        "blank": 13,
+        "comment_ratio_pct": 2.6
+      },
+      "maintainability_index": {
+        "score": 68.2,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 112.6,
+        "difficulty": 1.12,
+        "effort": 126.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.41,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/snapshot/tests/_helpers.py",
+      "raw": {
+        "loc": 84,
+        "sloc": 64,
+        "comments": 0,
+        "blank": 15,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 73.95,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.38,
+        "function_count": 8
+      },
+      "approx_health_score_1_to_10": 8.7,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/resolve/run.py",
+      "raw": {
+        "loc": 84,
+        "sloc": 44,
+        "comments": 0,
+        "blank": 15,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 81.14,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 70.3,
+        "difficulty": 3.0,
+        "effort": 211.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 3.5,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 9.06,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "atlas/resolve/matcher.py",
+      "raw": {
+        "loc": 52,
+        "sloc": 29,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 81.21,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 89.9,
+        "difficulty": 3.82,
+        "effort": 343.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 8,
+        "avg": 3.67,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.06,
+      "hotspot_signal": 8
+    },
+    {
+      "file_path": "atlas/resolve/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/resolve/override.py",
+      "raw": {
+        "loc": 47,
+        "sloc": 25,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 86.86,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 43.2,
+        "difficulty": 1.71,
+        "effort": 74.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 3.0,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 9.34,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "atlas/resolve/tests/test_idempotency.py",
+      "raw": {
+        "loc": 55,
+        "sloc": 37,
+        "comments": 0,
+        "blank": 15,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 78.5,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.93,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/resolve/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/resolve/tests/test_override.py",
+      "raw": {
+        "loc": 86,
+        "sloc": 61,
+        "comments": 5,
+        "blank": 17,
+        "comment_ratio_pct": 8.2
+      },
+      "maintainability_index": {
+        "score": 64.85,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 187.3,
+        "difficulty": 1.4,
+        "effort": 262.2
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.24,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/resolve/tests/test_matching.py",
+      "raw": {
+        "loc": 71,
+        "sloc": 54,
+        "comments": 2,
+        "blank": 12,
+        "comment_ratio_pct": 3.7
+      },
+      "maintainability_index": {
+        "score": 76.83,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.17,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.84,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/resolve/tests/_helpers.py",
+      "raw": {
+        "loc": 25,
+        "sloc": 17,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 69.85,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.49,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/hookclient/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/hookclient/matching.py",
+      "raw": {
+        "loc": 54,
+        "sloc": 31,
+        "comments": 5,
+        "blank": 6,
+        "comment_ratio_pct": 16.1
+      },
+      "maintainability_index": {
+        "score": 79.03,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 140.2,
+        "difficulty": 4.16,
+        "effort": 582.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 10,
+        "avg": 5.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.95,
+      "hotspot_signal": 10
+    },
+    {
+      "file_path": "atlas/hookclient/reader.py",
+      "raw": {
+        "loc": 124,
+        "sloc": 82,
+        "comments": 5,
+        "blank": 26,
+        "comment_ratio_pct": 6.1
+      },
+      "maintainability_index": {
+        "score": 63.43,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 186.5,
+        "difficulty": 3.5,
+        "effort": 652.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 13,
+        "avg": 3.57,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 6.67,
+      "hotspot_signal": 13
+    },
+    {
+      "file_path": "atlas/hookclient/tests/test_failure_modes.py",
+      "raw": {
+        "loc": 70,
+        "sloc": 49,
+        "comments": 3,
+        "blank": 15,
+        "comment_ratio_pct": 6.1
+      },
+      "maintainability_index": {
+        "score": 68.87,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 53.8,
+        "difficulty": 1.0,
+        "effort": 53.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 8
+      },
+      "approx_health_score_1_to_10": 8.44,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/hookclient/tests/test_project_resolution.py",
+      "raw": {
+        "loc": 84,
+        "sloc": 57,
+        "comments": 2,
+        "blank": 19,
+        "comment_ratio_pct": 3.5
+      },
+      "maintainability_index": {
+        "score": 72.97,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.22,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 8.65,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/hookclient/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/hookclient/tests/test_freshness.py",
+      "raw": {
+        "loc": 44,
+        "sloc": 30,
+        "comments": 4,
+        "blank": 11,
+        "comment_ratio_pct": 13.3
+      },
+      "maintainability_index": {
+        "score": 86.4,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 9.32,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/hookclient/tests/test_zero_deps.py",
+      "raw": {
+        "loc": 52,
+        "sloc": 39,
+        "comments": 1,
+        "blank": 10,
+        "comment_ratio_pct": 2.6
+      },
+      "maintainability_index": {
+        "score": 69.57,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 55.5,
+        "difficulty": 2.22,
+        "effort": 123.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 8,
+        "avg": 4.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.48,
+      "hotspot_signal": 8
+    },
+    {
+      "file_path": "atlas/hookclient/tests/_helpers.py",
+      "raw": {
+        "loc": 52,
+        "sloc": 41,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 70.32,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 127.4,
+        "difficulty": 1.88,
+        "effort": 238.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 7,
+        "avg": 3.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.52,
+      "hotspot_signal": 7
+    },
+    {
+      "file_path": "atlas/ingest/gitrepo_pull.py",
+      "raw": {
+        "loc": 166,
+        "sloc": 102,
+        "comments": 9,
+        "blank": 22,
+        "comment_ratio_pct": 8.8
+      },
+      "maintainability_index": {
+        "score": 69.83,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 177.9,
+        "difficulty": 3.27,
+        "effort": 582.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 8,
+        "avg": 3.57,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.49,
+      "hotspot_signal": 8
+    },
+    {
+      "file_path": "atlas/ingest/audit.py",
+      "raw": {
+        "loc": 51,
+        "sloc": 29,
+        "comments": 0,
+        "blank": 7,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 89.41,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 45.0,
+        "difficulty": 1.5,
+        "effort": 67.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 2.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.47,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/ingest/audit_scrub.py",
+      "raw": {
+        "loc": 294,
+        "sloc": 161,
+        "comments": 26,
+        "blank": 40,
+        "comment_ratio_pct": 16.1
+      },
+      "maintainability_index": {
+        "score": 63.95,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 223.8,
+        "difficulty": 4.46,
+        "effort": 998.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 10,
+        "avg": 3.27,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 8.2,
+      "hotspot_signal": 10
+    },
+    {
+      "file_path": "atlas/ingest/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/ingest/stream.py",
+      "raw": {
+        "loc": 169,
+        "sloc": 113,
+        "comments": 6,
+        "blank": 29,
+        "comment_ratio_pct": 5.3
+      },
+      "maintainability_index": {
+        "score": 63.22,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 254.4,
+        "difficulty": 5.76,
+        "effort": 1465.2
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 12,
+        "avg": 3.0,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 6.66,
+      "hotspot_signal": 12
+    },
+    {
+      "file_path": "atlas/ingest/verdicts.py",
+      "raw": {
+        "loc": 83,
+        "sloc": 46,
+        "comments": 4,
+        "blank": 11,
+        "comment_ratio_pct": 8.7
+      },
+      "maintainability_index": {
+        "score": 82.35,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 153.8,
+        "difficulty": 4.2,
+        "effort": 646.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 3.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.12,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "atlas/ingest/run_pull.py",
+      "raw": {
+        "loc": 277,
+        "sloc": 182,
+        "comments": 30,
+        "blank": 32,
+        "comment_ratio_pct": 16.5
+      },
+      "maintainability_index": {
+        "score": 59.38,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 450.3,
+        "difficulty": 3.97,
+        "effort": 1786.3
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 17,
+        "avg": 4.5,
+        "function_count": 8
+      },
+      "approx_health_score_1_to_10": 6.47,
+      "hotspot_signal": 34
+    },
+    {
+      "file_path": "atlas/ingest/tessera_pull.py",
+      "raw": {
+        "loc": 74,
+        "sloc": 37,
+        "comments": 0,
+        "blank": 13,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 83.86,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 55.5,
+        "difficulty": 1.5,
+        "effort": 83.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 2.0,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 9.19,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_stream_identity.py",
+      "raw": {
+        "loc": 73,
+        "sloc": 54,
+        "comments": 0,
+        "blank": 16,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 60.27,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 167.2,
+        "difficulty": 1.64,
+        "effort": 273.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.01,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_audit_scrub.py",
+      "raw": {
+        "loc": 344,
+        "sloc": 242,
+        "comments": 27,
+        "blank": 60,
+        "comment_ratio_pct": 11.2
+      },
+      "maintainability_index": {
+        "score": 51.37,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 344.4,
+        "difficulty": 4.21,
+        "effort": 1448.2
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.7,
+        "function_count": 20
+      },
+      "approx_health_score_1_to_10": 7.57,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_growth_and_partial_lines.py",
+      "raw": {
+        "loc": 82,
+        "sloc": 60,
+        "comments": 2,
+        "blank": 19,
+        "comment_ratio_pct": 3.3
+      },
+      "maintainability_index": {
+        "score": 59.02,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 312.6,
+        "difficulty": 2.42,
+        "effort": 757.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.33,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 7.95,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_tessera_pull.py",
+      "raw": {
+        "loc": 113,
+        "sloc": 88,
+        "comments": 0,
+        "blank": 19,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 63.06,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.6,
+        "function_count": 10
+      },
+      "approx_health_score_1_to_10": 8.15,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_ts_resolution.py",
+      "raw": {
+        "loc": 41,
+        "sloc": 15,
+        "comments": 13,
+        "blank": 10,
+        "comment_ratio_pct": 86.7
+      },
+      "maintainability_index": {
+        "score": 92.81,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 9.64,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/ingest/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_audit_mapper.py",
+      "raw": {
+        "loc": 64,
+        "sloc": 43,
+        "comments": 0,
+        "blank": 14,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 73.01,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 70.3,
+        "difficulty": 1.5,
+        "effort": 105.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.65,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_rotation.py",
+      "raw": {
+        "loc": 73,
+        "sloc": 51,
+        "comments": 6,
+        "blank": 14,
+        "comment_ratio_pct": 11.8
+      },
+      "maintainability_index": {
+        "score": 74.62,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 53.8,
+        "difficulty": 1.67,
+        "effort": 89.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.73,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_run_pull.py",
+      "raw": {
+        "loc": 301,
+        "sloc": 234,
+        "comments": 13,
+        "blank": 44,
+        "comment_ratio_pct": 5.6
+      },
+      "maintainability_index": {
+        "score": 48.21,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 253.8,
+        "difficulty": 2.35,
+        "effort": 595.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.04,
+        "function_count": 23
+      },
+      "approx_health_score_1_to_10": 7.41,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_malformed_lines.py",
+      "raw": {
+        "loc": 71,
+        "sloc": 47,
+        "comments": 6,
+        "blank": 15,
+        "comment_ratio_pct": 12.8
+      },
+      "maintainability_index": {
+        "score": 69.75,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 165.1,
+        "difficulty": 1.71,
+        "effort": 283.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.2,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.49,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_crash_resume.py",
+      "raw": {
+        "loc": 78,
+        "sloc": 50,
+        "comments": 4,
+        "blank": 15,
+        "comment_ratio_pct": 8.0
+      },
+      "maintainability_index": {
+        "score": 72.37,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 139.3,
+        "difficulty": 3.16,
+        "effort": 439.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.4,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.62,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+      "raw": {
+        "loc": 197,
+        "sloc": 154,
+        "comments": 3,
+        "blank": 33,
+        "comment_ratio_pct": 1.9
+      },
+      "maintainability_index": {
+        "score": 52.42,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 70.3,
+        "difficulty": 1.5,
+        "effort": 105.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.14,
+        "function_count": 22
+      },
+      "approx_health_score_1_to_10": 7.62,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/ingest/tests/_helpers.py",
+      "raw": {
+        "loc": 49,
+        "sloc": 32,
+        "comments": 0,
+        "blank": 11,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 78.6,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 28.5,
+        "difficulty": 1.5,
+        "effort": 42.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.4,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.93,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/mcp/server.py",
+      "raw": {
+        "loc": 85,
+        "sloc": 51,
+        "comments": 0,
+        "blank": 20,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 72.77,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 123.8,
+        "difficulty": 3.0,
+        "effort": 371.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 2.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.64,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "atlas/mcp/__init__.py",
+      "raw": {
+        "loc": 5,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 1,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/warehouse/ddl.py",
+      "raw": {
+        "loc": 82,
+        "sloc": 39,
+        "comments": 3,
+        "blank": 13,
+        "comment_ratio_pct": 7.7
+      },
+      "maintainability_index": {
+        "score": 78.5,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 115.9,
+        "difficulty": 3.73,
+        "effort": 432.9
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 3.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 8.93,
+      "hotspot_signal": 12
+    },
+    {
+      "file_path": "atlas/warehouse/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/warehouse/dq_runner.py",
+      "raw": {
+        "loc": 542,
+        "sloc": 414,
+        "comments": 45,
+        "blank": 66,
+        "comment_ratio_pct": 10.9
+      },
+      "maintainability_index": {
+        "score": 37.44,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1511.9,
+        "difficulty": 9.85,
+        "effort": 14885.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 10,
+        "avg": 4.26,
+        "function_count": 23
+      },
+      "approx_health_score_1_to_10": 6.87,
+      "hotspot_signal": 10
+    },
+    {
+      "file_path": "atlas/warehouse/migrate.py",
+      "raw": {
+        "loc": 105,
+        "sloc": 64,
+        "comments": 2,
+        "blank": 22,
+        "comment_ratio_pct": 3.1
+      },
+      "maintainability_index": {
+        "score": 78.68,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 27.0,
+        "difficulty": 1.8,
+        "effort": 48.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.8,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.93,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "atlas/warehouse/tests/test_ddl_bounds.py",
+      "raw": {
+        "loc": 99,
+        "sloc": 72,
+        "comments": 4,
+        "blank": 16,
+        "comment_ratio_pct": 5.6
+      },
+      "maintainability_index": {
+        "score": 63.54,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 223.8,
+        "difficulty": 3.11,
+        "effort": 695.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.17,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.18,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "atlas/warehouse/tests/test_credential_scan.py",
+      "raw": {
+        "loc": 66,
+        "sloc": 42,
+        "comments": 2,
+        "blank": 14,
+        "comment_ratio_pct": 4.8
+      },
+      "maintainability_index": {
+        "score": 80.9,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 9.04,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/warehouse/tests/test_dq_runner.py",
+      "raw": {
+        "loc": 142,
+        "sloc": 104,
+        "comments": 1,
+        "blank": 28,
+        "comment_ratio_pct": 1.0
+      },
+      "maintainability_index": {
+        "score": 57.87,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 64.5,
+        "difficulty": 2.0,
+        "effort": 129.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.53,
+        "function_count": 15
+      },
+      "approx_health_score_1_to_10": 7.89,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "atlas/warehouse/tests/test_trust_gate.py",
+      "raw": {
+        "loc": 212,
+        "sloc": 157,
+        "comments": 10,
+        "blank": 33,
+        "comment_ratio_pct": 6.4
+      },
+      "maintainability_index": {
+        "score": 61.19,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 51.9,
+        "difficulty": 1.88,
+        "effort": 97.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.62,
+        "function_count": 16
+      },
+      "approx_health_score_1_to_10": 8.06,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "atlas/warehouse/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/warehouse/tests/test_migration.py",
+      "raw": {
+        "loc": 61,
+        "sloc": 43,
+        "comments": 1,
+        "blank": 14,
+        "comment_ratio_pct": 2.3
+      },
+      "maintainability_index": {
+        "score": 72.59,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 5
+      },
+      "approx_health_score_1_to_10": 8.63,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/warehouse/tests/test_schema.py",
+      "raw": {
+        "loc": 96,
+        "sloc": 79,
+        "comments": 0,
+        "blank": 14,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 66.49,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.5,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.32,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "atlas/query/facade.py",
+      "raw": {
+        "loc": 115,
+        "sloc": 90,
+        "comments": 0,
+        "blank": 16,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 62.72,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 113.1,
+        "difficulty": 3.5,
+        "effort": 395.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 2.83,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.14,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "atlas/query/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/query/tests/test_readonly.py",
+      "raw": {
+        "loc": 35,
+        "sloc": 22,
+        "comments": 0,
+        "blank": 10,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 86.32,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 9.32,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/query/tests/__init__.py",
+      "raw": {
+        "loc": 0,
+        "sloc": 0,
+        "comments": 0,
+        "blank": 0,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 100.0,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 0,
+        "difficulty": 0,
+        "effort": 0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 0,
+        "avg": 0,
+        "function_count": 0
+      },
+      "approx_health_score_1_to_10": 10.0,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "atlas/query/tests/test_status.py",
+      "raw": {
+        "loc": 69,
+        "sloc": 53,
+        "comments": 1,
+        "blank": 13,
+        "comment_ratio_pct": 1.9
+      },
+      "maintainability_index": {
+        "score": 72.56,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 8.63,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/query/tests/test_fetch_allowlist.py",
+      "raw": {
+        "loc": 80,
+        "sloc": 59,
+        "comments": 0,
+        "blank": 18,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 67.89,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 8.39,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "atlas/query/tests/_helpers.py",
+      "raw": {
+        "loc": 41,
+        "sloc": 30,
+        "comments": 0,
+        "blank": 8,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 80.08,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 2.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.0,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "monitoring/build_dashboard_data.py",
+      "raw": {
+        "loc": 600,
+        "sloc": 441,
+        "comments": 55,
+        "blank": 65,
+        "comment_ratio_pct": 12.5
+      },
+      "maintainability_index": {
+        "score": 26.26,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 2405.5,
+        "difficulty": 10.29,
+        "effort": 24759.8
+      },
+      "git_commits_touching_file": 0,
+      "cyclomatic_complexity": {
+        "max": 26,
+        "avg": 8.94,
+        "function_count": 18
+      },
+      "approx_health_score_1_to_10": 3.31,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "monitoring/build_dashboard_server.py",
+      "raw": {
+        "loc": 67,
+        "sloc": 42,
+        "comments": 4,
+        "blank": 15,
+        "comment_ratio_pct": 9.5
+      },
+      "maintainability_index": {
+        "score": 76.66,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 72.0,
+        "difficulty": 2.73,
+        "effort": 196.4
+      },
+      "git_commits_touching_file": 0,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 2.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.83,
+      "hotspot_signal": 0
+    },
+    {
+      "file_path": "monitoring/foreman-status/foreman_status_dashboard_data.py",
+      "raw": {
+        "loc": 168,
+        "sloc": 114,
+        "comments": 14,
+        "blank": 25,
+        "comment_ratio_pct": 12.3
+      },
+      "maintainability_index": {
+        "score": 63.36,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 250.0,
+        "difficulty": 3.81,
+        "effort": 951.9
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 15,
+        "avg": 8.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 6.67,
+      "hotspot_signal": 30
+    },
+    {
+      "file_path": "monitoring/foreman-status/test_foreman_status_dashboard_data.py",
+      "raw": {
+        "loc": 180,
+        "sloc": 122,
+        "comments": 11,
+        "blank": 35,
+        "comment_ratio_pct": 9.0
+      },
+      "maintainability_index": {
+        "score": 62.58,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 131.8,
+        "difficulty": 1.67,
+        "effort": 219.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.43,
+        "function_count": 14
+      },
+      "approx_health_score_1_to_10": 8.13,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "monitoring/foreman-status/foreman_status_dashboard_server.py",
+      "raw": {
+        "loc": 64,
+        "sloc": 42,
+        "comments": 4,
+        "blank": 14,
+        "comment_ratio_pct": 9.5
+      },
+      "maintainability_index": {
+        "score": 75.45,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 72.0,
+        "difficulty": 2.73,
+        "effort": 196.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 2.0,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.77,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "monitoring/compliance-cron/skill_broadscan.py",
+      "raw": {
+        "loc": 175,
+        "sloc": 131,
+        "comments": 7,
+        "blank": 20,
+        "comment_ratio_pct": 5.3
+      },
+      "maintainability_index": {
+        "score": 51.35,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1071.5,
+        "difficulty": 7.51,
+        "effort": 8047.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 36,
+        "avg": 15.67,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 4.57,
+      "hotspot_signal": 36
+    },
+    {
+      "file_path": "bollard/stamp_ship_charter.py",
+      "raw": {
+        "loc": 62,
+        "sloc": 37,
+        "comments": 1,
+        "blank": 14,
+        "comment_ratio_pct": 2.7
+      },
+      "maintainability_index": {
+        "score": 76.48,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 119.2,
+        "difficulty": 4.25,
+        "effort": 506.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 4.5,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 8.82,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "bollard/test_ship_readiness_gate.py",
+      "raw": {
+        "loc": 184,
+        "sloc": 145,
+        "comments": 2,
+        "blank": 32,
+        "comment_ratio_pct": 1.4
+      },
+      "maintainability_index": {
+        "score": 46.37,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 167.2,
+        "difficulty": 2.29,
+        "effort": 382.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 1.08,
+        "function_count": 26
+      },
+      "approx_health_score_1_to_10": 7.32,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "bollard/preflight_blocking_gate.py",
+      "raw": {
+        "loc": 182,
+        "sloc": 127,
+        "comments": 6,
+        "blank": 29,
+        "comment_ratio_pct": 4.7
+      },
+      "maintainability_index": {
+        "score": 57.43,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 444.6,
+        "difficulty": 5.23,
+        "effort": 2326.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 11,
+        "avg": 6.0,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 6.37,
+      "hotspot_signal": 11
+    },
+    {
+      "file_path": "bollard/test_guard_prodconfig.py",
+      "raw": {
+        "loc": 83,
+        "sloc": 64,
+        "comments": 1,
+        "blank": 15,
+        "comment_ratio_pct": 1.6
+      },
+      "maintainability_index": {
+        "score": 67.93,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 8.4,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "bollard/test_pre_implementation_brief_gate.py",
+      "raw": {
+        "loc": 175,
+        "sloc": 121,
+        "comments": 3,
+        "blank": 22,
+        "comment_ratio_pct": 2.5
+      },
+      "maintainability_index": {
+        "score": 61.43,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 577.5,
+        "difficulty": 1.2,
+        "effort": 692.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 8.07,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "bollard/guard_untrusted_web.py",
+      "raw": {
+        "loc": 91,
+        "sloc": 51,
+        "comments": 9,
+        "blank": 19,
+        "comment_ratio_pct": 17.6
+      },
+      "maintainability_index": {
+        "score": 72.97,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 196.3,
+        "difficulty": 3.38,
+        "effort": 662.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 15,
+        "avg": 10.0,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 7.15,
+      "hotspot_signal": 15
+    },
+    {
+      "file_path": "bollard/component_coupling.py",
+      "raw": {
+        "loc": 519,
+        "sloc": 227,
+        "comments": 99,
+        "blank": 52,
+        "comment_ratio_pct": 43.6
+      },
+      "maintainability_index": {
+        "score": 41.21,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 1150.1,
+        "difficulty": 7.8,
+        "effort": 8970.6
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 27,
+        "avg": 6.29,
+        "function_count": 14
+      },
+      "approx_health_score_1_to_10": 4.06,
+      "hotspot_signal": 54
+    },
+    {
+      "file_path": "bollard/architecture_gate.py",
+      "raw": {
+        "loc": 135,
+        "sloc": 79,
+        "comments": 20,
+        "blank": 21,
+        "comment_ratio_pct": 25.3
+      },
+      "maintainability_index": {
+        "score": 69.83,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 235.9,
+        "difficulty": 5.02,
+        "effort": 1184.3
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 14,
+        "avg": 10.5,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 6.99,
+      "hotspot_signal": 28
+    },
+    {
+      "file_path": "bollard/test_foreman_evidence.py",
+      "raw": {
+        "loc": 108,
+        "sloc": 77,
+        "comments": 4,
+        "blank": 19,
+        "comment_ratio_pct": 5.2
+      },
+      "maintainability_index": {
+        "score": 64.82,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 129.7,
+        "difficulty": 1.76,
+        "effort": 228.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 8.24,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "bollard/concept_gate.py",
+      "raw": {
+        "loc": 156,
+        "sloc": 88,
+        "comments": 18,
+        "blank": 22,
+        "comment_ratio_pct": 20.5
+      },
+      "maintainability_index": {
+        "score": 66.64,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 363.6,
+        "difficulty": 5.69,
+        "effort": 2069.1
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 14,
+        "avg": 9.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 6.83,
+      "hotspot_signal": 14
+    },
+    {
+      "file_path": "bollard/ship_readiness_gate.py",
+      "raw": {
+        "loc": 216,
+        "sloc": 142,
+        "comments": 5,
+        "blank": 34,
+        "comment_ratio_pct": 3.5
+      },
+      "maintainability_index": {
+        "score": 55.82,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 726.9,
+        "difficulty": 7.21,
+        "effort": 5238.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 15,
+        "avg": 5.0,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 6.29,
+      "hotspot_signal": 15
+    },
+    {
+      "file_path": "bollard/guard_destructive.py",
+      "raw": {
+        "loc": 73,
+        "sloc": 40,
+        "comments": 3,
+        "blank": 16,
+        "comment_ratio_pct": 7.5
+      },
+      "maintainability_index": {
+        "score": 83.06,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 53.3,
+        "difficulty": 2.5,
+        "effort": 133.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 3.0,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 9.15,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "bollard/test_guard_untrusted_web.py",
+      "raw": {
+        "loc": 100,
+        "sloc": 69,
+        "comments": 1,
+        "blank": 20,
+        "comment_ratio_pct": 1.4
+      },
+      "maintainability_index": {
+        "score": 68.16,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 68.5,
+        "difficulty": 1.0,
+        "effort": 68.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.27,
+        "function_count": 11
+      },
+      "approx_health_score_1_to_10": 8.41,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "bollard/test_preflight_blocking_gate.py",
+      "raw": {
+        "loc": 108,
+        "sloc": 88,
+        "comments": 1,
+        "blank": 16,
+        "comment_ratio_pct": 1.1
+      },
+      "maintainability_index": {
+        "score": 54.4,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 245.2,
+        "difficulty": 1.31,
+        "effort": 320.6
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 4,
+        "avg": 1.78,
+        "function_count": 9
+      },
+      "approx_health_score_1_to_10": 7.72,
+      "hotspot_signal": 4
+    },
+    {
+      "file_path": "bollard/test_concept_gate.py",
+      "raw": {
+        "loc": 176,
+        "sloc": 124,
+        "comments": 14,
+        "blank": 32,
+        "comment_ratio_pct": 11.3
+      },
+      "maintainability_index": {
+        "score": 57.29,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 116.7,
+        "difficulty": 1.0,
+        "effort": 116.7
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 2,
+        "avg": 1.04,
+        "function_count": 27
+      },
+      "approx_health_score_1_to_10": 7.86,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "bollard/pre_implementation_brief_gate.py",
+      "raw": {
+        "loc": 226,
+        "sloc": 148,
+        "comments": 15,
+        "blank": 33,
+        "comment_ratio_pct": 10.1
+      },
+      "maintainability_index": {
+        "score": 58.06,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 470.4,
+        "difficulty": 4.79,
+        "effort": 2251.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 15,
+        "avg": 5.86,
+        "function_count": 7
+      },
+      "approx_health_score_1_to_10": 6.4,
+      "hotspot_signal": 15
+    },
+    {
+      "file_path": "bollard/hook_common.py",
+      "raw": {
+        "loc": 303,
+        "sloc": 125,
+        "comments": 26,
+        "blank": 63,
+        "comment_ratio_pct": 20.8
+      },
+      "maintainability_index": {
+        "score": 65.96,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 86.0,
+        "difficulty": 1.75,
+        "effort": 150.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 1.56,
+        "function_count": 18
+      },
+      "approx_health_score_1_to_10": 8.3,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "bollard/goals_freeze_gate.py",
+      "raw": {
+        "loc": 135,
+        "sloc": 89,
+        "comments": 7,
+        "blank": 23,
+        "comment_ratio_pct": 7.9
+      },
+      "maintainability_index": {
+        "score": 65.29,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 269.6,
+        "difficulty": 4.8,
+        "effort": 1293.9
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 13,
+        "avg": 7.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 6.76,
+      "hotspot_signal": 13
+    },
+    {
+      "file_path": "bollard/guard_prodconfig.py",
+      "raw": {
+        "loc": 61,
+        "sloc": 36,
+        "comments": 5,
+        "blank": 13,
+        "comment_ratio_pct": 13.9
+      },
+      "maintainability_index": {
+        "score": 82.64,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 53.3,
+        "difficulty": 2.5,
+        "effort": 133.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 5,
+        "avg": 4.0,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 9.13,
+      "hotspot_signal": 5
+    },
+    {
+      "file_path": "bollard/test_guard_destructive.py",
+      "raw": {
+        "loc": 83,
+        "sloc": 58,
+        "comments": 4,
+        "blank": 17,
+        "comment_ratio_pct": 6.9
+      },
+      "maintainability_index": {
+        "score": 73.05,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 15.5,
+        "difficulty": 1.0,
+        "effort": 15.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 10
+      },
+      "approx_health_score_1_to_10": 8.65,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "bollard/foreman_evidence.py",
+      "raw": {
+        "loc": 114,
+        "sloc": 45,
+        "comments": 1,
+        "blank": 14,
+        "comment_ratio_pct": 2.2
+      },
+      "maintainability_index": {
+        "score": 69.67,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 123.0,
+        "difficulty": 3.6,
+        "effort": 442.7
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 8,
+        "avg": 3.75,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.48,
+      "hotspot_signal": 16
+    },
+    {
+      "file_path": "bollard/verdict_ledger.py",
+      "raw": {
+        "loc": 139,
+        "sloc": 57,
+        "comments": 55,
+        "blank": 13,
+        "comment_ratio_pct": 96.5
+      },
+      "maintainability_index": {
+        "score": 67.85,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 203.1,
+        "difficulty": 4.7,
+        "effort": 953.8
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 12,
+        "avg": 12.0,
+        "function_count": 1
+      },
+      "approx_health_score_1_to_10": 6.89,
+      "hotspot_signal": 12
+    },
+    {
+      "file_path": "bollard/audit_lib.py",
+      "raw": {
+        "loc": 330,
+        "sloc": 204,
+        "comments": 22,
+        "blank": 49,
+        "comment_ratio_pct": 10.8
+      },
+      "maintainability_index": {
+        "score": 51.25,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 716.5,
+        "difficulty": 6.64,
+        "effort": 4755.2
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 9,
+        "avg": 3.94,
+        "function_count": 16
+      },
+      "approx_health_score_1_to_10": 7.56,
+      "hotspot_signal": 18
+    },
+    {
+      "file_path": "bollard/test_component_coupling.py",
+      "raw": {
+        "loc": 278,
+        "sloc": 175,
+        "comments": 43,
+        "blank": 41,
+        "comment_ratio_pct": 24.6
+      },
+      "maintainability_index": {
+        "score": 55.95,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 622.7,
+        "difficulty": 2.46,
+        "effort": 1529.5
+      },
+      "git_commits_touching_file": 2,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 29
+      },
+      "approx_health_score_1_to_10": 7.8,
+      "hotspot_signal": 2
+    },
+    {
+      "file_path": "bollard/dependency_provenance_gate/dependency_provenance_gate.py",
+      "raw": {
+        "loc": 276,
+        "sloc": 121,
+        "comments": 39,
+        "blank": 35,
+        "comment_ratio_pct": 32.2
+      },
+      "maintainability_index": {
+        "score": 57.57,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 482.4,
+        "difficulty": 4.68,
+        "effort": 2257.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 12,
+        "avg": 4.62,
+        "function_count": 8
+      },
+      "approx_health_score_1_to_10": 6.38,
+      "hotspot_signal": 12
+    },
+    {
+      "file_path": "bollard/cross_project_routing/routing_table.py",
+      "raw": {
+        "loc": 105,
+        "sloc": 49,
+        "comments": 12,
+        "blank": 19,
+        "comment_ratio_pct": 24.5
+      },
+      "maintainability_index": {
+        "score": 74.24,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 248.2,
+        "difficulty": 3.98,
+        "effort": 988.3
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 16,
+        "avg": 6.33,
+        "function_count": 3
+      },
+      "approx_health_score_1_to_10": 7.21,
+      "hotspot_signal": 16
+    },
+    {
+      "file_path": "bollard/tessera_resolver/tessera_resolver.py",
+      "raw": {
+        "loc": 118,
+        "sloc": 71,
+        "comments": 0,
+        "blank": 19,
+        "comment_ratio_pct": 0.0
+      },
+      "maintainability_index": {
+        "score": 66.93,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 285.8,
+        "difficulty": 4.64,
+        "effort": 1325.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 9,
+        "avg": 4.5,
+        "function_count": 6
+      },
+      "approx_health_score_1_to_10": 8.35,
+      "hotspot_signal": 9
+    },
+    {
+      "file_path": "bollard/local_review/local_review_gemini.py",
+      "raw": {
+        "loc": 96,
+        "sloc": 64,
+        "comments": 3,
+        "blank": 16,
+        "comment_ratio_pct": 4.7
+      },
+      "maintainability_index": {
+        "score": 74.66,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 68.0,
+        "difficulty": 2.5,
+        "effort": 170.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 3,
+        "avg": 2.25,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.73,
+      "hotspot_signal": 3
+    },
+    {
+      "file_path": "bollard/local_review/local_review_accountable.py",
+      "raw": {
+        "loc": 137,
+        "sloc": 98,
+        "comments": 2,
+        "blank": 20,
+        "comment_ratio_pct": 2.0
+      },
+      "maintainability_index": {
+        "score": 86.97,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 4.8,
+        "difficulty": 0.5,
+        "effort": 2.4
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 9.35,
+      "hotspot_signal": 1
+    },
+    {
+      "file_path": "bollard/local_review/local_review.py",
+      "raw": {
+        "loc": 147,
+        "sloc": 101,
+        "comments": 1,
+        "blank": 24,
+        "comment_ratio_pct": 1.0
+      },
+      "maintainability_index": {
+        "score": 70.64,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 99.4,
+        "difficulty": 3.21,
+        "effort": 319.5
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 6,
+        "avg": 3.25,
+        "function_count": 4
+      },
+      "approx_health_score_1_to_10": 8.53,
+      "hotspot_signal": 6
+    },
+    {
+      "file_path": "bollard/local_review/local_review_grounded.py",
+      "raw": {
+        "loc": 102,
+        "sloc": 68,
+        "comments": 2,
+        "blank": 18,
+        "comment_ratio_pct": 2.9
+      },
+      "maintainability_index": {
+        "score": 82.97,
+        "rank": "A"
+      },
+      "halstead": {
+        "volume": 27.0,
+        "difficulty": 1.0,
+        "effort": 27.0
+      },
+      "git_commits_touching_file": 1,
+      "cyclomatic_complexity": {
+        "max": 1,
+        "avg": 1.0,
+        "function_count": 2
+      },
+      "approx_health_score_1_to_10": 9.15,
+      "hotspot_signal": 1
+    }
+  ],
+  "tool_git_sha": "80575742af52557547bb990635dbc1d6ee3f8df4",
+  "tree_git_sha": "fcbcca6495b42eed8f28b0d7f6113f2bd5f582ff",
+  "formula_version": "radon=6.0.1;lizard=1.24.0;hotspot=v1;health=v1"
+}

@@ -1,0 +1,88 @@
+[
+  {
+    "gate": "concept",
+    "package": ".foreman/tpm-gate-concept.json",
+    "pin_key": "PRD.md",
+    "graded_sha256": "643e6cdf9d56a51fcc5597bcd1e2f97864509612596ff9cba5d6b6c83c1aa12e",
+    "graded_lines": 653,
+    "live_sha256": "a68cb44457e0870248ec8ee162bbc2e6bd693cd6d11afc7af381b5348572603e",
+    "live_lines": 824,
+    "live_commit": "04eeaa62f6039fadb3100ff157d25519ef31b3ef",
+    "drift_detected_at": "2026-09-02T09:34:25Z",
+    "accepted_at": "2026-09-02T09:35:19Z",
+    "accepted_by": "Priya Desai (concept gate owner)",
+    "accepted_by_session": "isolated review session; authored neither the PRD nor the brief",
+    "caused_the_drift": false,
+    "attestation_type": "agent gate-owner attestation, NOT a human signature",
+    "human_countersign_required": "REQ-41/ARCHITECTURE.md 7.6 describes these entries as human-reasoned. This one is not. If the project requires a human signature for a drift acceptance to count, this entry is a recommendation awaiting the operator's counter-sign, not a discharge of that requirement. Stated rather than glossed.",
+    "reviewed": {
+      "commits_since_grading": [
+        "b84e1a6",
+        "057d42e",
+        "04eeaa6"
+      ],
+      "prd_delta": "+221 / -50 lines, 653 -> 824",
+      "requirement_level_changes": "One. R23's heading extended from 'shall be version-controlled' to also require its outputs stop overwriting prior runs. That is condition C3 being acted on, and it strengthens the requirement rather than relaxing it.",
+      "other_changes": "New section 8.1 correcting the R0 row, which is condition C2 being discharged. Section 0.1 reworded to state the layered_command_guard.py search result as an invariant rather than a file count, which does not change the finding. Three GOALS.json freezes (bollard, scripts, skills) under commit b84e1a6, which are design-and-scope artifacts, not requirement changes to this document."
+    },
+    "decision": "accept",
+    "reasoning": "Every material change traces to a condition this gate itself imposed, and each one moves in the direction the gate asked for. No requirement was weakened, none removed, no scope boundary redrawn, and the done-state metrics in section 6 are untouched. The basis on which GO was rendered is intact and in two places better evidenced than when it was graded. Accepting rather than regrading.",
+    "carried_forward": "Section 8.1 was written against this package's revision 2, which framed 0.96x and 1.16x as two disagreeing measurements. Revision 3 supersedes that: there are at least four readings of one unstable metric (DEVH-5, open), and the 23:00 scoped file was not produced by dev-harness-7f as this session had inferred. Section 8.1 should be updated to revision 3's account. Flagged here rather than silently corrected, since editing the PRD is not the gate owner's job."
+  },
+  {
+    "entry_id": 2,
+    "gate": "concept",
+    "package": ".foreman/tpm-gate-concept.json",
+    "drift_record_ref": ".foreman/pin-drift-reported.json",
+    "drift_record_reported_at": "2026-09-02T10:46:34.805176Z",
+    "pin_key": "PRD.md",
+    "pinned_value": {
+      "sha256": "643e6cdf9d56a51fcc5597bcd1e2f97864509612596ff9cba5d6b6c83c1aa12e",
+      "lines": 653,
+      "note": "the originally graded content, unchanged since the gate was rendered"
+    },
+    "previously_accepted_value": {
+      "sha256": "a68cb44457e0870248ec8ee162bbc2e6bd693cd6d11afc7af381b5348572603e",
+      "lines": 824,
+      "accepted_in": "entry 1, 2026-09-02T09:35:19Z"
+    },
+    "live_value": {
+      "sha256": "d532ea38227176682a880eba32ed06586c10ca6f9f051de9b2b58fcae3c63978",
+      "lines": 902,
+      "commit": "2269b127eb868083a460295f952411d0fb10370e"
+    },
+    "delta": {
+      "since_graded": "653 -> 902 lines, +249",
+      "since_last_acceptance": "824 -> 902 lines, +99 / -21 across 6 commits",
+      "commits": [
+        "9a6261d",
+        "b5e9256",
+        "6d26ef9",
+        "bca51e4",
+        "665ff7c",
+        "2269b12"
+      ]
+    },
+    "accepted_at": "2026-09-02T11:25:42Z",
+    "accepting_party": "Priya Desai (concept gate owner), session dev-harness-9b",
+    "caused_the_drift": false,
+    "decision": "accept",
+    "independence_qualification": "ACCEPTED WITH A STATED WEAKNESS IN MY OWN STANDING, recorded because the dispatching session's stated basis for calling me independent is factually wrong and a later reader must not inherit it. The dispatch said I 'haven't touched PRD.md or the concept-gate package this session'. I have not edited PRD.md, which is the axis REQ-41 actually names, and on that axis I am valid. But I authored the concept-gate package itself and revised it four times, and I wrote ledger entry 1. More to the point: of the six commits producing THIS drift, four exist because of findings I routed - 9a6261d and b5e9256 apply my revision-3 and revision-4 corrections to section 8.1, and 6d26ef9/bca51e4 follow from my R17 dim_session finding. So I did not make these edits but I am substantially their cause. That is not an arms-length acceptor. A genuinely uninvolved party should re-confirm this entry, and Marcus's ship-readiness pass is the natural place.",
+    "verification_performed": {
+      "method": "spot-checked the package's own cited claims against the live tree, not against the package's self-report",
+      "claims_that_hold": [
+        "bollard/guard_destructive.py, guard_prodconfig.py, guard_untrusted_web.py all still absent (R24 not yet implemented)",
+        "tessera/store/store.py still MI=4.78 (C), max_cc=32, SLOC=1443",
+        "store.py git churn still 1, so hotspot_signal still reduces to max_cc (R18's finding)",
+        "atlas/ingest/audit.py:36 still writes payload_json=json.dumps(obj), unscrubbed (R8)",
+        "no layered_command_guard implementation exists; the new hits are ARCHITECTURE.md and DESIGN-AND-SCOPE.md planning references plus this gate's own files, not code (R14)"
+      ],
+      "claims_now_STALE_in_the_direction_of_progress": [
+        "The package states git ls-files returns 0 for the three measurement scripts. It now returns 3. R23 has been acted on. The claim is stale; the requirement it supported is closer to met, not further.",
+        "The package states a 9-commit tree. It is now 30 commits. R18's conclusion is unaffected and arguably strengthened: 21 further commits landed and store.py's churn is still 1, so the signal still collapses to max_cc."
+      ],
+      "conclusion": "No claim underpinning the GO decision has been falsified. Two are outdated because the project did what the gate asked. The scope boundaries, the section 6 done-state metrics and the section 7 falsification pass are intact. R17 moved from 'buildable now' to 'blocked on the same shape as R16', which is a scope reduction driven by evidence, not a weakening of the basis for GO."
+    },
+    "prior_caveat_status": "Entry 1 recorded that REQ-41/7.6 describes these attestations as human-reasoned, that mine is not, and that it therefore stood as a recommendation awaiting Jon's counter-sign. The dispatching session now relays that Jon has set this run to 100% end-to-end with only Marcus's eventual Go/Kill/Hold reaching him, and cites REQ-49 as making an independent session's resolution the intended substitute for escalating. I am recording that as a REVERSAL of the position both I and that session held earlier tonight, not as a clarification of it, so the change is visible rather than buried. I am not disputing it: escalation policy is the operator's to set. The practical effect is that the checkpoint for this entry is Marcus's pass rather than Jon's signature, which makes the independence_qualification above the thing Marcus most needs to read."
+  }
+]
