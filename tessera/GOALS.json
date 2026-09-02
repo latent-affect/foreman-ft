@@ -4,7 +4,7 @@
   "component": "tessera",
   "scope_version": 1,
   "created": "2026-09-02T11:00:00Z",
-  "criteria_frozen_at": "2026-09-02T13:20:23.387156Z",
+  "criteria_frozen_at": "2026-09-02T17:23:25.687305Z",
   "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health rises by at least the amount that improvement mathematically produces, measured against a same-session before-report rather than a fixed historical number; and no test that existed before is missing after, checked by identity rather than count; and the after-measurement is produced by a context that did not perform the refactor.",
   "requirement": "PRD.md R1a (DEVH-7), R2 (DEVH-8), R3 (DEVH-9). R2 lives here as a pre-commit criterion rather than in ARCHITECTURE.md, per Addendum 3: none of R1/R2/R3 introduces a component or interface, so all three are design-and-scope work.",
   "pre_implementation_brief": {
@@ -27,6 +27,11 @@
       "ticket_id": "DEVH-11",
       "persona": "dana-okafor",
       "covers": "R5 detect-secrets baseline for tessguard's EXPECTED_SHIM_SHAS (C8 amendment). Brief marker updated to this ticket; DEVH-37 and DEVH-10 remain cited here."
+    },
+    {
+      "ticket_id": "DEVH-54",
+      "persona": "dana-okafor",
+      "covers": "tessguard git-worktree resolution fallback (C9 amendment). Brief marker updated to this ticket; DEVH-37, DEVH-10 and DEVH-11 remain cited here."
     }
   ],
   "target_number_decision": "PRD.md left R1's target unpinned and proposed 'store.py MI >= 20 AND SLOC-weighted >= 7.5' pending confirmation. Measured rather than confirmed by hunch, and the proposal does not survive it. From the baseline report's own per_file_detail: 149 files, 14,443 total SLOC, recomputed SLOC-weighted health 6.857 which reproduces the reported 6.86. store.py is 1,443 SLOC, 10.0% of the tree, health 2.24. The health formula (foreman_quality_baseline.py:364) is health = min(10, MI/10)*0.5 + cc_bucket*0.5, where cc_bucket is 10 at max_cc<=10, 7 at <=20, 4 at <=50, else 1; store.py's 4.78 MI and 32 max_cc give 0.239 + 2.0 = 2.24, confirming the formula. Simulating store.py alone at a PERFECT health of 10 moves the tree only to 7.633, so a 7.5 tree target would require store.py at health ~9, meaning MI >= 80 and max_cc <= 10. That is a rewrite, not a refactor, and the two halves of the original proposal were never consistent with each other. What the formula also shows is that MI is the weaker lever: MI 4.78 -> 20 buys 0.76 health, while max_cc 32 -> <=20 buys 1.5. Decision, and it is derived rather than round: store.py reaches MI >= 20 AND max_cc <= 20, giving health 4.5 and a tree score of 7.083; the tree target is therefore SLOC-weighted >= 7.05. Not escalated, per REQ-49.",
@@ -86,6 +91,13 @@
       "verification": "python3 -m detect_secrets scan against the live repo reproduces exactly these two findings in tessera/tessguard/config.py (line 45's shared pre-commit/pre-push hash, line 47's commit-msg hash) and no others in that file. The baseline's entries for both are set is_secret: false with a comment. detect-secrets audit .secrets.baseline --report --only-real then contains zero entries for tessera/tessguard/config.py -- the file-scoped 'zero unaudited findings' DEVH-11's own verification clause asks for, not a whole-repo claim (other files' findings from the same scan are out of scope for this ticket and are left as found-but-unaudited, named in results[] rather than silently baselined).",
       "verifiable": true,
       "added": "2026-09-02T16:20:00Z"
+    },
+    {
+      "id": "C9",
+      "statement": "project_resolve.resolve_projects_for_repo() (used by both gitgate.py's check_gate/check_commit_message and audit.py's layer-1 flow) resolves the correct TESSERA project(s) for a cwd inside a git WORKTREE whose own path is not itself a registered source_root, by falling back to that worktree's siblings (git worktree list) -- DEVH-54. root_matches_internal's own matching logic is unchanged; the fix is trying more candidate paths, not relaxing the match.",
+      "verification": "Real git commit attempts (not calling the resolver function directly), from a repository with at least two worktrees where only the FIRST (main) worktree's path is registered as a TESSERA project's source_root: (a) from the main worktree, a commit citing a real recently-active ticket for that project passes, and a commit naming no ticket blocks -- unchanged regression, both directions proven. (b) from a SECOND worktree of the same repository, the identical two cases (ticket-citing passes, no-ticket blocks) now ALSO hold -- this is the actual fix, proven by a real git commit, not a direct call to resolve_projects_for_repo(). (c) audit.py's layer-1 flow (resolve_projects_for_cwd, which resolve_projects_for_repo also serves) picks up the same fix: a coverage audit run from the second worktree now correctly finds the registered project instead of reading as zero registered projects. (d) A repo with NO registered project at all (in any worktree) still resolves to zero projects -- the fallback must not manufacture a match that doesn't exist.",
+      "verifiable": true,
+      "added": "2026-09-02T17:50:00Z"
     }
   ],
   "failure_criteria": [
@@ -143,11 +155,16 @@
       "id": "F11",
       "statement": "The baseline entry is marked is_secret: false with no stated reason, so a later reader re-running detect-secrets audit interactively has no context for why it was dismissed and either re-flags it as suspicious or blindly re-approves without checking.",
       "detection": "C8 requires a comment on the audited entry, and a corrected in-file comment on EXPECTED_SHIM_SHAS itself stating what the values are."
+    },
+    {
+      "id": "F12",
+      "statement": "The fallback manufactures a match that doesn't really exist -- for example by relaxing root_matches_internal itself, or by treating ANY sibling worktree as automatically belonging to whatever project is registered anywhere, rather than requiring the SAME exact-or-nested path match the direct case already requires.",
+      "detection": "C9's case (d) requires a repo with no registered project in ANY worktree to still resolve to zero -- the fallback must only try more candidate paths through the unchanged matching function, never loosen the match itself."
     }
   ],
   "out_of_scope": [
     "R1b's two files. monitoring/compliance-cron/skill_broadscan.py (MI 51.35, grade A) and bollard/component_coupling.py (MI 41.45, grade A) do not meet R1's stated criterion of complexity AND maintainability both flagging, and they belong to the monitoring and bollard components rather than tessera. PRD.md requires each to carry a written justification or leave scope; neither is covered by this freeze.",
-    "tessera's other subdirectories: api/, common/, gitops/, reviewui/. This freeze covers store.py's C1-C5 MI/complexity work only, which is the sole file in the analyzed tree carrying a grade-C maintainability index. tessguard/ is excepted narrowly by the DEVH-11 amendment (C8) for one file, config.py's EXPECTED_SHIM_SHAS detect-secrets baseline entry only -- not a general freeze of tessguard/.",
+    "tessera's other subdirectories: api/, common/, gitops/, reviewui/. This freeze covers store.py's C1-C5 MI/complexity work only, which is the sole file in the analyzed tree carrying a grade-C maintainability index. tessguard/ is excepted narrowly by two amendments, neither a general freeze of tessguard/: DEVH-11 (C8) for config.py's EXPECTED_SHIM_SHAS detect-secrets baseline entry, and DEVH-54 (C9) for project_resolve.py's (and gitutil.py's) worktree-resolution fallback.",
     "Raising the tree score above 7.05. The measurement in target_number_decision shows store.py alone caps the tree at 7.633 even at perfect health; further movement requires work on other components and is a separate scoping question.",
     "Any change to the health formula or the hotspot signal. R18 (DEVH-19) owns the signal's honesty; changing the formula under this freeze would invalidate the 6.86 baseline C3 is measured against.",
     "Fixing DEVH-4 and DEVH-5. They are bugs in token_bloat_diagnostic.py, a different script from foreman_quality_baseline.py, and do not affect these criteria."
@@ -163,8 +180,8 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 8,
-    "frozen_at": "2026-09-02T13:20:23.387156Z"
+    "test_criteria": 9,
+    "frozen_at": "2026-09-02T17:23:25.687305Z"
   },
   "results": [
     {
@@ -206,6 +223,28 @@
       "recorded": "2026-09-02T13:10:00Z",
       "verified_by": "dev-harness-33 -- this session did not author commits 31c8ee2 or b00057d",
       "note": "Report files: /private/tmp/claude-501/-Users-m5-dev-dev-harness/5c92ac28-071d-4518-a3a9-b8eae2ebb1ae/scratchpad/tessera_verify/{before_report.json,after_report.json} -- ephemeral scratch, not committed."
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "grep confirms '# nosec B608' at store.py:478-479 (set_priority_like, naming PRIORITY_LIKE_FIELDS at line 457 as the identifier source), store.py:1314 and store.py:1332 (rebuild_projection/live_projection, naming schema.PROJECTION_TABLES and canonical_columns_internal()'s PRAGMA read), and replay_handlers.py:154 (naming the event_type ternary). Lines differ slightly from this criterion's own stated 479/1308/1320 -- re-verified by content, not by trusting the criterion text's line numbers, same drift class R18/PRD section 0.1 already name for this project. Each comment names its identifier's real source in prose, not just the suppression code.",
+      "recorded": "2026-09-02T16:35:00Z",
+      "verified_by": "dev-harness-33, independent re-run in this session (did not author DEVH-10)"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tessera.store.tests.test_sql_identifier_safety -v\ntest_c7_rejects_field_name_outside_priority_like_fields ... ok\ntest_c7_still_works_for_the_two_real_fields ... ok\nRan 2 tests in 0.007s\nOK\n\nNegative control reproduced independently, not trusted from the commit message: copied tessera/store/+tessera/common to an isolated scratch location, stubbed the field_name guard at store.py:461 to `if False:`, re-ran the same committed test -- it fails (KeyError: 'not_a_real_field', since the code now falls through to PRIORITY_LIKE_FIELDS[field_name] with no guard), confirming the test is not vacuous.",
+      "recorded": "2026-09-02T16:35:00Z",
+      "verified_by": "dev-harness-33, own negative control built independently in this session (did not author DEVH-10 or trust its self-reported negative control)"
+    },
+    {
+      "criterion_id": "C8",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/detect-secrets audit .secrets.baseline --report --json\n14 total entries: 2 VERIFIED_FALSE, both tessera/tessguard/config.py (the file-scoped requirement this criterion states). 12 UNVERIFIED across 6 other files (.foreman/pin-drift-reported.json, .foreman/tpm-gate-concept.json, atlas/ingest/tests/test_audit_scrub.py, atlas/warehouse/tests/test_credential_scan.py, security_privacy_convergence.py, tessera/common/tests/test_hashing.py) -- matches the commit's own disclosed count exactly, and matches this criterion's own text that those are 'out of scope for this ticket... named in results[] rather than silently baselined.' Full tessera suite: 211/211, no regression.",
+      "recorded": "2026-09-02T16:35:00Z",
+      "verified_by": "dev-harness-33, independent re-run in this session (did not author DEVH-11)",
+      "note": "The 12 unverified findings are new information, not previously named anywhere in PRD.md -- a byproduct of installing detect-secrets for this ticket's own purpose, not a regression and not part of R5's scope (R5's own verification clause is explicitly file-scoped to tessguard/config.py). Flagged in VALIDATION-REPORT.md as its own disclosed gap, same pattern as root GOALS.json's C1 reproduction_gap, rather than folded into this criterion's MET status or silently dropped. Caution for whoever re-runs this baseline: `detect-secrets scan --baseline .secrets.baseline` REWRITES the baseline file in place by merging live findings -- running it without redirecting to a separate file mutates a tracked, security-relevant artifact. Caught and reverted (git checkout) during this verification pass; use `detect-secrets audit .secrets.baseline --report --json`, which is read-only, for checks like this one instead."
     }
   ],
   "amendments": [
@@ -331,10 +370,19 @@
       "reason": "agent-remediation-af routed DEVH-11 (R5) to this session. DEVH-11's own text claimed 'the in-file comment already says so' (that EXPECTED_SHIM_SHAS holds integrity hashes, not credentials) -- read directly and found FALSE: the existing comment (config.py:42-43) explains the pre-commit/pre-push/commit-msg relationship but never states what the values represent. Corrected as part of this same fix rather than filed separately, since it's the exact clarifying line the audit justification depends on and costs one line. detect-secrets was not installed in this venv (confirmed absent alongside bandit and pip-audit in GOALS.json's own C1 reproduction_gap note) -- installed via pip into /Users/m5/.venv per this session's existing Python-interpreter convention, since security_privacy_convergence.py's own docstring already names it as an expected optional dependency, not a new one to the project.",
       "requested_by": "dev-harness-run2 (this session, self-scoped per DEVH-11's assignment)",
       "at": "2026-09-02T16:20:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "scope narrowly extended to cover DEVH-54 (the git-worktree resolution gap found while verifying DEVH-52); C9 and F12 added",
+      "from": "project_resolve.resolve_projects_for_repo() matched only the exact cwd-derived path (or its exact registered ancestor); no fallback for a git worktree whose own path differs from whichever worktree a project's source_root was registered against.",
+      "to": "C9 adds a fallback in resolve_projects_for_repo(): when the given repo_root itself matches no registered project, try every sibling path from `git worktree list` before returning empty. root_matches_internal's own match logic is unchanged -- more candidate paths, not a looser match.",
+      "reason": "agent-remediation-af's own explicit decision to fix this for real rather than register each worktree as its own TESSERA project or bypass with --no-verify: 'gitgate resolves the repo via git rev-parse --show-toplevel, which for a worktree is that worktree's own distinct path -- but DEVH's registered source_root is exactly /Users/m5/dev/dev-harness. Fix: resolve via git rev-parse --git-common-dir (or equivalent -- shared across all worktrees of one repo) instead of the per-worktree toplevel.' Implemented via git worktree list rather than git-common-dir directly, since gitgate.py's actual call sites (check_gate/check_commit_message) pass repo_root straight to resolve_projects_for_repo() without going through resolve_projects_for_cwd -- the fix belongs in the shared function both layers already call, not a new wrapper that gitgate.py's real code path would just bypass.",
+      "requested_by": "dev-harness-run2 (this session, self-scoped per DEVH-54's assignment)",
+      "at": "2026-09-02T17:50:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:9f711be5e682b5b509622b238f1f3a4abb8c9e49ef81e94cee9070abd9ef7d48",
+    "criteria_hash_at_freeze": "sha256:918af320410079b7f6c560bf48f30458b19d12246ae567bf6b3795da3fc181c8",
     "match": null
   }
 }

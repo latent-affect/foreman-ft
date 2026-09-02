@@ -4,7 +4,7 @@
   "component": "root-docs-and-scratch",
   "scope_version": 1,
   "created": "2026-09-02T07:20:00Z",
-  "criteria_frozen_at": "2026-09-02T13:05:29.633845Z",
+  "criteria_frozen_at": "2026-09-02T15:06:01.327131Z",
   "done_state": "The three measurement scripts every quantitative claim in PRD.md traces to exist in this repository, are tracked by git, emit provenance (tool commit, tree commit, formula version) inside every report they write, and cannot destroy a prior run's output when re-run from the same working directory.",
   "requirement": "PRD.md R23 (R23a provenance, R23b evidence destruction). Sequenced first by concept-gate condition C3.",
   "pre_implementation_brief": {
@@ -22,6 +22,11 @@
       "ticket_id": "DEVH-19",
       "persona": "dana-okafor",
       "covers": "R18 hotspot-signal relabelling (C5-C7 amendment). Brief marker at .foreman/briefs/root-docs-and-scratch.json updated to this ticket; both remain cited here so DEVH-43's original citation is not lost."
+    },
+    {
+      "ticket_id": "DEVH-54",
+      "persona": "dana-okafor",
+      "covers": "README.agents.md git-hooks limitations documentation (C8 amendment). Brief marker updated to this ticket; DEVH-43 and DEVH-19 remain cited here."
     }
   ],
   "criteria": [
@@ -73,6 +78,13 @@
       "verification": "python3 -m unittest against a new test asserting cross_reference_code_findings() populates quality_compound with the correct quality_hotspot_signal value from both a degenerate-churn quality_report fixture (hotspot_signal_complexity_only present, hotspot_signal absent) and a non-degenerate one (hotspot_signal present) -- both must produce a populated, correctly-valued quality_compound row, not a KeyError and not a silently-empty one.",
       "verifiable": true,
       "added": "2026-09-02T15:10:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "README.agents.md documents the git-hooks gate class honestly: what it actually enforces, and its real, currently-live limitations -- not just the install command. DEVH-52 found dev-harness's hooks were never wired despite this same file's 'Installed means' section (point 4) stating as an already-true fact that 'this clone has git config core.hooksPath .githooks', when it did not. DEVH-54, found while verifying DEVH-52's fix end to end, is a currently-live, unresolved limitation: hooks fail closed for every commit made from a git worktree other than the repo's registered main checkout (this project's own dev-harness-run2 included).",
+      "verification": "README.agents.md's 'Installed means' section no longer states hooksPath wiring as an unconditional fact about the clone -- it is a step the operator runs (already true of the 'Install' section above it) verified by the existing 'Verify' section's git config --get core.hooksPath check, not asserted as already done. A new limitations note names: (a) TESSGUARD_DB_PATH must be exported in the operator's shell for hooks to do anything but fail closed on a missing db, and it is not set by the install script; (b) hooks fail closed for commits from any worktree other than the one whose path matches the registered TESSERA project's source_root exactly (DEVH-54, open, not yet fixed). Read back after the edit and confirm both points are present in plain text, not merely implied.",
+      "verifiable": true,
+      "added": "2026-09-02T17:35:00Z"
     }
   ],
   "failure_criteria": [
@@ -159,8 +171,8 @@
   "scope_estimate": {
     "components": 1,
     "interfaces": 0,
-    "test_criteria": 7,
-    "frozen_at": "2026-09-02T13:05:29.633845Z"
+    "test_criteria": 8,
+    "frozen_at": "2026-09-02T15:06:01.327131Z"
   },
   "results": [
     {
@@ -313,10 +325,19 @@
       "reason": "Seventh instance tonight of verified-but-never-written-back, across bollard, atlas, root twice, monitoring and tessera twice. The work was real every time; the record was the thing that lapsed.",
       "requested_by": "priya-desai",
       "at": "2026-09-02T14:40:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "scope narrowly extended to cover README.agents.md's git-hooks limitations documentation (DEVH-52/DEVH-54); C8 added",
+      "from": "No criteria existed for README content. root-docs-and-scratch's glob covers README.agents.md, but nothing under this freeze had touched it.",
+      "to": "C8 requires the 'Installed means' section's hooksPath claim to stop asserting an unconditional fact and requires a new limitations note naming TESSGUARD_DB_PATH's requirement and the DEVH-54 worktree gap.",
+      "reason": "agent-remediation-af's own decision (per REQ-55) to wire DEVH-52 for real rather than defer, plus a follow-on ask to update this repo's limitations/README surface for this class of gate if nothing documents it yet. Verifying DEVH-52 end to end (not just running the config command) surfaced that the README's own existing claim was part of what made the original gap invisible -- it stated hooksPath wiring as already-done fact rather than as a step to verify, which is exactly the 'looks alive, does nothing' shape this project's own precedent keeps naming.",
+      "requested_by": "dev-harness-run2 (this session, self-scoped per the routed DEVH-52/DEVH-54 work)",
+      "at": "2026-09-02T17:35:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:20e251a9f347e4c9a02d7336f0c6d727ec360be6a43f892ffd3827508508359c",
+    "criteria_hash_at_freeze": "sha256:9d621d53f1ea60e667c7ba0560c0dd63ee9d93a9f4de1634d31f3bbe325a556f",
     "match": null
   },
   "notes": [

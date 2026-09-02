@@ -31,12 +31,9 @@ def root_matches_internal(repo_root_path, source_root_path):
     return repo_root_path in source_root_path.parents
 
 
-def resolve_projects_for_repo(repo_root, store):
-    """All store.list_projects() rows whose source_root == repo_root or is nested under it.
-    repo_root need not itself be a git repository -- see the module docstring on GIF."""
-    repo_root_path = Path(repo_root).resolve()
+def _match_against_roots(repo_root_path, projects):
     matched = []
-    for project in store.list_projects():
+    for project in projects:
         source_root = project.get("source_root")
         if not source_root:
             continue
@@ -44,6 +41,35 @@ def resolve_projects_for_repo(repo_root, store):
         if root_matches_internal(repo_root_path, source_root_path):
             matched.append(project)
     return matched
+
+
+def resolve_projects_for_repo(repo_root, store):
+    """All store.list_projects() rows whose source_root == repo_root or is nested under it.
+    repo_root need not itself be a git repository -- see the module docstring on GIF.
+
+    DEVH-54: if repo_root itself matches nothing, try every sibling git-worktree path
+    (git worktree list) before returning empty. A git worktree has its own distinct
+    top-level working directory, so a project registered against one worktree (most
+    commonly the original/main checkout) would otherwise be invisible from every other
+    worktree of the very same repository -- gitgate.py's hard gates would fail closed for
+    every commit made from a worktree other than the registered one, and layer 1's audit
+    would silently read as zero registered projects. root_matches_internal itself is
+    unchanged; this only widens the set of candidate paths it is applied to. Safe for a
+    non-git repo_root (GIF's case): `git worktree list` simply fails there and this
+    degrades to the prior, exact-match-only behaviour."""
+    repo_root_path = Path(repo_root).resolve()
+    projects = store.list_projects()
+    matched = _match_against_roots(repo_root_path, projects)
+    if matched:
+        return matched
+    for sibling in gitutil.git_worktree_paths(repo_root):
+        sibling_path = Path(sibling).resolve()
+        if sibling_path == repo_root_path:
+            continue
+        sibling_matched = _match_against_roots(sibling_path, projects)
+        if sibling_matched:
+            return sibling_matched
+    return []
 
 
 def resolve_projects_for_cwd(cwd, store):

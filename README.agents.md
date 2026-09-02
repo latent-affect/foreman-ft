@@ -32,8 +32,34 @@ A Foreman project needs `ARCHITECTURE.md` at its own root. This clone does not s
 1. Bollard PreToolUse hooks are files under `~/.claude/hooks/`.
 2. Foreman, code-safety, and research-lifecycle skills are under `~/.claude/skills/`.
 3. Named reviewers: source `agents/`, project copy `.claude/agents/`, install dest `/path/to/home/.claude/agents/`. Same seven files. Copy, not a single location.
-4. This clone has `git config core.hooksPath .githooks` so tessguard `commit-msg` runs.
+4. `git config core.hooksPath .githooks` has been run for this clone, so tessguard `commit-msg`/`pre-commit`/`pre-push` run -- run the `Verify` section below yourself rather than trusting this line. DEVH-52 (2026-09-02): this exact claim was stated here as already-true fact while dev-harness's real hooks had never actually been wired, and every push in its real history went out with zero gate enforcement as a result. `scripts/install-dev-harness.sh` currently only *prints* the command as an instruction (line ~142); it does not run it (DEVH-55, open).
 5. `PYTHONPATH` includes this clone so `python3 -m tessera.api.cli` and `atlas.*` import.
+
+## Git-hooks gate: what it enforces, and what it doesn't (DEVH-52/DEVH-54)
+
+`.githooks/{pre-commit,pre-push,commit-msg}` are thin wrappers around
+`tessera.tessguard.gitgate` -- read that module's own docstring for what it actually checks
+(recent TESSERA ticket activity, and that a commit message names a real ticket). Three
+prerequisites, not one, have to hold before it enforces anything:
+
+1. **`core.hooksPath` must be set** (see point 4 above). `git config --get core.hooksPath` is
+   shared across every worktree of one repository -- setting it once from any worktree wires
+   all of them, confirmed empirically 2026-09-02 across `dev-harness`, `dev-harness-run2`, and
+   `dev-harness-qa` sharing one `.git/config`.
+2. **`TESSGUARD_DB_PATH` must be exported in the operator's shell.** Without it, every hook
+   invocation fails closed immediately on `no TESSERA db at /path/to/ticket-system/data/tessera.db`
+   -- that path is a literal, unresolved template placeholder
+   (`tessera/tessguard/config.py`'s `DEFAULT_DB_PATH_INTERNAL`), not a real fallback. Nothing
+   in `scripts/install-dev-harness.sh` sets this automatically.
+3. **The repo path you're committing from must match a registered TESSERA project's
+   `source_root` exactly.** `gitgate.py` resolves the repo root via `git rev-parse
+   --show-toplevel`, which for a git *worktree* is that worktree's own distinct path, not the
+   main checkout's. A worktree whose path isn't itself a registered `source_root` resolves to
+   zero registered projects, and every hook fails closed regardless of ticket citation or real
+   activity -- confirmed live for `dev-harness-run2` against the `DEVH` project (registered
+   `source_root=/Users/m5/dev/dev-harness`). **DEVH-54, open, not yet fixed.** If you're working
+   from a worktree other than the one your project was registered against, do not assume the
+   hooks are covering you just because `core.hooksPath` prints correctly.
 
 ## Environment
 
