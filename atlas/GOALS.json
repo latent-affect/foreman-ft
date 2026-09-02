@@ -220,6 +220,20 @@
       "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 143 tests in 1.296s\nOK\n$ /Users/m5/.venv/bin/python3 -m unittest atlas.ingest.tests.test_audit_scrub -v\nRan 10 tests in 0.144s\nOK\n\nCovering tests:\ntest_c6_redaction_marker_differs_between_dirty_and_clean_rows ... ok",
       "recorded": "2026-09-02T10:30:00Z",
       "verified_by": "priya-desai (design-and-scope session), re-run in this session"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 155 tests in 1.394s\nOK\n\nCovering tests:\ntest_c7_not_derived_by_subtraction_from_allowed_views ... ok\ntest_c7_synthetic_view_added_to_allowed_views_does_not_leak_into_mcp_views ... ok\ntest_c7_payload_bearing_view_still_excluded ... ok\ntest_c7_regression_every_previously_servable_view_still_servable ... ok\n\nAll three clauses also checked directly in this session rather than through the suite alone. Not derived by subtraction: grep -c 'ALLOWED_VIEWS if' on atlas/mcp/server.py returns 0, and MCP_VIEWS is an explicit frozenset literal of 17 names at line 31. Regression and exclusion: the literal was extracted with ast (server.py cannot be imported here -- it needs the mcp SDK, which lives in its own .venv-mcp) and compared as sets against ALLOWED_VIEWS minus v_fail_open_incident. 18 -> 17, set-equal, nothing gained and nothing lost, and v_fail_open_incident absent.",
+      "recorded": "2026-09-02T15:05:00Z",
+      "verified_by": "priya-desai, re-run and source-checked in this session"
+    },
+    {
+      "criterion_id": "C8",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t .\nRan 155 tests in 1.394s\nOK\n\nCovering tests:\ntest_c8_limit_is_pushed_into_sql_not_sliced_after_fetchall ... ok\ntest_c8_limit_bounds_rows_returned ... ok\ntest_c8_no_limit_argument_returns_two_tuple_unchanged ... ok\ntest_c8_invalid_limit_types_are_refused ... ok\ntest_c8_where_sql_still_refused ... ok\n\nThe first of those is the criterion's load-bearing clause: it proves the bound is pushed into the SQL rather than applied after fetchall() has already materialized the whole view, which is the difference between a real bound and a cosmetic one. The unchanged-return-shape test protects monitoring's five existing zero-argument fetch() call sites, which C8 names explicitly.",
+      "recorded": "2026-09-02T15:05:00Z",
+      "verified_by": "priya-desai, re-run and source-checked in this session"
     }
   ],
   "amendments": [
@@ -285,6 +299,15 @@
       "reason": "Self-caught twice while designing the fix, before any implementation or verification ran, per this project's own real-execution-only standard (same discipline as docs/GOALS.json's C1 and this same file's own prior C3 amendment). First pass wrongly put the +1/truncation logic inside fetch() itself and returned a 3-tuple only when limit was given, which would have broken every existing 2-value-unpack caller (monitoring's five fetch() call sites, atlas/mcp/server.py's own) the moment they passed limit, and behaved inconsistently based on an argument's presence. Reworked so fetch()'s contract never changes shape; only atlas_query_view, which already owns the 'truncated' field in its own response and is the only real limit-passing caller today, does the +1 request and trim.",
       "requested_by": "dev-harness-run2 (this session, self-caught during scoping, before implementation)",
       "at": "2026-09-02T17:15:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "results recorded for C7-C8 (SECURITY-PRIVACY-REVIEW F1/F2)",
+      "from": "results[] held C1-C6; the two security-review fixes were built and independently confirmed and never written back.",
+      "to": "C7 and C8 recorded MET from a re-run plus direct source verification of C7's three clauses.",
+      "reason": "Eighth instance of verified-but-never-written-back, now covered by PDP REQ-53. C7 was checked at source as well as through its tests because its central claim is about how MCP_VIEWS is DEFINED, not about behaviour a passing test would necessarily distinguish -- a subtraction and an explicit literal produce identical membership today, and only reading the definition separates them.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T15:05:00Z"
     }
   ],
   "integrity": {
