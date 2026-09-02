@@ -160,6 +160,27 @@ def ask(reason: str):
                                   "permissionDecisionReason": reason}})
 
 
+def rewrite(command: str, reason: str = None):
+    """PreToolUse: allow the tool call to proceed, but with `command` substituted for the
+    original tool_input.command.
+
+    Unlike deny()/ask(), this is not a veto -- it is for a guard whose enforcement is a
+    kernel-level wrapper around the command's own execution (see guard_os_sandbox.py) rather
+    than a pre-execution decision. `updatedInput` carries the substitution; per the harness's
+    own contract it must travel with permissionDecision "allow" or "ask" -- allow is used here
+    because the constraint this exists to add is enforced by the wrapped command itself, not by
+    a human confirming it, and per PRD-DELTA-R14-R15.md section 3 this bypass is deliberately
+    scoped to a declared capability class rather than every Bash call (option C, not option A).
+    """
+    mark("rewrite")
+    mark_decision("allow")
+    payload = {"hookEventName": "PreToolUse", "permissionDecision": "allow",
+               "updatedInput": {"command": command}}
+    if reason:
+        payload["permissionDecisionReason"] = reason
+    _emit({"hookSpecificOutput": payload})
+
+
 # ---- PostToolUse (non-blocking warning) -----------------------------------
 def warn(context: str):
     mark("warn")

@@ -1,0 +1,44 @@
+; deny_capability.sb
+;
+; Seatbelt (sandbox-exec) profile used by capability_scope.sh to run a single subprocess (and
+; everything it forks/execs) with the destructive-filesystem-write CAPABILITY categorically
+; removed, while leaving everything else about that subprocess's environment alone --
+; already-open file descriptors (stdout/stderr inherited from the invoking shell), network,
+; process exec, reads, all still work normally, per (allow default) below. Only the ability to
+; open/create/write/delete a filesystem path is removed.
+;
+; WHY THIS FILE EXISTS (PRD.md R13/R14a, TESSERA DEVH-61 through DEVH-64,
+; PRD-DELTA-R14-R15.md): a command-string guard like bollard/guard_destructive.py matches on the
+; TEXT of a command and can in principle be evaded by an obfuscation its pattern list has not
+; seen yet -- the same su""do-class evasion problem PRD.md R13 names. Capability removal at the
+; OS level does not depend on recognizing the command's text at all: once a process tree is
+; denied the file-write capability, no shell-level trick executed INSIDE that tree can restore
+; it, because the kernel enforces the denial on every open/unlink/rename syscall regardless of
+; how the invoking command string was assembled.
+;
+; WHY A BLANKET DENY, NOT A SCOPED SUBPATH (unlike deny_keychain.sb, which scopes to Keychain
+; paths specifically): this profile's declared capability is "destructive filesystem writes" in
+; general, not writes to one named resource. `guard_os_sandbox.py`'s own capability-class check
+; (which commands get wrapped in this profile at all) is what keeps the blast radius bounded --
+; see that file's CAPABILITY_CLASS_PATTERNS, reused from guard_destructive.py's own
+; DESTRUCTIVE_PATTERNS rather than a second, competing matcher. This profile itself denies the
+; capability unconditionally for whatever process it wraps; it does not re-implement the
+; command-shape decision that already lives in guard_os_sandbox.py.
+;
+; WHY ORDINARY COMMAND OUTPUT STILL WORKS UNDER THIS PROFILE: Seatbelt's file-write* operations
+; gate NEW filesystem path lookups (open/create/unlink/rename), not writes to a file descriptor
+; the process already held open before sandbox-exec applied the profile. A wrapped command's
+; inherited stdout/stderr therefore keeps working -- this is what makes the POSITIVE case
+; (C14a: a command that never opens a new path for writing) distinguishable from the TRAP case
+; (C14b: a command that does), rather than every wrapped command failing identically regardless
+; of what it does.
+;
+; EMPIRICAL VERIFICATION: see bollard/test_capability_scope.py (C14) for the three-case
+; positive/trap/negative-control run against this exact file via the real capability_scope.sh,
+; the same discipline deny_keychain.sb's own header documents and DEVH-63/DEVH-64 both
+; independently reproduced against a scratch version of this profile before it was shipped here.
+
+(version 1)
+(allow default)
+
+(deny file-write*)

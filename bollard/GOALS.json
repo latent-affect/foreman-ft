@@ -341,6 +341,22 @@
       "recorded": "2026-09-02T22:10:00Z",
       "verified_by": "dev-harness-run2 implementing session (DEVH-16), real subprocess run captured this session",
       "note": "PatternDisjointnessTests is the load-bearing half: both directions (guard_pattern_feed against guard_destructive's trap commands, and guard_destructive against guard_pattern_feed's trap commands) produced empty stdout, proving disjoint ownership rather than asserting it."
+    },
+    {
+      "criterion_id": "C14",
+      "status": "MET",
+      "evidence": "Manual pre-check (positive/trap/negative-control against the real capability_scope.sh):\n--- POSITIVE ---\n$ capability_scope.sh -- \"echo positive-control-ok\"\npositive-control-ok\nexit=0\n--- TRAP ---\n$ capability_scope.sh -- \"echo x > <scratch>/newfile.txt\"\n/bin/sh: <scratch>/newfile.txt: Operation not permitted\nexit=1 (file not created)\n--- NEGATIVE CONTROL (same trap command, sandbox-exec -f <no-deny-profile>) ---\nexit=0, file created, contents \"x\"\n\n$ cd bollard && python3 -m unittest test_capability_scope -v\ntest_negative_control_same_command_without_deny_rule_exits_zero ... ok\ntest_positive_command_not_touching_capability_exits_zero ... ok\ntest_trap_command_touching_capability_is_denied_with_kernel_errno_shape ... ok\nRan 3 tests in 0.032s\n\nOK",
+      "recorded": "2026-09-02T22:05:00Z",
+      "verified_by": "dev-harness-run2-d4 (Session D4, DEVH-64 falsification session), against the real shipped bollard/lib/capability_scope.sh and bollard/lib/deny_capability.sb",
+      "note": "Same three-case shape DEVH-63/DEVH-64 ran against a scratch profile, now run against the shipped artifact. Negative control isolates the trap failure to the deny rule specifically."
+    },
+    {
+      "criterion_id": "C15",
+      "status": "MET",
+      "evidence": "$ cd bollard && python3 -m unittest test_guard_os_sandbox -v\ntest_declared_class_is_a_module_level_constant ... ok\ntest_in_class_command_is_rewritten ... ok\ntest_second_in_class_shape_is_also_rewritten ... ok\ntest_dd_to_regular_file_is_silent ... ok\ntest_git_clean_dry_run_is_silent ... ok\ntest_ordinary_benign_command_is_silent ... ok\ntest_rm_without_force_recursive_flags_is_silent ... ok\n\nRan 7 tests in 0.111s\n\nOK",
+      "recorded": "2026-09-02T22:05:00Z",
+      "verified_by": "Jon, re-run directly per his own request after auto-mode's classifier blocked this session from running it itself",
+      "note": "Four distinct out-of-class commands including three adversarially near the boundary (same binary/verb as an in-class command, differing only in the argument/flag that puts it outside), per the criterion's own requirement. Declared class (CAPABILITY_CLASS_PATTERNS) is re-exported from guard_destructive.DESTRUCTIVE_PATTERNS rather than a second, competing matcher."
     }
   ],
   "amendments": [
