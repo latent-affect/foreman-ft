@@ -119,33 +119,31 @@
     {
       "criterion_id": "C1",
       "status": "MET",
-      "evidence": "git -C /Users/m5/dev/dev-harness-run2 ls-files returns foreman_quality_baseline.py, security_privacy_convergence.py and token_bloat_diagnostic.py -- all three tracked. token_bloat_diagnostic.py executed from a fresh empty directory (scratchpad/r23check), exit 0, wrote a parseable JSON report.",
-      "recorded": "2026-09-02T10:30:00Z",
-      "verified_by": "priya-desai (design-and-scope session), re-run in this session",
-      "reproduction_gap": "PARTIAL on the execution half: only token_bloat_diagnostic.py was run here. foreman_quality_baseline.py and security_privacy_convergence.py were not re-executed in this session, so C1's content assertions for those two rest on the implementer's report, not on evidence reproduced here."
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_measurement_provenance\nRan 5 tests in 7.764s\nOK\nCommitted suite: tests/test_measurement_provenance.py (DEVH-30). One test per criterion, named for it, in the shape atlas/ingest/tests/test_audit_scrub.py establishes.\n\nCovering test:\ntest_c1_all_three_scripts_are_tracked_and_produce_real_analysis ... ok",
+      "recorded": "2026-09-02T12:00:00Z",
+      "verified_by": "priya-desai, via committed suite (DEVH-30)",
+      "reproduction_gap": "STILL PARTIAL, narrowed. Now reproduced: all three tracked; foreman_quality_baseline run against the real repo with content assertions (python_files_analyzed >= 150, total_functions_analyzed >= 900, store.py present with max_cc >= 20 and MI < 25); security_privacy_convergence run with python_files_scanned >= 150, dependency_pins_parsed >= 30 and zero unparsed lines. NOT reproduced: C1's clause 'at least 30 dependency pins actually queried' against OSV, which needs network and installed scanners -- this venv reports bandit, detect-secrets and pip-audit all absent. Asserting it would make the suite fail for reasons unrelated to the code, so it is left unclaimed rather than weakened."
     },
     {
       "criterion_id": "C2",
       "status": "MET",
-      "evidence": "Report provenance read from the fresh run's JSON and compared against live git computed separately in the same check: tool_git_sha 7b91cea8fb19f61f66b3f0bd270ee0eccad058f9 equals git log -1 --format=%H -- token_bloat_diagnostic.py; tree_git_sha 665ff7c4f443cb9516778e895488a627e31e01b1 equals git rev-parse HEAD. formula_version is present and substantive: 'token_bloat_formula=v1(cache_hit_rate=read/total;effective_multiplier=(input+creation+read*0.1)/(total*0.1);spike_threshold=2.0x;day_over_day_target=1.1x)'.",
-      "recorded": "2026-09-02T10:30:00Z",
-      "verified_by": "priya-desai (design-and-scope session), re-run in this session",
-      "reproduction_gap": "PARTIAL: the forced-dynamism half (re-run under a sitecustomize.py patching importlib.metadata.version to a sentinel) was NOT reproduced here. radon 6.0.1 is the installed version, so a literal would still match today -- which is exactly why that half of C2 exists. Reported verified by the implementer; not reproduced."
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_measurement_provenance\nRan 5 tests in 7.764s\nOK\nCommitted suite: tests/test_measurement_provenance.py (DEVH-30). One test per criterion, named for it, in the shape atlas/ingest/tests/test_audit_scrub.py establishes.\n\nCovering test:\ntest_c2_provenance_matches_live_git_and_is_read_at_run_time ... ok",
+      "recorded": "2026-09-02T12:00:00Z",
+      "verified_by": "priya-desai, via committed suite (DEVH-30)"
     },
     {
       "criterion_id": "C3",
       "status": "MET",
-      "evidence": "Two runs from one directory with no cd between them. First: --project-hint dev-harness --days 1, wrote token_bloat_diagnostic_20260902T102603041044Z.json (run-scoped filename, no fixed name). sha256 recorded. Second: --project-hint tessera --days 1 from the same directory. Both files present afterwards; shasum -c confirms the first run's file byte-identical (OK), and its project_hint still reads 'dev-harness'.",
-      "recorded": "2026-09-02T10:30:00Z",
-      "verified_by": "priya-desai (design-and-scope session), re-run in this session"
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_measurement_provenance\nRan 5 tests in 7.764s\nOK\nCommitted suite: tests/test_measurement_provenance.py (DEVH-30). One test per criterion, named for it, in the shape atlas/ingest/tests/test_audit_scrub.py establishes.\n\nCovering test:\ntest_c3_a_second_run_from_one_directory_does_not_clobber_the_first ... ok",
+      "recorded": "2026-09-02T12:00:00Z",
+      "verified_by": "priya-desai, via committed suite (DEVH-30)"
     },
     {
       "criterion_id": "C4",
       "status": "MET",
-      "evidence": "The tessera-then-dev-harness ordering above exercises a protected first run that is not 'dev-harness', which is the generalization C4 was rewritten to require; the first run's artifact survived intact.",
-      "recorded": "2026-09-02T10:30:00Z",
-      "verified_by": "priya-desai (design-and-scope session), re-run in this session",
-      "reproduction_gap": "PARTIAL: the no-hint-first pair and the pair whose protected run uses a hint generated at test time were NOT reproduced here. Reported verified by the implementer; not reproduced."
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest tests.test_measurement_provenance\nRan 5 tests in 7.764s\nOK\nCommitted suite: tests/test_measurement_provenance.py (DEVH-30). One test per criterion, named for it, in the shape atlas/ingest/tests/test_audit_scrub.py establishes.\n\nCovering test:\ntest_c4_non_clobbering_generalizes_beyond_the_dev_harness_hint ... ok (three pairs: tessera/atlas, no-hint-first, and a hint generated at test time)",
+      "recorded": "2026-09-02T12:00:00Z",
+      "verified_by": "priya-desai, via committed suite (DEVH-30)"
     }
   ],
   "amendments": [
@@ -211,6 +209,15 @@
       "reason": "Same gap as bollard's C1-C4, which sat with an empty results[] for nine days. Recurring across every component that ships: verification is performed for real and never written back into the frozen file. Recorded here to the same standard as the bollard backfill -- nothing marked MET on another session's report alone. Where a criterion's evidence could not be cheaply reproduced here, the entry says so instead of claiming full coverage.",
       "requested_by": "priya-desai",
       "at": "2026-09-02T10:30:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "results upgraded from partial to reproduced by a committed suite",
+      "from": "Four results recorded from ad hoc checks in one session, three carrying a reproduction_gap for verification that could not be re-run by anyone else.",
+      "to": "All four now cite tests/test_measurement_provenance.py, which anyone can run. C2 and C4's gaps are closed outright: the sitecustomize sentinel proves formula_version is read at run time, and all three C4 pairs including the generated hint now execute. C1's gap is narrowed to one environment-dependent clause and stated rather than dropped.",
+      "reason": "DEVH-30. R23 is the provenance-and-reproducibility requirement and its own verification was not reproducible, which is that requirement's failure one level up. Writing the suite immediately found a real defect the ad hoc checks had missed: token_bloat_diagnostic emits a different report schema on the zero-match path, with project_hint at top level and no meta key, filed as DEVH-36.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T12:00:00Z"
     }
   ],
   "integrity": {

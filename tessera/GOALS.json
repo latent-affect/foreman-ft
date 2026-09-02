@@ -4,8 +4,8 @@
   "component": "tessera",
   "scope_version": 1,
   "created": "2026-09-02T11:00:00Z",
-  "criteria_frozen_at": "2026-09-02T11:26:51Z",
-  "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health moves from 6.86 to at least 7.05; and the after-measurement is produced by a context that did not perform the refactor.",
+  "criteria_frozen_at": "2026-09-02T11:30:43Z",
+  "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health rises by at least the amount that improvement mathematically produces, measured against a same-session before-report rather than a fixed historical number; and the after-measurement is produced by a context that did not perform the refactor.",
   "requirement": "PRD.md R1a (DEVH-7), R2 (DEVH-8), R3 (DEVH-9). R2 lives here as a pre-commit criterion rather than in ARCHITECTURE.md, per Addendum 3: none of R1/R2/R3 introduces a component or interface, so all three are design-and-scope work.",
   "target_number_decision": "PRD.md left R1's target unpinned and proposed 'store.py MI >= 20 AND SLOC-weighted >= 7.5' pending confirmation. Measured rather than confirmed by hunch, and the proposal does not survive it. From the baseline report's own per_file_detail: 149 files, 14,443 total SLOC, recomputed SLOC-weighted health 6.857 which reproduces the reported 6.86. store.py is 1,443 SLOC, 10.0% of the tree, health 2.24. The health formula (foreman_quality_baseline.py:364) is health = min(10, MI/10)*0.5 + cc_bucket*0.5, where cc_bucket is 10 at max_cc<=10, 7 at <=20, 4 at <=50, else 1; store.py's 4.78 MI and 32 max_cc give 0.239 + 2.0 = 2.24, confirming the formula. Simulating store.py alone at a PERFECT health of 10 moves the tree only to 7.633, so a 7.5 tree target would require store.py at health ~9, meaning MI >= 80 and max_cc <= 10. That is a rewrite, not a refactor, and the two halves of the original proposal were never consistent with each other. What the formula also shows is that MI is the weaker lever: MI 4.78 -> 20 buys 0.76 health, while max_cc 32 -> <=20 buys 1.5. Decision, and it is derived rather than round: store.py reaches MI >= 20 AND max_cc <= 20, giving health 4.5 and a tree score of 7.083; the tree target is therefore SLOC-weighted >= 7.05. Not escalated, per REQ-49.",
   "criteria": [
@@ -25,8 +25,8 @@
     },
     {
       "id": "C3",
-      "statement": "The repository's SLOC-weighted health reaches at least 7.05, up from 6.86.",
-      "verification": "aggregate.sloc_weighted_average_health_1_to_10 >= 7.05 in the after-report. Additionally, recompute it independently from per_file_detail as sum(health*sloc)/sum(sloc) and require the two to agree to two decimal places -- the report's own aggregate must not be taken on trust when it is the number being graded. 7.05 is derived from C2's targets, not chosen: store.py at MI 20 and max_cc <= 20 gives health 4.5, which over its 10.0% SLOC share yields 7.083.",
+      "statement": "The repository's SLOC-weighted health improves by at least the amount store.py's own improvement mathematically produces, measured against a before-report generated from the same working tree rather than against a fixed historical number.",
+      "verification": "Generate a before-report and an after-report with foreman_quality_baseline.py, both against the same repository and both in the same session as the refactor, so tree size is held constant across the comparison. From the BEFORE report compute the predicted gain: (store_health_after - store_health_before) * store_sloc / total_sloc, where store_health_after is the value C2's targets imply under the health formula at foreman_quality_baseline.py:364 (MI >= 20 and max_cc <= 20 give min(10,20/10)*0.5 + 7*0.5 = 4.5). Require the observed rise in aggregate.sloc_weighted_average_health_1_to_10 to be at least 90 percent of that predicted gain. The 90 percent allowance absorbs rounding and incidental churn in other files; it does not permit the store.py work to be skipped, because C2 pins store.py's own numbers independently. Recompute the aggregate from per_file_detail as sum(health*sloc)/sum(sloc) for BOTH reports and require each to agree with its own reported aggregate to two decimal places -- the tool's own summary must not be trusted when it is the number being graded. Do NOT compare against any previously published figure: 6.86 was measured over 14,443 SLOC and 6.81 over 16,372 SLOC, and neither is a valid baseline for a tree that has changed since.",
       "verifiable": true,
       "added": "2026-09-02T11:00:00Z"
     },
@@ -80,6 +80,11 @@
       "id": "F7",
       "statement": "The report's own aggregate field is trusted as the after-number while per-file data tells a different story, for instance because files dropped out of analysis. The graded number is produced by the same tool being graded.",
       "detection": "C3 requires the aggregate to be independently recomputed from per_file_detail and to agree to two decimal places."
+    },
+    {
+      "id": "F8",
+      "statement": "The tree score target is expressed as an absolute number. Unrelated work lands in the analyzed tree, the denominator grows, store.py's SLOC share shrinks, and the same successful refactor no longer reaches the threshold -- so a correct implementation fails a criterion it never had control over. This is not hypothetical: it happened to this file's own C3 within an hour of freezing, when R23 added 1,278 SLOC of measurement scripts to the tree and moved store.py's share from 10.00 percent to 8.81 percent.",
+      "detection": "C3 is stated as a fraction of the gain predicted from a before-report generated in the same session, so it rescales with the tree instead of being pinned to a figure that decays."
     }
   ],
   "out_of_scope": [
@@ -101,12 +106,100 @@
     "components": 1,
     "interfaces": 0,
     "test_criteria": 5,
-    "frozen_at": "2026-09-02T11:26:51Z"
+    "frozen_at": "2026-09-02T11:30:43Z"
   },
   "results": [],
-  "amendments": [],
+  "amendments": [
+    {
+      "criterion_id": "C3",
+      "change": "statement and verification",
+      "from": "Required aggregate.sloc_weighted_average_health_1_to_10 >= 7.05, an absolute threshold derived from a 14,443 SLOC tree in which store.py held a 10.00 percent share.",
+      "to": "Requires the observed improvement to be at least 90 percent of the gain predicted from a before-report generated in the same session, which rescales with the tree.",
+      "reason": "Caught by running the baseline against the current tree while starting DEVH-30, one hour after this freeze. R23 shipped 1,278 SLOC of measurement scripts into the analyzed tree: total SLOC 14,443 -> 16,372, store.py share 10.00 -> 8.81 percent, weighted 6.857 -> 6.809. C2's target of store.py at health 4.5 now yields 7.008, below the frozen 7.05, so no correct implementation could have passed C3. The defect was mine and it was in the freeze within an hour. Rewritten as a self-adjusting fraction rather than re-pinned to 7.00, because a new absolute number would decay exactly the same way on the next merge. Same family as R18's commit count and PRD section 0.1's file enumeration -- a snapshot this project's own output keeps invalidating.",
+      "requested_by": "priya-desai",
+      "at": "2026-09-02T11:45:00Z"
+    },
+    {
+      "id": "A1",
+      "raised_at": "2026-09-02T11:33:44Z",
+      "raised_by": "dev-harness-9b (independent falsification; did not author this freeze)",
+      "severity": "blocking for C5, and it undermines C3's baseline",
+      "affects": [
+        "C3",
+        "C5"
+      ],
+      "finding": "C5 requires TWO baseline reports each carrying tool_git_sha, tree_git_sha and formula_version. The 'before' report cannot satisfy that and never will. The only one that exists is /Users/m5/dev/dev-harness/quality_baseline_report.json, whose meta keys are exactly [root, python_files_analyzed, total_functions_analyzed, thresholds_source]: none of the three provenance fields, and no timestamp. It predates R23, which is what added provenance emission (foreman_quality_baseline.py:559). Worse for C3: its meta.root is /Users/m5/dev/dev-harness, NOT the dev-harness-run2 worktree where the refactor and the after-run will happen, and run2 has moved 30 commits since. So the 6.86 that C3 measures against was produced by a different tool version against a different tree state, and no baseline report exists in run2 at all.",
+      "why_it_cannot_be_fixed_by_rerunning": "Re-running now WOULD produce a provenance-bearing before-report, but it would not produce 6.86, because R23 and R24 work has already changed the tree. The pre-refactor state C3 is anchored to is no longer reachable.",
+      "options_for_the_freeze_holder": [
+        "Amend C5 to require provenance on the AFTER report only, and record the before-report's lack of it as a known, accepted limitation with its file path and meta keys named.",
+        "Re-baseline now against run2's current tree, replacing 6.86 with the freshly measured number and re-deriving C3's threshold from it using the same method. This keeps C5 whole and costs the 6.86 anchor."
+      ],
+      "reviewer_recommendation": "The second. C3's whole purpose is a credible before/after, and an anchor that cannot be reproduced from the tree being measured is the exact unfalsifiability R23 exists to close. Re-deriving is cheap now and the derivation method in target_number_decision is sound and was independently reproduced (see A0 below).",
+      "disposition": "RESOLVED by priya-desai's C3 amendment (2026-09-02T11:45:00Z), which this reviewer had not seen when A1 was raised -- the freeze was amended mid-review. That amendment requires the before-report to be generated in the SAME SESSION, which means it is produced by the post-R23 tool and therefore carries tool_git_sha, tree_git_sha and formula_version. C5 was unsatisfiable against the stale /Users/m5/dev/dev-harness report; it is satisfiable against an in-session before-report. No action required. Retained rather than deleted because the reasoning explains WHY C5 needs the in-session clause, which the amendment itself does not state."
+    },
+    {
+      "id": "A2",
+      "raised_at": "2026-09-02T11:33:44Z",
+      "raised_by": "dev-harness-9b (independent falsification; did not author this freeze)",
+      "severity": "real risk to C3, no criterion currently detects it",
+      "affects": [
+        "C3"
+      ],
+      "finding": "C3 has no protection against being broken by work outside this freeze. F4 guards one direction only (the tree score being reached by touching other files); nothing guards the opposite, where concurrent work drags the weighted average down and C3 fails even though the store.py refactor did exactly what C2 asked. The margin is thin: store.py at C2's exact targets gives a tree of 7.0833 against a 7.05 threshold, a margin of 0.0333. R24 is landing three new guard files plus tests in the same tree right now. Measured headroom, computed from the live report: new code at health 7.0 can add 9,619 SLOC safely, but at health 6.5 only 874 SLOC, and at health 6.0 only 458 SLOC. For calibration, the existing bollard gate files sit right in that band -- ship_readiness_gate.py 6.29, preflight_blocking_gate.py 6.37, pre_implementation_brief_gate.py 6.40. Three guards with tests plausibly exceed 458 SLOC, so this is a live risk rather than a theoretical one.",
+      "options_for_the_freeze_holder": [
+        "Add a criterion, or extend C3's verification, requiring the after-number be reported BOTH over the whole tree and over the tree as constituted at freeze time (files present in the before-report), so dilution by new files is visible instead of being read as a failed refactor.",
+        "State explicitly in out_of_scope that C3 may be invalidated by concurrent component work, and name who adjudicates when it is."
+      ],
+      "reviewer_recommendation": "The first. It costs one extra computation and makes the failure legible.",
+      "disposition": "SUPERSEDED by the same C3 amendment, which replaces the absolute 7.05 threshold with a relative one (>= 90 percent of the gain predicted from an in-session before-report). A relative measure rescales with the tree, so dilution by concurrent work no longer fails a correct refactor. This reviewer reached the dilution risk by simulation; priya-desai reached it empirically an hour after the freeze, and hers is the stronger evidence because the dilution had ALREADY happened rather than being projected. Residual value retained: the headroom table quantifies how little slack an absolute threshold ever had, and R24's three guards are still to land, so more dilution is coming."
+    },
+    {
+      "id": "A3",
+      "raised_at": "2026-09-02T11:33:44Z",
+      "raised_by": "dev-harness-9b (independent falsification; did not author this freeze)",
+      "severity": "F5's stated detection does not detect the failure it names",
+      "affects": [
+        "C4",
+        "F5"
+      ],
+      "finding": "C4 and F5 rest on the test COUNT being >= 208. A count cannot detect masked deletion: delete five tests the refactor broke, add six, and the suite reports 209, passes C4, and five tests are silently gone. This is not hypothetical here, because R4 (DEVH-10) is specified to add a regression test to tessera/store, so concurrent additions to this exact suite are expected. The 'any test removed must be named in results[]' clause is the real control, and it is honour-system; the mechanical check beside it does not back it up.",
+      "options_for_the_freeze_holder": [
+        "Compare the SET of test ids before and after, not the count. `python3 -m unittest discover -s tessera -t . -v` lists them; requiring the before-set to be a subset of the after-set detects masked deletion and still permits additions."
+      ],
+      "reviewer_recommendation": "Adopt it. Same cost as the count, and it actually detects F5.",
+      "disposition": "OPEN -- requires the freeze holder's decision"
+    },
+    {
+      "id": "A0",
+      "raised_at": "2026-09-02T11:33:44Z",
+      "raised_by": "dev-harness-9b (independent falsification; did not author this freeze)",
+      "severity": "none -- confirmation, recorded so the check is not repeated",
+      "affects": [
+        "target_number_decision",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "finding": "The target derivation was re-derived independently from the raw report rather than read back, and every number reproduces exactly: 149 files carrying both health and sloc out of 173 per_file_detail entries; 14,443 total SLOC; SLOC-weighted health 6.8575, which rounds to the reported 6.86; store.py 1,443 SLOC at 9.991% of the tree, MI 4.78, max_cc 32, health 2.24 reproduced from the formula at foreman_quality_baseline.py (mi_component = max(0,min(10,MI/10)), cc buckets 10/7/4/1 at <=10/<=20/<=50/else, blended 0.5/0.5). Simulations: store.py at perfect health gives 7.6328 (claimed 7.633); at MI>=20 and max_cc<=20 gives 7.0833 (claimed 7.083); MI-only gives 6.9334 (claimed 6.93). Levers: MI 4.78->20 buys 0.760, max_cc 32->20 buys 1.500 (claimed 0.76 and 1.5). The conclusion that the PRD's proposed 7.5 does not survive measurement is correct. C4's baseline was verified by re-running the suite rather than trusting the record: 208 tests, OK, 19.110s against the recorded 19.070s. The freeze itself is intact -- criteria_hash recomputed with the gate's own function matches criteria_hash_at_freeze.",
+      "one_imprecision_not_a_defect": "target_number_decision says a 7.5 tree would need store.py at 'health ~9, meaning MI >= 80 and max_cc <= 10'. The exact requirement is health 8.67, so MI >= 73.4 with max_cc <= 10. The stated figure is conservative in the safe direction and the conclusion, that this is a rewrite rather than a refactor of a 1,443-SLOC file, is unaffected.",
+      "disposition": "CLOSED -- no action. Note the inputs verified here (14,443 SLOC, 6.857 weighted, store.py at 10.00 percent) were correct AS OF THE FREEZE and have since moved to 16,372 and 6.809. That does not invalidate the verification: what was checked is that the derivation METHOD is sound and faithfully applied, and the method is what the C3 amendment reuses."
+    },
+    {
+      "id": "A4",
+      "raised_at": "2026-09-02T11:35:29Z",
+      "raised_by": "dev-harness-9b (independent falsification; did not author this freeze)",
+      "severity": "minor, non-blocking; the conclusion and the fix are both unaffected",
+      "affects": [
+        "the C3 amendment's stated cause"
+      ],
+      "finding": "The C3 amendment attributes the dilution to 'R23 shipped 1,278 SLOC of measurement scripts into the analyzed tree' and records the tree moving 14,443 -> 16,372 SLOC. Those two figures do not reconcile: the delta is +1,929, so roughly 686 SLOC came from something other than the three R23 scripts. Measured directly with radon against the live worktree, those three total 1,243 SLOC (foreman_quality_baseline.py 379, token_bloat_diagnostic.py 425, security_privacy_convergence.py 439), which is also 35 below the 1,278 cited.",
+      "why_it_matters_and_why_it_is_minor": "The remedy is unaffected: a relative threshold is correct regardless of what caused the dilution, and the amendment's own arithmetic checks out exactly (6.809 + (4.5-2.24) * 0.0881 = 7.008, below the frozen 7.05, so no correct implementation could have passed the original C3). It matters only in that the attribution UNDERSTATES the problem. If ~686 SLOC of dilution is already arriving from sources other than R23, and R24's three guards plus tests have not landed yet, then the absolute threshold would have kept breaking. That strengthens the case for the amendment rather than weakening it.",
+      "recommendation": "Correct the cause line to name the measured delta rather than R23 alone, so a later reader does not conclude the dilution source is closed.",
+      "disposition": "OPEN -- documentation accuracy only; does not block implementation"
+    }
+  ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:3453f2a0b24a9eee34856c7aa224dad70a9807e0a79be60c680716ef9780f4b7",
+    "criteria_hash_at_freeze": "sha256:68d592b3b320bdb71c691fcbfd04654ece078d2d3709f38f355dec071491183d",
     "match": null
   }
 }
