@@ -81,14 +81,33 @@ def parse_component_map(project_root):
     except OSError:
         return {}
     in_block = False
+    seen_first_block = False
     components = {}
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("```yaml components"):
+            if seen_first_block:
+                # A second '```yaml components' block exists after the first has already
+                # closed. Only the first block's declarations are ever used (kept, not
+                # merged -- see DEVH-41: merging would be a bigger behavior change than this
+                # fix is scoped to make); this disclosure is what was previously missing.
+                # Disclosed, not swallowed -- same precedent the malformed-JSON branch below
+                # already uses: silently dropping a second block's component declarations is
+                # the exact "looks alive, does nothing" failure this whole project exists to
+                # catch (found live: the parse_component_map bug an earlier ARCHITECTURE.md
+                # write hit had no warning at all when it happened).
+                print(
+                    f"[component_coupling] {arch_path} has more than one "
+                    f"'```yaml components' block; only the first is used, later block(s) "
+                    f"are ignored", file=sys.stderr,
+                )
+                break
             in_block = True
             continue
         if in_block and stripped.startswith("```"):
-            break
+            in_block = False
+            seen_first_block = True
+            continue
         if not in_block:
             continue
         m = COMPONENT_BLOCK_RE.match(stripped)

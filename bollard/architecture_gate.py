@@ -73,7 +73,7 @@ def _check(file_path, project_root):
 
     if (project_root / REVIEW_BINDING_MARKER).is_file():
         verdict, reason = fe.review_binds_architecture(review_path, arch_path)
-        if verdict in ("mismatch", "unbound"):
+        if verdict in ("mismatch", "unbound", "ambiguous"):
             hc.set_rule(f"{RULE_ID}:review-{verdict}")
             hc.deny(
                 f"Foreman: ARCHITECTURE-REVIEW.md at {project_root} does not bind to "

@@ -37,29 +37,42 @@ def file_sha256(path):
 
 
 def extract_labeled_hash(text, label):
-    """Find a '**<label>:** sha256:<64hex>' line -- the same bold-label header convention
+    """Find every '**<label>:** sha256:<64hex>' line -- the same bold-label header convention
     ARCHITECTURE-REVIEW.md already uses for **Reviewer:**, **Date:**, **Scope:** (confirmed
     against a real review file before this convention was chosen, not invented from scratch).
-    Returns the bare 64-hex-character digest, or None if the label is absent or malformed."""
+
+    Returns (hash_or_none, match_count). match_count == 0 means absent (hash_or_none is None).
+    match_count == 1 means hash_or_none is that one match. match_count > 1 means MORE than one
+    candidate line exists -- hash_or_none is None in that case too, because this function
+    refuses to silently pick one (DEVH-41): a stale draft hash left above a fresh one, or the
+    label text appearing in a quoted passage (this project's own ARCHITECTURE-REVIEW.md already
+    quotes exact strings out of ARCHITECTURE.md, so this is plausible, not hypothetical), would
+    otherwise silently bind review_binds_architecture() against whichever hash re.search()
+    happened to find first. The caller decides what "more than one" means for its own verdict."""
     pattern = r"\*\*" + re.escape(label) + r":\*\*\s*sha256:([0-9a-f]{64})"
-    m = re.search(pattern, text)
-    return m.group(1) if m else None
+    matches = [m.group(1) for m in re.finditer(pattern, text)]
+    if len(matches) == 1:
+        return matches[0], 1
+    return None, len(matches)
 
 
 def review_binds_architecture(review_path, architecture_path, label="Reviews-Architecture-SHA256"):
     """A3: does review_path's header contain a hash that matches architecture_path's CURRENT
     content right now? Returns (verdict, reason) where verdict is one of:
-      "bound"     -- the label is present and matches; the review is current.
+      "bound"     -- the label is present exactly once and matches; the review is current.
       "unbound"   -- the review exists but has no labeled hash line yet (the pre-A3 state
                      every real project is in today -- NOT the same as a mismatch, see
                      architecture_gate.py's separate rule_ids for the two).
-      "mismatch"  -- the label is present but does not match; the architecture changed since
-                     this review was written and it needs a fresh pass.
+      "mismatch"  -- the label is present exactly once but does not match; the architecture
+                     changed since this review was written and it needs a fresh pass.
+      "ambiguous" -- MORE THAN ONE labeled hash line exists (DEVH-41); refuses to guess which
+                     one is current rather than silently binding against whichever
+                     extract_labeled_hash() happened to find first.
       "error"     -- a file is missing or unreadable; reason names which one and why.
-    Never raises. The three-way split (unbound / mismatch / error) exists specifically so a
-    caller can treat "hasn't adopted this yet" differently from "adopted it and it's stale" --
-    collapsing those into one boolean is exactly the ambiguity risk flagged during the F-2
-    toy-model review.
+    Never raises. The multi-way split exists specifically so a caller can treat "hasn't adopted
+    this yet" differently from "adopted it and it's stale" differently from "can't tell which
+    one is meant" -- collapsing any of those into one boolean is exactly the ambiguity risk
+    flagged during the F-2 toy-model review.
     """
     if not Path(architecture_path).is_file():
         return "error", f"{architecture_path} does not exist"
@@ -70,11 +83,16 @@ def review_binds_architecture(review_path, architecture_path, label="Reviews-Arc
     except OSError as exc:
         return "error", f"{review_path} could not be read: {exc}"
 
-    stored = extract_labeled_hash(review_text, label)
+    stored, match_count = extract_labeled_hash(review_text, label)
     current = file_sha256(architecture_path)
     if current is None:
         return "error", f"{architecture_path} could not be hashed"
 
+    if match_count > 1:
+        return "ambiguous", (
+            f"{match_count} separate **{label}:** sha256:<hex> lines found in {review_path} "
+            f"-- refusing to guess which one is current; leave exactly one"
+        )
     if stored is None:
         return "unbound", f"no **{label}:** sha256:<hex> line found in {review_path}"
     if stored != current:

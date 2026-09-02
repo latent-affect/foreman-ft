@@ -80,8 +80,11 @@ That is consistent with both explanations below and settles neither.
 
 Two explanations fit. A scratchpad artifact was written and cleaned up before landing anywhere
 durable, which matches a real pattern from other sessions. Or the implementation was described
-rather than built. **This document takes no position on which**, and the question is the
-operator's to settle, not a reviewer's to assume. What matters for scoping is that both
+rather than built. **This document takes no position on which.** It was the operator's to
+settle; on 2026-09-02T11:21Z it stopped needing to be settled, because concept-gate condition
+C1's default fired at architecture freeze and the artifact is now treated as never written
+(section 9, item 1). The evidence below is unaffected — nothing here was resolved by the
+default, only unblocked. What matters for scoping is that both
 explanations have the same consequence right now: there is no code to validate, so R14 and R15
 cannot be validation requirements, and nothing in R12-R15 that rests only on the brief's
 narration can be relied on while planning.
@@ -842,16 +845,24 @@ does change is section 9's disposal of the brief's fourth open question.
 Five, three of which block something. The first is for the operator, not the architecture stage,
 and it is the highest-severity open item in this document.
 
-1. **HIGH — Was `layered_command_guard.py` ever written?** Blocks R14 and R15 entirely, and
-   sets how much of R12-R15 can be trusted while planning. Not answerable by search: four
-   independent passes over five terms have now returned nothing, the fourth run by the concept
-   gate in a context that authored neither this PRD nor the brief. Needs the operator's own
-   recall or a pointer to a machine nobody has searched. Full statement in section 0.1.
-   **Default if unanswered by architecture freeze, set by the concept gate (C1) and adopted
-   here:** treat it as never written. R14 and R15 become build-from-nothing requirements sized
-   at design-and-scope, and every R12-R15 technical claim resting only on the brief's narration
-   gets re-derived rather than inherited. The default exists so an unanswered question cannot
-   silently become an assumed yes.
+1. **RESOLVED BY DEFAULT, 2026-09-02T11:21Z — `layered_command_guard.py` is treated as never
+   written.** This was the highest-severity open item in the document and is no longer waiting
+   on anyone. Concept-gate condition C1 set the default to fire if the question went unanswered
+   by architecture freeze; architecture froze, the question was unanswered, and the orchestrator
+   applied it, recorded on DEVH-16. Consequence, as C1 specified: R14 and R15 become
+   build-from-nothing requirements sized at design-and-scope, and every R12-R15 technical claim
+   resting only on the brief's narration gets re-derived rather than inherited.
+
+   The evidence in section 0.1 is unchanged and still says what it said: no executable
+   implementation exists anywhere searched, across four independent passes over five terms, and
+   this document takes no position on why. What changed is that the project no longer needs to
+   know why in order to proceed. That is the point of writing a default with a trigger rather
+   than an open question with an owner — an unanswered question could not silently become an
+   assumed yes, and it also could not silently become an indefinite hold.
+
+   **DEVH-16 remains blocked, but on a different thing:** R13's control ordering (DEVH-15),
+   which has to be re-derived against N2's latency budget rather than inherited, and which this
+   document's author is recused from because the original ordering call was mine.
 2. **R1's target number.** Blocks R1 implementation. Coupled to R21's static-versus-per-category
    choice; the same decision made once.
 3. **A current measured count for R9.** Blocks sizing. The 477 figure is unverified here.

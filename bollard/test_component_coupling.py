@@ -9,10 +9,12 @@ commands with no invoked script is byte-identical to before.
 
 (run from /path/to/home/.claude/hooks so the bare `import component_coupling` resolves)
 """
+import io
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import component_coupling as cc
 
@@ -213,6 +215,63 @@ class ExtractBashWriteTargetsAngleBracketTests(unittest.TestCase):
         command = "true; > web/index.html"
         targets = cc.extract_bash_write_targets(command, str(self.tmp))
         self.assertIn((self.tmp / "web/index.html").resolve(), targets)
+
+
+class ParseComponentMapTests(unittest.TestCase):
+    """DEVH-41 finding 2: parse_component_map() breaks at the FIRST yaml-components block's
+    closing fence and never looks for a second one -- previously with zero disclosure, unlike a
+    malformed JSON line on the same block, which already warned. This locks in the (kept, not
+    changed) first-wins behavior AND the new disclosure; a second block silently losing its
+    declarations is exactly what regressed once before with no warning at all."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def _write_architecture(self, text):
+        (self.tmp / "ARCHITECTURE.md").write_text(text)
+
+    def test_single_block_unaffected(self):
+        self._write_architecture(
+            "# Fixture\n\n```yaml components\nstore: [\"store/\"]\n```\n"
+        )
+        with mock.patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            components = cc.parse_component_map(self.tmp)
+        self.assertEqual(components, {"store": ["store/"]})
+        self.assertEqual(stderr.getvalue(), "", "a single block must never warn")
+
+    def test_second_block_is_ignored_and_disclosed(self):
+        self._write_architecture(
+            "# Fixture\n\n"
+            "```yaml components\nstore: [\"store/\"]\n```\n\n"
+            "some prose in between\n\n"
+            "```yaml components\napi: [\"api/\"]\n```\n"
+        )
+        with mock.patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            components = cc.parse_component_map(self.tmp)
+        # First-wins is KEPT (not this fix's job to change) -- the second block's
+        # declaration ("api") must not silently appear, and must not silently vanish either:
+        # it has to be visible in the warning.
+        self.assertEqual(components, {"store": ["store/"]})
+        self.assertNotIn("api", components)
+        warning = stderr.getvalue()
+        self.assertIn("more than one", warning)
+        self.assertIn("yaml components", warning)
+
+    def test_three_blocks_warns_once_not_per_extra_block(self):
+        self._write_architecture(
+            "# Fixture\n\n"
+            "```yaml components\nstore: [\"store/\"]\n```\n\n"
+            "```yaml components\napi: [\"api/\"]\n```\n\n"
+            "```yaml components\nweb: [\"web/\"]\n```\n"
+        )
+        with mock.patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            components = cc.parse_component_map(self.tmp)
+        self.assertEqual(components, {"store": ["store/"]})
+        self.assertEqual(
+            stderr.getvalue().count("more than one"), 1,
+            "one disclosure is enough; a warning per extra block would just be noise",
+        )
 
 
 if __name__ == "__main__":
