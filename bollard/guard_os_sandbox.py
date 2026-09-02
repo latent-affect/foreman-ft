@@ -28,6 +28,7 @@ commands inside the declared class (option C): outside it, it is silent, and the
 ordinary permission layer is untouched.
 """
 
+import os
 import shlex
 import sys
 from pathlib import Path
@@ -39,7 +40,15 @@ import guard_destructive  # noqa: E402
 RULE_ID = "GUARD-OS-SANDBOX"
 
 LIB_DIR = Path(__file__).resolve().parent / "lib"
-DENY_CAPABILITY_SB = LIB_DIR / "deny_capability.sb"
+
+# BOLLARD_DENY_CAPABILITY_SB_OVERRIDE exists ONLY so C16's live-harness negative-control arm and
+# C18's own negative control can point this guard's real, unmodified code path at a profile with
+# the deny rule removed -- proving the trap failure is attributable to the deny rule, not to a
+# malformed invocation -- without a second copy of this file. It is never set in normal
+# operation; the shipped guard always resolves to lib/deny_capability.sb.
+DENY_CAPABILITY_SB = Path(
+    os.environ.get("BOLLARD_DENY_CAPABILITY_SB_OVERRIDE") or str(LIB_DIR / "deny_capability.sb")
+)
 CAPABILITY_SCOPE_SH = LIB_DIR / "capability_scope.sh"
 
 # Re-exported, not redefined -- see the module docstring's DECLARED CAPABILITY CLASS section.
