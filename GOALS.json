@@ -4,7 +4,7 @@
   "component": "root-docs-and-scratch",
   "scope_version": 1,
   "created": "2026-09-02T07:20:00Z",
-  "criteria_frozen_at": "2026-09-02T07:14:44Z",
+  "criteria_frozen_at": "2026-09-02T07:20:07Z",
   "done_state": "The three measurement scripts every quantitative claim in PRD.md traces to exist in this repository, are tracked by git, emit provenance (tool commit, tree commit, formula version) inside every report they write, and cannot destroy a prior run's output when re-run from the same working directory.",
   "requirement": "PRD.md R23 (R23a provenance, R23b evidence destruction). Sequenced first by concept-gate condition C3.",
   "criteria": [
@@ -18,7 +18,7 @@
     {
       "id": "C2",
       "statement": "Every report written by each of the three scripts carries tool_git_sha, tree_git_sha and formula_version, and the first two match the live repository state at the time of the run rather than a stored or placeholder value.",
-      "verification": "Run each script, load its JSON report, and assert tool_git_sha, tree_git_sha and formula_version are present and non-empty. Assert report['tool_git_sha'] equals the independently computed output of git log -1 --format=%H -- <that script's path>, and report['tree_git_sha'] equals git rev-parse HEAD, both computed by the test itself and not read from the report. Then commit an unrelated change and re-run: tree_git_sha must differ from the previous run's value. formula_version must likewise be checked against live state, not merely for presence: assert the radon version it reports equals importlib.metadata.version('radon') as queried by the test itself (6.0.1 as installed 2026-09-02). A hardcoded literal such as 'radon-6.0.1' passes a presence check forever and goes on passing after a version bump, which defeats the entire reason the field exists -- making a dependency change that moves every number in a report visible without a tool SHA change or a tree diff.",
+      "verification": "Run each script, load its JSON report, and assert tool_git_sha, tree_git_sha and formula_version are present and non-empty. Assert report['tool_git_sha'] equals the independently computed output of git log -1 --format=%H -- <that script's path>, and report['tree_git_sha'] equals git rev-parse HEAD, both computed by the test itself and not read from the report. Then commit an unrelated change and re-run: tree_git_sha must differ from the previous run's value. formula_version must likewise be checked against live state, not merely for presence: assert the radon version it reports equals importlib.metadata.version('radon') as queried by the test itself (6.0.1 as installed 2026-09-02). A hardcoded literal such as 'radon-6.0.1' passes a presence check forever and goes on passing after a version bump, which defeats the entire reason the field exists -- making a dependency change that moves every number in a report visible without a tool SHA change or a tree diff. Presence and live-match are not sufficient on their own for formula_version, because the reported value can coincide with the installed one: a hardcoded literal 'radon-6.0.1' matches today and keeps matching until an actual upgrade, so nothing would catch it in the meantime. Force the same dynamism proof tree_git_sha already gets. Re-run the script in a subprocess whose PYTHONPATH carries a sitecustomize.py that patches importlib.metadata.version to return a sentinel string for the 'radon' distribution, and assert the report echoes that sentinel. A script reading the version at run time passes; a literal fails. This closes the gap that formula_version was otherwise the one provenance field verified only by coincidence.",
       "verifiable": true,
       "added": "2026-09-02T07:20:00Z"
     },
@@ -32,7 +32,7 @@
     {
       "id": "C4",
       "statement": "The non-clobbering behaviour generalizes across scopes rather than being keyed to this project's own recovery narrative: it holds for a project hint other than 'dev-harness', and for a sequence whose FIRST run carries no hint at all.",
-      "verification": "Repeat C3's independent-snapshot procedure twice more from a single directory each time, with no cd between runs in a pair. Pair one: first run --project-hint tessera --days 30, second run --project-hint atlas --days 30; the tessera run's true created set must survive intact with project_hint == 'tessera'. Pair two, hint order inverted: first run --days 30 with NO --project-hint, second run --project-hint dev-harness --days 30; the unhinted run's true created set must survive intact with its own project_hint value. Neither pair mentions 'dev-harness' as the protected first run. An implementation that special-cases the literal string 'dev-harness', or that protects only hinted runs, passes C1 through C3 green and fails here.",
+      "verification": "Repeat C3's independent-snapshot procedure twice more from a single directory each time, with no cd between runs in a pair. Pair one: first run --project-hint tessera --days 30, second run --project-hint atlas --days 30; the tessera run's true created set must survive intact with project_hint == 'tessera'. Pair two, hint order inverted: first run --days 30 with NO --project-hint, second run --project-hint dev-harness --days 30; the unhinted run's true created set must survive intact with its own project_hint value. Neither pair mentions 'dev-harness' as the protected first run. An implementation that special-cases the literal string 'dev-harness', or that protects only hinted runs, passes C1 through C3 green and fails here. Pair three, and the reason it exists: the first two pairs name four concrete hint shapes, which a sufficiently bad-faith implementation could in principle hardcode as a set. So the third pair's protected run uses a hint string GENERATED AT TEST TIME (a random suffix, e.g. 'scopeprobe-' plus eight random hex characters), followed by a --project-hint dev-harness run; the generated-hint run's true created set must survive intact with its own hint echoed. A hint that matches no real project directory still produces a valid report with zero session files, which is a sufficient artifact for a persistence assertion. Because the value cannot be known before the test runs, no implementation can enumerate the set this criterion checks, which closes the class rather than adding a fifth fixed value to it.",
       "verifiable": true,
       "added": "2026-09-02T07:20:00Z"
     }
@@ -82,6 +82,16 @@
       "id": "F9",
       "statement": "The disclosed output file is protected while an undisclosed companion file the tool never reports about itself is still clobbered. A verification built on the tool's own self-reported list of what it wrote cannot see this, because the tool defines the evidence used to judge it.",
       "detection": "C3 and C4 both take an independent before/after directory snapshot with per-file sha256 and diff them, so the true created set is established by the test rather than reported by the subject."
+    },
+    {
+      "id": "F10",
+      "statement": "formula_version is a literal that happens to equal the installed radon version, so every live-match check passes by coincidence and goes on passing until an upgrade -- the one event the field exists to surface. Distinct from F8: F8's detection was the live-match check itself, which this vector defeats.",
+      "detection": "C2's forced-dynamism step runs the script under a patched importlib.metadata.version and requires the sentinel to appear in the report."
+    },
+    {
+      "id": "F11",
+      "statement": "The non-clobbering fix is keyed to the specific set of hint values the criteria name rather than to one literal string. Every enumerable pair passes and a fifth real hint still clobbers.",
+      "detection": "C4's third pair uses a hint generated at test time, so the checked set cannot be enumerated in advance."
     }
   ],
   "out_of_scope": [
@@ -103,7 +113,7 @@
     "components": 1,
     "interfaces": 0,
     "test_criteria": 4,
-    "frozen_at": "2026-09-02T07:14:44Z"
+    "frozen_at": "2026-09-02T07:20:07Z"
   },
   "results": [],
   "amendments": [
@@ -142,10 +152,28 @@
       "reason": "dev-harness-32 blind falsification pass. Arrived cold, with no prior briefing, and found four gaming vectors that would pass the original criteria all green. A subject that defines the evidence used to judge it can protect the file it discloses while clobbering one it does not.",
       "requested_by": "dev-harness-32",
       "at": "2026-09-02T07:40:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "change": "verification",
+      "from": "Asserted formula_version's radon version equals importlib.metadata.version('radon') as queried by the test -- a live-match check with no forced-change step, unlike tree_git_sha, which is proven dynamic by committing and re-running.",
+      "to": "Adds a forced-dynamism step: re-run under a sitecustomize.py that patches importlib.metadata.version to return a sentinel for 'radon', and require the report to echo the sentinel.",
+      "reason": "dev-harness-32 residual findings, raised as non-blocking after it confirmed the first amendment closed the primary gaming vector. formula_version was the one provenance field whose correctness rested on coinciding with the installed value rather than on being read at run time. A hardcoded literal would have passed until the next radon upgrade, which is exactly the event the field exists to make visible.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T07:55:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "change": "verification",
+      "from": "Two pairs naming four concrete hint shapes (tessera, atlas, no-hint, dev-harness), all knowable before the test runs.",
+      "to": "Adds a third pair whose protected run uses a hint string generated at test time, so the set of hints checked cannot be enumerated in advance.",
+      "reason": "dev-harness-32 residual findings, raised as non-blocking after it confirmed the first amendment closed the primary gaming vector. Much less plausible than the original single-string special case, and both legitimate fix strategies already generalize past it, so this was explicitly flagged as not worth gating on. Taken anyway because the fix is one generated string and it closes the class rather than adding a fifth enumerable value.",
+      "requested_by": "dev-harness-32",
+      "at": "2026-09-02T07:55:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:22e571357a7154b0c8cdceb98fcced6262674210dde640c70080b571753435eb",
+    "criteria_hash_at_freeze": "sha256:8293e9288f3db9d3bcfec1a1b7083ba92992ccf53e1ef8131fd675819dbec500",
     "match": null
   }
 }
