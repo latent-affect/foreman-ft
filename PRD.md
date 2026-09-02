@@ -30,7 +30,7 @@ claims and a second session re-checked the artifact behind it.
 | R16 | Un-defer ATLAS D5 (model column) | D5's stated reason is *no data source*: `sessions.jsonl` carries no model field (`docs/atlas-architecture.md:63`, DDL comment at line 600) | Two-part requirement; the data source is the blocking half |
 | R18 | Churn reads 1 almost everywhere; probably an ATLAS gap | No analyzed source file has more than one commit touching it. `get_git_churn` counts all history with no window, so churn of 1 is arithmetically correct | Not an ATLAS gap. The real defect is downstream: see R18 |
 | — | not in the brief | The three report scripts every number here rests on are untracked (`??`) in git, and one of them overwrites its own prior output on reuse | New requirement R23, sequenced first |
-| R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` read `open` in TESSERA when checked; closed 2026-09-02, after this correction. Four readings of one unstable metric (0.96x, 1.1x, 1.16x, 0.64x), not two disagreeing measurements | Corrected in 8.1 after the concept gate challenged it |
+| R0 | "Closed by Run 1" (this document's own earlier claim) | `DEVH-3` read `open` in TESSERA when checked; closed 2026-09-02, after this correction. Four readings of one unstable metric, not two disagreeing measurements. Well-sampled days (n=9) run median 1.93, all above target | Corrected in 8.1 after the concept gate challenged it |
 
 Confidence notation follows the operator's standing rule: **High** = verified against an
 independent artifact; **Medium** = internally consistent, not independently confirmed;
@@ -731,12 +731,40 @@ Four readings, not two, and they are not disagreeing measurements. They are one 
 sampled at four different moments, which is what DEVH-5 already says about it: the day-over-day
 ratio compares a fixed historical day against an in-progress one.
 
-**The decisive evidence is inside the surviving JSON, and it settles this without needing any of
-the four readings.** That file's own per-day series, every entry computed against the same
-`day_one`, runs: 1.0, 2.5, 0.25, 1.34, 2.09, 2.11, 1.75, 0.5, 1.82, 1.25, 1.93, 2.14, 1.24,
-1.96, 1.78, 1.78, 0.64. A tenfold spread, against a target of 1.1. A quantity that ranges from
-0.25 to 2.5 across consecutive days is not being measured; any single reading is a draw from a
-noisy series, and choosing one is arbitrary rather than evidential.
+**The evidence is inside the surviving JSON's own per-day series, and it needs stating carefully
+because the obvious version of the argument does not hold.** An earlier revision of this
+subsection pointed at the raw spread — 1.0, 2.5, 0.25, 1.34, 2.09, 2.11, 1.75, 0.5, 1.82, 1.25,
+1.93, 2.14, 1.24, 1.96, 1.78, 1.78, 0.64 — and called a tenfold range decisive. It is not. The
+three lowest ratios sit on the three thinnest days in the file (47, 42 and 106 turns), so a
+skeptic discounts them as small-sample noise and the spread collapses toward twofold. That
+objection is correct and the claim was overstated.
+
+The form that survives it: restrict to well-sampled days, at least 1000 turns, and read what is
+left. n=9, verified from the file in this session:
+
+| Day | Turns | Ratio |
+|---|---|---|
+| 2026-08-15 | 1,793 | 2.09 |
+| 2026-08-16 | 1,840 | 2.11 |
+| 2026-08-19 | 3,805 | 1.82 |
+| 2026-08-20 | 1,212 | 1.25 |
+| 2026-08-21 | 2,194 | 1.93 |
+| 2026-08-22 | 1,003 | 2.14 |
+| 2026-08-26 | 4,632 | 1.96 |
+| 2026-08-27 | 5,254 | 1.78 |
+| 2026-08-28 | 3,067 | 1.78 |
+
+Median 1.93. Every well-sampled day sits above the 1.1 target and none is near parity. Meanwhile
+the headline 0.64x that reads as comfortably under target is a **106-turn partial day**, and the
+`day_one` every ratio is divided by is itself only **262 turns**. That is DEVH-5's mechanism
+shown rather than asserted: a two-point comparison between two arbitrary days, either of which
+can be thin, which is exactly why no single reading closes anything.
+
+**The honest limit, named rather than left implicit:** none of this says *why* well-sampled days
+run high. A real workload change and a metric defect are both live explanations and this data
+cannot separate them. **Confidence: High** on the arithmetic and the turn counts, read directly
+from the file. **Medium** on 1000 turns being the right cutoff — it is a reasonable line, not a
+derived one.
 
 That same file also carries `day_one: 2026-08-06`. dev-harness's own transcripts do not begin
 until 2026-08-23, a point the brief's own R0 correction makes independently. So the baseline day
