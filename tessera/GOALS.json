@@ -4,8 +4,8 @@
   "component": "tessera",
   "scope_version": 1,
   "created": "2026-09-02T11:00:00Z",
-  "criteria_frozen_at": "2026-09-02T11:30:43Z",
-  "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health rises by at least the amount that improvement mathematically produces, measured against a same-session before-report rather than a fixed historical number; and the after-measurement is produced by a context that did not perform the refactor.",
+  "criteria_frozen_at": "2026-09-02T11:38:14Z",
+  "done_state": "tessera/store/store.py is refactored behind characterization tests that were proven to fail against a mutated copy first; its maintainability index reaches radon grade A and its worst-function cyclomatic complexity drops below the 20 threshold that dominates this project's own health formula; the repository's SLOC-weighted health rises by at least the amount that improvement mathematically produces, measured against a same-session before-report rather than a fixed historical number; and no test that existed before is missing after, checked by identity rather than count; and the after-measurement is produced by a context that did not perform the refactor.",
   "requirement": "PRD.md R1a (DEVH-7), R2 (DEVH-8), R3 (DEVH-9). R2 lives here as a pre-commit criterion rather than in ARCHITECTURE.md, per Addendum 3: none of R1/R2/R3 introduces a component or interface, so all three are design-and-scope work.",
   "target_number_decision": "PRD.md left R1's target unpinned and proposed 'store.py MI >= 20 AND SLOC-weighted >= 7.5' pending confirmation. Measured rather than confirmed by hunch, and the proposal does not survive it. From the baseline report's own per_file_detail: 149 files, 14,443 total SLOC, recomputed SLOC-weighted health 6.857 which reproduces the reported 6.86. store.py is 1,443 SLOC, 10.0% of the tree, health 2.24. The health formula (foreman_quality_baseline.py:364) is health = min(10, MI/10)*0.5 + cc_bucket*0.5, where cc_bucket is 10 at max_cc<=10, 7 at <=20, 4 at <=50, else 1; store.py's 4.78 MI and 32 max_cc give 0.239 + 2.0 = 2.24, confirming the formula. Simulating store.py alone at a PERFECT health of 10 moves the tree only to 7.633, so a 7.5 tree target would require store.py at health ~9, meaning MI >= 80 and max_cc <= 10. That is a rewrite, not a refactor, and the two halves of the original proposal were never consistent with each other. What the formula also shows is that MI is the weaker lever: MI 4.78 -> 20 buys 0.76 health, while max_cc 32 -> <=20 buys 1.5. Decision, and it is derived rather than round: store.py reaches MI >= 20 AND max_cc <= 20, giving health 4.5 and a tree score of 7.083; the tree target is therefore SLOC-weighted >= 7.05. Not escalated, per REQ-49.",
   "criteria": [
@@ -32,8 +32,8 @@
     },
     {
       "id": "C4",
-      "statement": "The refactor preserves behaviour: the full tessera suite is green after, and no test was deleted or skipped to achieve it.",
-      "verification": "python3 -m unittest discover -s tessera -t . exits OK with a test count greater than or equal to the pre-refactor count of 208, measured in this session at 208 tests in 19.070s, OK. Greater-than-or-equal on the COUNT is the load-bearing half: a suite that goes green by losing tests satisfies 'OK' and fails this criterion. Any test removed must be named in results[] with a reason.",
+      "statement": "The refactor preserves behaviour: the full tessera suite is green after, and no test that existed before is missing after, checked by identity rather than by count.",
+      "verification": "Capture the set of test identifiers before the refactor and again after, each from `python3 -m unittest discover -s tessera -t . -v`, taking the fully qualified id of every test rather than the total. The after-set must be a SUPERSET of the before-set, and the run must exit OK. Baseline captured in this session: 208 unique test ids, `Ran 208 tests in 19.070s, OK`. A count comparison is explicitly insufficient and was the earlier form of this criterion: deleting five tests while adding six raises the count and hides the deletion. That is not a hypothetical risk here, because R4 (DEVH-10) is specified to add a test to this same suite, so the count is expected to rise for legitimate reasons and cannot distinguish them. Any test present before and absent after must be named in results[] with a reason; the superset check makes such a removal impossible to land silently.",
       "verifiable": true,
       "added": "2026-09-02T11:00:00Z"
     },
@@ -68,8 +68,8 @@
     },
     {
       "id": "F5",
-      "statement": "The suite goes green by deleting or skipping tests the refactor broke. 'OK' is reported honestly and coverage silently shrinks.",
-      "detection": "C4 requires the test COUNT to be at least the pre-refactor 208 and any removal to be named with a reason."
+      "statement": "The suite goes green by deleting or skipping tests the refactor broke, and the deletion is masked by additions made in the same change -- drop five, add six, and a count check reads as growth. 'OK' is reported honestly and coverage silently shrinks. R4 (DEVH-10) adding a test to this same suite provides exactly that cover.",
+      "detection": "C4 compares the SET of fully qualified test ids before and after and requires a superset, so an id that disappears fails regardless of how many were added alongside it."
     },
     {
       "id": "F6",
@@ -106,7 +106,7 @@
     "components": 1,
     "interfaces": 0,
     "test_criteria": 5,
-    "frozen_at": "2026-09-02T11:30:43Z"
+    "frozen_at": "2026-09-02T11:38:14Z"
   },
   "results": [],
   "amendments": [
@@ -196,10 +196,28 @@
       "why_it_matters_and_why_it_is_minor": "The remedy is unaffected: a relative threshold is correct regardless of what caused the dilution, and the amendment's own arithmetic checks out exactly (6.809 + (4.5-2.24) * 0.0881 = 7.008, below the frozen 7.05, so no correct implementation could have passed the original C3). It matters only in that the attribution UNDERSTATES the problem. If ~686 SLOC of dilution is already arriving from sources other than R23, and R24's three guards plus tests have not landed yet, then the absolute threshold would have kept breaking. That strengthens the case for the amendment rather than weakening it.",
       "recommendation": "Correct the cause line to name the measured delta rather than R23 alone, so a later reader does not conclude the dilution source is closed.",
       "disposition": "OPEN -- documentation accuracy only; does not block implementation"
+    },
+    {
+      "criterion_id": "C4",
+      "change": "statement and verification",
+      "from": "Required the test COUNT to be greater than or equal to the pre-refactor 208.",
+      "to": "Requires the after-set of fully qualified test ids to be a superset of the before-set, captured from `unittest discover -v`.",
+      "reason": "dev-harness-9b falsification finding A3. A count cannot detect a masked deletion: remove five tests, add six, the count rises and the criterion passes while coverage shrank. Live rather than hypothetical, because R4 (DEVH-10) is specified to add a test to this same suite, so growth in the count is expected and provides the cover. Set extraction verified in this session: 208 unique ids from discover -v.",
+      "requested_by": "dev-harness-9b (found), priya-desai (scoped)",
+      "at": "2026-09-02T12:20:00Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "correction to the C3 amendment's stated cause",
+      "from": "The C3 amendment attributed the dilution to R23 landing 1,278 SLOC, framed as though that accounted for the change in store.py's share.",
+      "to": "Measured by diffing per_file_detail across the two reports: total growth was 1,929 SLOC over 13 new files. R23's four files are 1,278 of it (security_privacy_convergence 439, token_bloat_diagnostic 425, foreman_quality_baseline 379, report_provenance 35). The other 651 came from R8's and R24's work landing in parallel -- atlas/ingest/tests/test_audit_scrub.py 242, monitoring/build_dashboard_data.py 240, atlas/ingest/audit_scrub.py 161, and the three bollard guard test files at 191 between them.",
+      "reason": "dev-harness-9b falsification finding A4, documentation accuracy. The C3 fix is unaffected -- 7.008 is below 7.05 under either attribution -- but naming one requirement as the cause understated the effect and would have misled a reader about how fast the denominator moves. It is still moving: the R24 guard tests in that list landed after the C3 amendment was written, which is itself the argument for C3 being relative rather than re-pinned.",
+      "requested_by": "dev-harness-9b (found), priya-desai (measured)",
+      "at": "2026-09-02T12:20:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:68d592b3b320bdb71c691fcbfd04654ece078d2d3709f38f355dec071491183d",
+    "criteria_hash_at_freeze": "sha256:7cd0cdb9a3b94bd9ad6673ef32430ccdd6ecc55ab3095cea319df065ca4c4c77",
     "match": null
   }
 }
