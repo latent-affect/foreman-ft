@@ -5,7 +5,11 @@
   "scope_version": 1,
   "created": "2026-08-24T05:58:00Z",
   "criteria_frozen_at": "2026-09-02T08:05:41Z",
-  "pre_implementation_brief": {"ticket_id": "DEVH-33", "persona": "dana-okafor", "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."},
+  "pre_implementation_brief": {
+    "ticket_id": "DEVH-33",
+    "persona": "dana-okafor",
+    "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."
+  },
   "done_state": "When preflight_blocking_gate.py would DENY because tessera_resolver.resolve returned ambiguous or unreachable, an Edit, Write, or Bash call whose sole write target resolves to {project_root}/.foreman/tessera-prefix is not denied; every other Edit, Write, or Bash call in that state is still denied. AND (R24, DEVH-2): bollard ships guard_destructive.py, guard_prodconfig.py and guard_untrusted_web.py, each of which, driven as a subprocess through its real hook entry point, emits a PreToolUse deny on the traffic it exists to block and emits nothing at all on everything else.",
   "criteria": [
     {
@@ -156,6 +160,36 @@
       "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_preflight_blocking_gate -v\ntest_allows_sole_remedy_bash_redirect ... ok\ntest_allows_sole_remedy_edit_or_write ... ok\ntest_denies_non_remedy_writes ... ok\ntest_remedy_path_uses_override_filename ... ok\nRan 4 tests in 0.008s\nOK",
       "recorded": "2026-09-02T09:00:00Z",
       "note": "Recorded retroactively by the design-and-scope session from a live run, not by the original implementer. The freeze predates this record by nine days."
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest discover -s . -t .\nRan 98 tests in 1.238s\nOK\n\nCovering tests:\ntest_recursive_force_delete_is_denied ... ok\ntest_force_clean_is_denied_as_the_second_distinct_shape ... ok\ntest_quote_obfuscated_recursive_delete_is_still_denied ... ok\ntest_benign_command_produces_empty_stdout ... ok\ntest_another_benign_command_produces_empty_stdout ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session",
+      "note": "Three distinct destructive shapes including the obfuscated variant, plus two benign controls, as the criterion requires."
+    },
+    {
+      "criterion_id": "C6",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest discover -s . -t .\nRan 98 tests in 1.238s\nOK\n\nCovering tests:\ntest_dotenv_production_denied_on_edit ... ok\ntest_dotenv_production_denied_on_write ... ok\ntest_second_distinct_shape_production_path_segment_denied ... ok\ntest_third_shape_docker_compose_prod_denied ... ok\ntest_ordinary_source_file_edit_produces_empty_stdout ... ok\ntest_ordinary_source_file_write_produces_empty_stdout ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session"
+    },
+    {
+      "criterion_id": "C7",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest discover -s . -t .\nRan 98 tests in 1.238s\nOK\n\nCovering tests:\ntest_cloud_metadata_endpoint_is_denied ... ok\ntest_localhost_hostname_is_denied ... ok\ntest_loopback_address_is_denied ... ok\ntest_private_range_address_is_denied ... ok\ntest_file_scheme_is_denied ... ok\ntest_ordinary_public_url_within_the_declared_surface_produces_empty_stdout ... ok\ntest_declared_matcher_covers_this_guards_expected_tool ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session",
+      "note": "test_declared_matcher_covers_this_guards_expected_tool satisfies C7's requirement that the surface be resolved from the declared matcher rather than assumed from the guard's name."
+    },
+    {
+      "criterion_id": "C8",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest discover -s . -t .\nRan 98 tests in 1.238s\nOK\n\nCovering tests:\ntest_empty_payload_exits_zero_with_no_output ... ok (x3, one per guard)\ntest_unrelated_tool_name_produces_empty_stdout ... ok (x3, one per guard)",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session"
     }
   ],
   "amendments": [

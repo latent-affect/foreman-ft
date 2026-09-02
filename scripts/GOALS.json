@@ -3,8 +3,12 @@
   "component": "scripts",
   "scope_version": 1,
   "created": "2026-08-29T00:00:00Z",
-  "criteria_frozen_at": "2026-09-02T08:05:41Z",
-  "pre_implementation_brief": {"ticket_id": "DEVH-35", "persona": "dana-okafor", "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."},
+  "criteria_frozen_at": "2026-09-02T11:43:12Z",
+  "pre_implementation_brief": {
+    "ticket_id": "DEVH-35",
+    "persona": "dana-okafor",
+    "note": "REQ-45 citation only -- does not touch criteria[] or its frozen hash."
+  },
   "done_state": "install-dev-harness.sh installs a working hooks/skills/agents set into a fresh machine's ~/.claude/ tree, substitutes every /path/to/... token with the real local path, and fails closed (nonzero exit, no partial install left in place) if any required file is missing from the source tree -- including every real persona file in agents/, not a hardcoded subset of it. AND (R24, DEVH-2): the preflight refuses to install a tree missing any one of the three security guards, and a guard installed by that installer denies a destructive command from its installed location, not merely from the build tree.",
   "criteria": [
     {
@@ -37,8 +41,8 @@
     },
     {
       "id": "C5",
-      "statement": "A guard installed by the installer actually denies a destructive command from its installed location.",
-      "verification": "muse's fourth verification leg, and the one that separates this from a file-existence check. Run a full install into a temp HOME. Then drive the INSTALLED copy of guard_destructive.py -- the file under the temp HOOKS_DST, not the repository source -- as a subprocess with a destructive PreToolUse payload on stdin, and assert permissionDecision == 'deny'. This is what proves the installed artifact works rather than the one in the build tree, and it catches token substitution that corrupts a guard's imports on the way in.",
+      "statement": "Each of the three guards, as installed by the installer, denies the traffic it exists to block when driven from its installed location.",
+      "verification": "muse's fourth verification leg, and the one that separates this from a file-existence check. Run a full install into a temp HOME. Then drive the INSTALLED copy of EACH of guard_destructive.py, guard_prodconfig.py and guard_untrusted_web.py -- the files under the temp HOOKS_DST, not the repository sources -- as subprocesses with a PreToolUse payload on stdin, and assert permissionDecision == 'deny' for each. All three are required. Token substitution rewrites files individually, so a substitution that corrupts one guard's imports leaves the others working; exercising only guard_destructive.py proves that one file survived installation and says nothing about the other two. Each guard must also be shown silent on a payload outside its own surface from the installed location, so the installed copy is not merely denying everything.",
       "verifiable": true,
       "added": "2026-09-02T09:00:00Z"
     }
@@ -65,6 +69,11 @@
       "id": "F4",
       "statement": "Guards are copied in but token substitution breaks their imports, so they exist at the destination and crash when invoked. Every install-time check passes and the harness runs with three hooks that raise on every call.",
       "detection": "C5 executes the installed copy from its installed location."
+    },
+    {
+      "id": "F5",
+      "statement": "The installed-guard probe covers one guard and the criterion is read as covering installation of all three. A substitution bug specific to guard_prodconfig.py or guard_untrusted_web.py -- a token appearing in only those files, say -- ships a guard that raises on every invocation, while every test passes and the install reports success.",
+      "detection": "C5 requires all three installed copies to be driven from the temp HOME and to deny their own traffic, plus a silence control for each."
     }
   ],
   "out_of_scope": [
@@ -94,6 +103,22 @@
       "status": "MET",
       "evidence": "$ /usr/bin/python3 -m unittest scripts.test_install_fail_closed.InstallFailClosedTests.test_required_agents_covers_every_real_agent_file -v\ntest_required_agents_covers_every_real_agent_file ... ok\nOK\n\nNegative control run first, confirmed real: same test against the pre-fix REQUIRED_AGENTS (5 of 7 agents) failed with 'agents/ has real files REQUIRED_AGENTS never checks: {owen-reyes.md, nadia-osei.md}'.",
       "recorded": "2026-08-29T00:00:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed\nRan 9 tests in 1.361s\nOK\n\nCovering tests:\ntest_guard_destructive_missing_fails_closed ... ok\ntest_guard_prodconfig_missing_fails_closed ... ok\ntest_guard_untrusted_web_missing_fails_closed ... ok\ntest_unmodified_tree_installs_successfully ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session",
+      "note": "Three separate deletion trials as the criterion requires, not one combined trial, plus the control that an unmodified tree still installs."
+    },
+    {
+      "criterion_id": "C5",
+      "status": "NOT MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest scripts.test_install_fail_closed\nRan 9 tests in 1.361s\nOK\n\nCovering tests:\ntest_installed_guard_destructive_denies_a_real_destructive_command ... ok",
+      "recorded": "2026-09-02T12:45:00Z",
+      "verified_by": "priya-desai, re-run in this session",
+      "note": "Covers guard_destructive.py only. C5 was widened in this same pass to require all three installed guards, so it is now unsatisfied: no equivalent test exists for guard_prodconfig.py or guard_untrusted_web.py. Recorded NOT MET rather than closing the criterion around the test that happens to exist. Remaining work filed as a ticket."
     }
   ],
   "amendments": [
@@ -105,10 +130,28 @@
       "reason": "PRD.md R24 / DEVH-2. Appended rather than replaced so the completed record's results[] keeps pointing at the criteria it evidences. integrity.criteria_hash_at_completion is left untouched as the historical attestation for C1-C3; match is set to null because it can be neither true nor false for the widened scope until C4 and C5 also complete.",
       "requested_by": "priya-desai",
       "at": "2026-09-02T09:00:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "change": "flagged, not yet changed -- open finding, scoping decision needed",
+      "from": "C5's statement and verification, as frozen, name only guard_destructive.py: \"the INSTALLED copy of guard_destructive.py\", and the component's own done_state says \"a guard\" (singular).",
+      "to": "Unchanged as written. Flagging that the implementation landed in d7b636c and the test suite (InstalledGuardDeniesFromItsRealLocationTests) still contains exactly one installed-copy denial test, test_installed_guard_destructive_denies_a_real_destructive_command -- no equivalent for guard_prodconfig.py or guard_untrusted_web.py. Re-run independently 2026-09-02: all 9 scripts/test_install_fail_closed.py tests pass, but C5 as literally written and as tested never exercises whether token substitution corrupted either of the other two guards' imports on the way in -- the exact class of bug C5 exists to catch (F4), for two of the three guards it's supposed to cover.",
+      "reason": "dev-harness-33, independent re-verification pass requested by agent-remediation-af following R24's implementation landing. Same gap named in the pre-implementation falsification pass (dev-harness-32's replacement task, before code existed); confirmed still open now that code and tests exist. Not fixing this myself -- flagging for a scoping decision: widen C5 to all three guards (matches C4's three-trial discipline and bollard's C5-C8 per-guard symmetry), or explicitly narrow the done_state/C5 statement to say ONLY guard_destructive.py's installed-copy behavior is guaranteed and record that as a deliberate, disclosed scope limit rather than an implicit one.",
+      "requested_by": "dev-harness-33",
+      "at": "2026-09-02T11:40:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "change": "statement and verification",
+      "from": "Required only guard_destructive.py's installed copy to be driven and to deny.",
+      "to": "Requires all three installed guards to be driven from the temp HOME, each denying its own traffic and each silent outside its own surface.",
+      "reason": "dev-harness-33 falsification. Widened rather than disclosed as a limit, because the property C5 exists to establish -- that installation does not corrupt a guard -- is per file: apply_tokens_tree rewrites each file separately, so one guard surviving says nothing about the others. Narrowing done_state instead would have documented the hole rather than closed it. Confirmed by reading scripts/test_install_fail_closed.py directly: the three deletion trials at lines 123-130 do cover all three guards, but the installed-denial test at line 161 exists only for guard_destructive. C5 is consequently recorded NOT MET.",
+      "requested_by": "dev-harness-33 (found), priya-desai (scoped)",
+      "at": "2026-09-02T12:45:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:19d416c72bdb0239c60b3f364a56ce40ed438740357b4ff44a37e0766359612f",
+    "criteria_hash_at_freeze": "sha256:6d4b57f84c2c08662d271fafaba6def8c9cb1865b3a30a87611ffa3bdba61234",
     "criteria_hash_at_completion": "sha256:96bb0856f27c67b4aca0169c512b385cd2c5e0b8f6460f047f9aeade8c56b223",
     "match": null
   },
@@ -116,6 +159,6 @@
     "components": 1,
     "interfaces": 0,
     "test_criteria": 5,
-    "frozen_at": "2026-09-02T08:05:41Z"
+    "frozen_at": "2026-09-02T11:43:12Z"
   }
 }
