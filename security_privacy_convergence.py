@@ -364,10 +364,16 @@ def cross_reference_code_findings(bandit_findings, secrets_findings, quality_rep
         elif len(active) == 1:
             single_source.append(row)
         if sources["quality_hotspot"] and active:
+            # R18 (DEVH-19): foreman_quality_baseline.py emits hotspot_signal_complexity_only
+            # instead of hotspot_signal when git churn is degenerate (this repo's own real
+            # state) -- read whichever key is actually present rather than assuming
+            # hotspot_signal unconditionally, which would KeyError here on that path.
+            hotspot = sources["quality_hotspot"]
+            signal_value = hotspot.get("hotspot_signal", hotspot.get("hotspot_signal_complexity_only"))
             quality_compound.append({
                 "file_path": fp,
                 "security_sources_firing": active,
-                "quality_hotspot_signal": sources["quality_hotspot"]["hotspot_signal"],
+                "quality_hotspot_signal": signal_value,
                 "note": "flagged by BOTH a security source and the complexity/maintainability "
                         "hotspot pass -- compounding-risk candidate.",
             })

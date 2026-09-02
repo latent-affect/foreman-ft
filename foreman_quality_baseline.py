@@ -405,7 +405,6 @@ def build_report(root: Path):
 
         mi_score = entry.get("maintainability_index", {}).get("score", 0)
         entry["approx_health_score_1_to_10"] = approximate_health_score(mi_score, max_cc)
-        entry["hotspot_signal"] = round(max_cc * entry["git_commits_touching_file"], 1)
 
         file_reports.append(entry)
 
@@ -413,6 +412,25 @@ def build_report(root: Path):
             file_texts[rel] = path.read_text(errors="ignore").splitlines()
         except Exception:
             pass
+
+    # R18 fix (DEVH-19): git churn's whole-history commit count is degenerate (every currently
+    # tracked file shares one value, this repo's real state today per GOALS.json C5) whenever
+    # the tree's real history is a squashed/rewritten distribution rather than an organic
+    # commit-per-change history. Multiplying by a constant does not change the RANKING
+    # hotspots_top15 sorts by, but "complexity x git churn" misdescribes a single-signal number
+    # as compound when churn contributes nothing but a fixed multiplier -- and R1's file-
+    # selection ranking reads this field. Detected from the real distribution rather than
+    # hardcoded to churn==1 (GOALS.json F12): len(set(churn_values)) <= 1 catches "every file
+    # shares one churn value" regardless of what that value happens to be.
+    churn_values = [f["git_commits_touching_file"] for f in file_reports]
+    churn_is_degenerate = len(set(churn_values)) <= 1
+    hotspot_signal_key = "hotspot_signal_complexity_only" if churn_is_degenerate else "hotspot_signal"
+    for entry in file_reports:
+        max_cc = entry["cyclomatic_complexity"]["max"]
+        if churn_is_degenerate:
+            entry["hotspot_signal_complexity_only"] = round(max_cc, 1)
+        else:
+            entry["hotspot_signal"] = round(max_cc * entry["git_commits_touching_file"], 1)
 
     # weighted vs simple average health (weighted by SLOC, CodeScene-style)
     valid = [f for f in file_reports if "error" not in f.get("raw", {})]
@@ -423,7 +441,7 @@ def build_report(root: Path):
         if total_sloc else 0
     )
 
-    hotspots = sorted(file_reports, key=lambda f: f.get("hotspot_signal", 0), reverse=True)[:15]
+    hotspots = sorted(file_reports, key=lambda f: f.get(hotspot_signal_key, 0), reverse=True)[:15]
     worst_mi = sorted(
         [f for f in valid if "error" not in f.get("maintainability_index", {})],
         key=lambda f: f["maintainability_index"]["score"]
@@ -445,6 +463,7 @@ def build_report(root: Path):
                 "health_score_1_to_10": "standalone approximation for THIS script only, "
                                          "not a CodeScene score",
             },
+            "hotspot_signal_degenerate_churn": churn_is_degenerate,
         },
         "aggregate": {
             "simple_average_health_1_to_10": simple_avg,
@@ -456,7 +475,7 @@ def build_report(root: Path):
         "hotspots_top15": [
             {
                 "file_path": f["file_path"],
-                "hotspot_signal": f["hotspot_signal"],
+                hotspot_signal_key: f[hotspot_signal_key],
                 "max_cc": f["cyclomatic_complexity"]["max"],
                 "git_commits": f["git_commits_touching_file"],
                 "mi_score": f.get("maintainability_index", {}).get("score"),
@@ -477,6 +496,15 @@ def build_report(root: Path):
         "duplicate_blocks_heuristic": duplicates,
         "per_file_detail": file_reports,
     }
+    if churn_is_degenerate:
+        constant_churn = churn_values[0] if churn_values else 0
+        report["meta"]["hotspot_signal_note"] = (
+            f"git churn is constant at {constant_churn} across every analyzed file (R18, "
+            f"DEVH-19) -- the hotspot signal below carries complexity only and is emitted as "
+            f"hotspot_signal_complexity_only, not hotspot_signal, so a reader does not mistake "
+            f"a single-signal number for the compound complexity-x-churn one the field name "
+            f"would otherwise imply."
+        )
     return report
 
 
@@ -494,12 +522,18 @@ def write_txt_summary(report, out_path: Path):
     lines.append(f"SLOC-weighted average health (1-10):  {a['sloc_weighted_average_health_1_to_10']}")
     lines.append(f"  -> {a['note']}")
     lines.append("")
+    degenerate_churn = m.get("hotspot_signal_degenerate_churn", False)
+    signal_key = "hotspot_signal_complexity_only" if degenerate_churn else "hotspot_signal"
     lines.append("-" * 70)
-    lines.append("TOP 15 HOTSPOTS (complexity x git churn -- fix these first)")
+    if degenerate_churn:
+        lines.append("TOP 15 HOTSPOTS (complexity only -- git churn is constant across every "
+                      "analyzed file, see meta.hotspot_signal_note)")
+    else:
+        lines.append("TOP 15 HOTSPOTS (complexity x git churn -- fix these first)")
     lines.append("-" * 70)
     for h in report["hotspots_top15"]:
         lines.append(
-            f"  {h['file_path']}  signal={h['hotspot_signal']}  "
+            f"  {h['file_path']}  signal={h[signal_key]}  "
             f"max_cc={h['max_cc']}  commits={h['git_commits']}  "
             f"MI={h['mi_score']} ({h['mi_rank']})"
         )
