@@ -29,6 +29,7 @@ ordinary permission layer is untouched.
 """
 
 import os
+import re
 import shlex
 import sys
 from pathlib import Path
@@ -55,6 +56,26 @@ CAPABILITY_SCOPE_SH = LIB_DIR / "capability_scope.sh"
 # C15's own test imports this name directly to enumerate the class rather than trusting a
 # description of it.
 CAPABILITY_CLASS_PATTERNS = guard_destructive.DESTRUCTIVE_PATTERNS
+
+
+def _profile_can_deny(profile_path: Path) -> bool:
+    """C19: shallow check that the resolved profile could deny SOMETHING before this guard
+    substitutes it for a pre-execution veto. Deliberately shallow -- it parses for the presence
+    of a `(deny ...)` rule, it does not and cannot (without running it) prove the profile denies
+    the RIGHT capability, which is C14's and C18's job against the real, shipped profile.
+
+    Exists because BOLLARD_DENY_CAPABILITY_SB_OVERRIDE (below) means the resolved profile is not
+    always the shipped one, and this guard's rewrite carries a destructive-shaped command past
+    Claude Code's own ambient safety layer (measured directly this session -- see DEVH-75):
+    substituting a profile that cannot deny anything is strictly worse than not registering this
+    guard at all, since the upstream layer that would have blocked the unwrapped command is
+    bypassed and nothing replaces it (F17).
+    """
+    try:
+        text = profile_path.read_text()
+    except OSError:
+        return False
+    return bool(re.search(r"\(deny\b", text))
 
 
 def _in_capability_class(command: str):
@@ -94,6 +115,18 @@ def main(data):
         return
 
     hc.set_rule(f"{RULE_ID}:{matched}")
+
+    if not _profile_can_deny(DENY_CAPABILITY_SB):
+        hc.deny(
+            f"guard_os_sandbox: this command matches a destructive-operation shape "
+            f"({matched}), but the capability-removal profile at {DENY_CAPABILITY_SB} cannot "
+            f"be shown to deny anything (missing, unreadable, or no deny rule present). "
+            f"Refusing to substitute a control that would deny nothing while its rewrite still "
+            f"bypasses the operator's own permission layer -- denying outright instead of "
+            f"allowing an unprotected rewrite through."
+        )
+        return
+
     hc.rewrite(
         _wrapped_command(command),
         reason=(
