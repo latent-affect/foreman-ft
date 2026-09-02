@@ -668,6 +668,12 @@ CREATE TABLE audit_event (
     cwd            TEXT,
     payload_json   TEXT NOT NULL,
     payload_bytes  INTEGER NOT NULL,
+    -- PRD.md R8 / GOALS.json C6: set by atlas/ingest/audit_scrub.py when a CREDENTIAL_PATTERNS
+    -- match was redacted from payload_json before this row was ever written, never inferred
+    -- from the payload's absence of a secret. DEFAULT 0 so a row inserted by anything that
+    -- predates this column (a raw test INSERT with an explicit column list) reads "not redacted"
+    -- rather than failing NOT NULL.
+    payload_redacted INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (stream_id, byte_offset)
 ) WITHOUT ROWID;
 CREATE INDEX ix_ae_type_ts ON audit_event(event_type, ts);
@@ -1247,7 +1253,7 @@ INSERT INTO dq_check (check_name, source_table, scope, severity, threshold_kind,
  ('handler_denominator_nonzero',  'hook_verdict', 'source',  'advisory','invariant', 'Structural-zero-denominator class. A handler with zero silent verdicts has a structurally zero false-positive denominator and no interpretable fire rate.',1),
  ('audit_envelope_wellformed',    'audit_event',  'source',  'contract','invariant', 'schema_version, a parseable ts and a non-empty event_type on every row.',1),
  ('audit_payload_size_bounded',   'audit_event',  'source',  'contract','lean',      'No single audit payload exceeds 1 MiB. Real max 682,196 bytes. LEAN: recalibrate on the first payload above the bound.',1),
- ('audit_payload_credential_scan','audit_event',  'source',  'advisory','invariant', 'adversarial-code-review verification finding (SERIOUS): auditplane_to_ingest is secret-bearing (section 0/4) and section 1 states "ten credential patterns scanned, zero hits" as a one-time authorship measurement, never wired as a running check, while v_fail_open_incident (in query facade ALLOWED_VIEWS) serves audit_detail=payload_json verbatim. This check makes zero-hits a continuously-verified alert, not a stale claim -- advisory, since a real hit is an incident to alert on, not grounds to withhold the whole source. Does not redact at read time; whether query/snapshot should additionally redact secret-bearing payloads is a separate, tracked design question, not decided here.',1),
+ ('audit_payload_credential_scan','audit_event',  'source',  'contract','invariant', 'adversarial-code-review verification finding (SERIOUS): auditplane_to_ingest is secret-bearing (section 0/4) and section 1 states "ten credential patterns scanned, zero hits" as a one-time authorship measurement, never wired as a running check, while v_fail_open_incident (in query facade ALLOWED_VIEWS) serves audit_detail=payload_json verbatim. Originally advisory, since a real hit was only ever detected after the fact and withholding the whole source over a serve-time read felt disproportionate. PRD.md R8 / GOALS.json C5 promotes it to contract now that atlas/ingest/audit_scrub.py redacts at write time: a hit here means the write-time gate itself failed, which is exactly the class of failure withholding the source is for, not a level to alert on and tolerate. Independent of and does not replace the write-time gate -- a second, differently-shaped check that does not share its blind spots.',1),
  ('audit_ledger_partition_by_cwd','audit_event',  'source',  'advisory','invariant', 'Rows whose cwd resolves to a registered project but which landed in global-safety. Measured 477.',1),
  ('tessera_event_id_unique',      'tessera_event','source',  'contract','invariant', 'v_flat stays 1:1 on event_id. Its comment join on (ticket_id, created_ts) fans out silently if two comments share a timestamp.',1),
  ('git_ticket_prefix_registered', 'git_commit',   'source',  'contract','invariant', 'Every stored ticket link has a prefix in dim_project. 15 of 167 real candidates dropped, incl. P0-3 and F5-001.',1),

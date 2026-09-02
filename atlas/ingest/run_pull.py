@@ -24,7 +24,7 @@ import functools
 import sqlite3
 from pathlib import Path
 
-from atlas.ingest import audit, stream, verdicts
+from atlas.ingest import audit, audit_scrub, stream, verdicts
 from atlas.resolve import run as resolve_run
 from atlas.warehouse import dq_runner, migrate
 from . import gitrepo_pull, tessera_pull
@@ -170,15 +170,29 @@ def run(warehouse_db_path, tessera_db_path,
     )
     audit_rows_inserted_by_source = {}
     audit_detail_by_source = {}
+    audit_scrub_drops_by_source = {}
     for source_name, source_path in audit_sources:
-        n, detail = _pull_stream_source(
-            warehouse_conn, source_name, source_path, audit.make_row_mapper(str(source_path)),
-            functools.partial(audit.insert_audit_event_row, ingest_run_id=run_id),
-        )
-        audit_rows_inserted_by_source[source_name] = n
-        audit_detail_by_source[source_name] = detail
+        # PRD.md R8 / atlas/GOALS.json (DEVH-13): audit-plane rows go through the write-time
+        # credential scrub, never directly through _pull_stream_source's plain
+        # audit.insert_audit_event_row path other sources (verdicts) still use.
+        result = audit_scrub.ingest_audit_source(warehouse_conn, source_name, source_path, run_id)
+        audit_rows_inserted_by_source[source_name] = result.rows_inserted
+        audit_scrub_drops_by_source[source_name] = result.dropped_count
+        if result.error is not None:
+            audit_detail_by_source[source_name] = f"tail() error: {result.error}"
+        else:
+            audit_detail_by_source[source_name] = (
+                f"rows_inserted={result.rows_inserted}, rows_skipped={result.rows_skipped}, "
+                f"rows_rejected_by_mapper={result.rows_rejected_by_mapper}, "
+                f"rotation_detected={result.rotation_detected}, "
+                f"fail_closed_drops={result.dropped_count}"
+            )
     audit_rows_inserted = sum(n for n in audit_rows_inserted_by_source.values() if n is not None) \
         if any(n is not None for n in audit_rows_inserted_by_source.values()) else None
+    # A dropped line is a fail-closed success (no credential persisted), not a clean run -- the
+    # caller must not be able to report success while silently having lost a record
+    # (GOALS.json's design_decision / C4 / F5).
+    audit_scrub_drops_total = sum(audit_scrub_drops_by_source.values())
 
     resolve_results = resolve_real_cwds(warehouse_conn)
     resolution_counts = {}
@@ -214,6 +228,8 @@ def run(warehouse_db_path, tessera_db_path,
         "audit_rows_inserted": audit_rows_inserted,
         "audit_rows_inserted_by_source": audit_rows_inserted_by_source,
         "audit_detail_by_source": audit_detail_by_source,
+        "audit_scrub_drops_total": audit_scrub_drops_total,
+        "audit_scrub_drops_by_source": audit_scrub_drops_by_source,
         "cwds_resolved": len(resolve_results),
         "resolution_counts": resolution_counts,
         "dq_checks_run": len(dq_results),
@@ -243,6 +259,17 @@ def main():
     print(f"[run_pull] dq_runner: {summary['dq_checks_run']} checks run, "
           f"{len(summary['dq_contract_failures'])} contract failures: {summary['dq_contract_failures']}, "
           f"{len(summary['dq_advisory_failures'])} advisory failures: {summary['dq_advisory_failures']}")
+    if summary["audit_scrub_drops_total"]:
+        print(f"[run_pull] audit scrub: {summary['audit_scrub_drops_total']} line(s) fail-closed "
+              f"dropped: {summary['audit_scrub_drops_by_source']}")
+    # A fail-closed drop means no credential was persisted -- exactly the guarantee working as
+    # designed -- but it must never look like a clean run to whatever invoked this process
+    # (PRD.md R8 / GOALS.json's design_decision / C4 / F5: silent record loss is the failure
+    # mode per-line atomicity trades for, and this is the one place that trade gets reported).
+    # Deliberately scoped to audit_scrub drops only -- dq_contract_failures is pre-existing
+    # behavior outside R8's freeze and this change does not touch its semantics.
+    if summary["audit_scrub_drops_total"]:
+        return 1
     return 0
 
 

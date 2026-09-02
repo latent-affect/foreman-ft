@@ -35,7 +35,7 @@ EXPECTED_CHECKS = {
     "handler_denominator_nonzero": ("hook_verdict", "source", "advisory", "invariant"),
     "audit_envelope_wellformed": ("audit_event", "source", "contract", "invariant"),
     "audit_payload_size_bounded": ("audit_event", "source", "contract", "lean"),
-    "audit_payload_credential_scan": ("audit_event", "source", "advisory", "invariant"),
+    "audit_payload_credential_scan": ("audit_event", "source", "contract", "invariant"),
     "audit_ledger_partition_by_cwd": ("audit_event", "source", "advisory", "invariant"),
     "tessera_event_id_unique": ("tessera_event", "source", "contract", "invariant"),
     "git_ticket_prefix_registered": ("git_commit", "source", "contract", "invariant"),

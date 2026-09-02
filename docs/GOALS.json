@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "DEVH",
+  "component": "docs",
+  "scope_version": 1,
+  "created": "2026-09-02T08:40:00Z",
+  "status": "citation-anchor, not a full component freeze",
+  "note": "The 'docs' component has no design-and-scope pass of its own yet -- it was only declared as a component during the Run 2 architecture backfill (ARCHITECTURE.md, 'docs was also never declared as a component at all -- added, because R16b and R22 both write into it'). This file exists only so pre_implementation_brief_gate.py has something to cite a brief ticket into for writes to docs/** made in service of another component's already-frozen GOALS.json. It is not a frozen set of criteria for the docs component itself, and should not be read as one. A real design-and-scope pass for 'docs' (if this component ever needs its own, rather than always being written to in service of another component's frozen criteria) is Priya Desai's call, not this implementer's.",
+  "briefs": [
+    {
+      "ticket_id": "DEVH-26",
+      "persona": "dana-okafor",
+      "covers": "docs/atlas-architecture.md section 16: payload_redacted column on audit_event, audit_payload_credential_scan severity advisory->contract",
+      "authorizing_freeze": "atlas/GOALS.json C5, C6 (DEVH-13 / PRD.md R8)"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "audit_event's DDL block in docs/atlas-architecture.md section 16 declares payload_redacted INTEGER NOT NULL DEFAULT 0, extraction and migration both succeed against the edited document, and the column is real in an actually created database.",
+      "verification": "atlas.warehouse.ddl.extract_schema_and_seed_sql() and ddl.ddl_sha256() run against the edited file without raising DdlExtractionError. atlas.warehouse.migrate.apply() runs the extracted schema_sql against a fresh sqlite3 connection without raising. PRAGMA table_info(audit_event) on that connection lists a payload_redacted row, type INTEGER, notnull=1, dflt_value='0' (cid=13 as actually verified 2026-09-02, corrected from this criterion's own original guess of 14).",
+      "verifiable": true
+    },
+    {
+      "id": "C2",
+      "statement": "audit_payload_credential_scan's seed row in the same section's dq_check INSERT carries severity='contract', not 'advisory', and no other row's check_name, source_table, scope, severity, threshold_kind, or implemented value changed.",
+      "verification": "A fresh migrate.connect() against a temp db, then SELECT check_name, source_table, scope, severity, threshold_kind FROM dq_check yields exactly 19 rows (unchanged count) and matches atlas.warehouse.tests.test_schema.EXPECTED_CHECKS once that dict's audit_payload_credential_scan entry is updated to ('audit_event','source','contract','invariant') -- the only entry that changes. test_exactly_21_tables_and_18_views stays green (a column addition must not change table/view counts).",
+      "verifiable": true
+    }
+  ],
+  "criteria_frozen_at": "2026-09-02T07:51:35.164516Z",
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:c783601573dd57267034c7ba3a712c1a4ed29f1d4bd6f636f203514525e465ba",
+    "match": null
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 0,
+    "test_criteria": 2,
+    "frozen_at": "2026-09-02T07:51:35.164516Z"
+  },
+  "amendments": [
+    {
+      "criterion_id": "C1",
+      "change": "verification",
+      "from": "Predicted payload_redacted at column position 14 in PRAGMA table_info, before the edit was ever run.",
+      "to": "Corrected to cid=13 (0-indexed), the actual position confirmed by running migrate.apply() against the edited DDL and reading PRAGMA table_info back.",
+      "reason": "Self-caught while verifying this same freeze's own criteria for real immediately after writing them, per this project's real-execution-only standard -- a wrong position number in a criterion marked verifiable:true is exactly the kind of unverified specific claim this project's own precedent (PRD.md section 0.1) warns against leaving uncorrected once caught.",
+      "requested_by": "dev-harness-run2-1e (self-caught during verification, not by another pass)",
+      "at": "2026-09-02T07:51:35.164516Z"
+    }
+  ]
+}
