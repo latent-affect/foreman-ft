@@ -4,7 +4,7 @@
   "component": "bollard",
   "scope_version": 1,
   "created": "2026-08-24T05:58:00Z",
-  "criteria_frozen_at": "2026-09-02T21:20:51Z",
+  "criteria_frozen_at": "2026-09-02T22:10:00Z",
   "pre_implementation_brief": {
     "ticket_id": "DEVH-33",
     "persona": "dana-okafor",
@@ -123,6 +123,13 @@
       "verification": "THREE runs of the installed harness non-interactively (claude -p) in a THROWAWAY project directory with its own .claude/settings.json, never the repo's shared config. The prompt in every run asks for a command whose sole effect is writing a marker file inside a directory lib/deny_capability.sb denies, and that command MUST be chosen to fall outside AllowlistGuard's own pattern set (assert that separately by driving guard_allowlist.py as a subprocess against it and requiring EMPTY stdout), so the three runs isolate each guard's contribution instead of measuring their union. Run 1 registers only guard_os_sandbox.py and guard_allowlist.py; assert the marker is ABSENT. Run 2 registers ONLY guard_os_sandbox.py, AllowlistGuard absent; assert the marker is ABSENT -- this is the run that actually tests R14a's claim, OS-kernel-level denial robust to any string obfuscation, since without it a completely non-functional OSSandboxGuard stub passes run 1 on AllowlistGuard's work alone. Run 3 is the discriminator: identical directory and prompt with NO guards registered; assert the marker IS present, because an absent marker is otherwise equally explained by the model declining to run the command, which would score a guard that does nothing as a pass. Record the harness version from claude --version in the evidence, because this criterion depends on hook behavior that is version-specific (see PRD-DELTA-R14-R15.md section 7.3).",
       "verifiable": true,
       "added": "2026-09-02T21:20:51Z"
+    },
+    {
+      "id": "C17",
+      "statement": "PatternFeedGuard's relationship to guard_destructive.py's DESTRUCTIVE_PATTERNS is disjoint by construction, not subsuming: driving each guard's real hook entry point against the other's own trap commands produces empty stdout in both directions.",
+      "verification": "cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_pattern_feed -v exits 0. PatternDisjointnessTests drives guard_pattern_feed.py as a SUBPROCESS against every trap command guard_destructive.py's own test file uses (recursive-force-delete in both flag orders, git-force-clean in both flag orders, device-level dd/mkfs overwrite, and the quote-obfuscated recursive-delete variant) and asserts EMPTY stdout for each; then drives guard_destructive.py as a SUBPROCESS against every trap command guard_pattern_feed.py's own PATTERN_FEED_PATTERNS covers (secure-delete shred, disk-erase diskutil, git force-push in both spellings, git force branch-delete, SQL DROP TABLE, SQL DROP DATABASE, and a quote-obfuscated force-push variant) and asserts EMPTY stdout for each -- this is R15b's 'two pattern sets are disjoint' requirement in the mechanical form F13 names. GuardPatternFeedTests separately proves guard_pattern_feed.py itself satisfies C5/C8's own discipline: DENY on each of its five declared shapes including one quote-obfuscated variant, EMPTY stdout on four benign near-miss controls (ordinary git push, ordinary git branch listing, an ordinary SELECT, diskutil list), and DENY-or-nothing on empty/unrelated payloads.",
+      "verifiable": true,
+      "added": "2026-09-02T22:10:00Z"
     }
   ],
   "failure_criteria": [
@@ -232,8 +239,8 @@
     "components": 1,
     "interfaces": 3,
     "interfaces_note": "Was 2. The third is bollard's side of the capability_scope.sh / deny_capability.sb wrapper contract, which did not exist before: a nonzero exit plus errno-shaped stderr discovered at execution time, structurally unlike the PreToolUse JSON decision contract (DEVH-63). Counted separately because a consumer cannot tell 'capability denied' from 'the command had an ordinary bug' without it.",
-    "test_criteria": 16,
-    "test_criteria_note": "Was 8. Growth is the eight criteria above and is recorded as an amendment, not a silent addition.",
+    "test_criteria": 17,
+    "test_criteria_note": "Was 16. C17 (PatternFeedGuard vs guard_destructive.py disjointness, R15b/DEVH-16) appended after C9-C16's own freeze -- R15b was deliberately left with no positive criterion at design-and-scope time (F13 named the risk, C9-C16 did not carry a passing test for it), closed here as part of building PatternFeedGuard, per the amendment below.",
     "frozen_at": "2026-09-02T21:20:51Z"
   },
   "results": [
@@ -310,6 +317,30 @@
       "recorded": "2026-09-02T20:55:00Z",
       "verified_by": "dev-harness-run2-e5, real run this session, DEVH-16/DEVH-62",
       "note": "guard_allowlist.py's main() wraps its classification call in a guard-local try/except calling hc.deny() on failure (DEVH-62's toy-modeled mitigation), unlike every other guard in bollard/ which relies on hook_common.run()'s shared fail-open. Field-equality assertions throughout, no substring search, per the criterion's own text."
+    },
+    {
+      "criterion_id": "C12",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_semantic_resolution -v\ntest_chr_concatenation_constructed_destructive_command_is_denied ... ok\ntest_hex_escape_constructed_destructive_command_is_denied_as_the_second_construction ... ok\ntest_chr_concatenation_resolving_to_a_harmless_token_produces_empty_stdout ... ok\ntest_benign_command_with_no_character_code_construction_produces_empty_stdout ... ok\ntest_unrelated_tool_name_produces_empty_stdout ... ok\ntest_empty_payload_exits_zero_with_no_output ... ok\nRan 10 tests in 0.113s\nOK\n\nguard_semantic_resolution.py driven as a real subprocess over stdin (F5), new file, no other guard imported or invoked by this test module -- AllowlistGuard/PatternFeedGuard/OSSandboxGuard absent by construction, not mocked off (F11). Two distinct constructions of the same destructive token both denied: chr(114)+chr(109)+chr(32)+chr(45)+chr(114)+chr(102)+... (chr-concatenation, PRD.md R15's named shape) and \\x72\\x6d\\x20\\x2d\\x72\\x66... (hex-byte escapes), both decoding to 'rm -rf ...'. The required control holds: chr(108)+chr(115) decodes to 'ls' and produces EMPTY stdout, so the guard resolves what the codes spell rather than denying on the mere presence of chr(.",
+      "recorded": "2026-09-02T22:45:00Z",
+      "verified_by": "dev-harness-run2-d2, real subprocess run this session, DEVH-16",
+      "note": "Additionally verified outside the unittest run, in a separate scratch script (per this project's 'test your own test code' rule): find_forbidden_calls-adjacent decode helpers (_decode_chr_concat, _decode_hex_escapes) reconstruct the literal token 'rm -rf ' from both encodings (not just an assertion that passed), and produce zero findings when the module's own AST scanner is pointed at hook_common.py, a real file of comparable complexity, ruling out a decoder that only happens to work on the two test fixtures."
+    },
+    {
+      "criterion_id": "C13",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_semantic_resolution -v\ntest_own_source_contains_no_forbidden_execution_call ... ok\ntest_scan_fires_on_direct_eval_fixture ... ok\ntest_scan_fires_on_dynamically_resolved_eval_fixture ... ok\ntest_fixtures_are_real_files_not_inline_strings ... ok\nRan 10 tests in 0.113s\nOK\n\nfind_forbidden_calls() lives in guard_semantic_resolution.py itself and is imported (not reimplemented) by the test. It ast.parses guard_semantic_resolution.py's own source and asserts zero findings for eval/exec/compile/__import__/os.system/os.popen/subprocess-by-name AND for any Call whose callee or argument traces through getattr/globals()/locals()/__builtins__. The SAME function is then run over two real fixture FILES on disk (bollard/fixtures_semantic_resolution/direct_eval_fixture.py, dynamic_eval_fixture.py -- never imported or executed, only ast.parse'd) and is shown to fire on both: 'eval' on the direct-call fixture, 'dynamic-resolution' on getattr(__builtins__, 'ev'+'al')(token), which a name-only scan for the literal token 'eval' would miss (F12).",
+      "recorded": "2026-09-02T22:45:00Z",
+      "verified_by": "dev-harness-run2-d2, real subprocess run this session, DEVH-16",
+      "note": "Full bollard/ regression suite re-run after adding this file: unittest discover, 144 tests, OK -- no regressions against the C1-C11/C17 work other sessions landed concurrently on this same freeze."
+    },
+    {
+      "criterion_id": "C17",
+      "status": "MET",
+      "evidence": "$ cd bollard && /Users/m5/.venv/bin/python3 -m unittest test_guard_pattern_feed -v\ntest_disk_erase_diskutil_is_denied ... ok\ntest_diskutil_list_produces_empty_stdout ... ok\ntest_empty_payload_exits_zero_with_no_output ... ok\ntest_git_force_branch_delete_is_denied ... ok\ntest_git_force_push_is_denied ... ok\ntest_ordinary_git_branch_listing_produces_empty_stdout ... ok\ntest_ordinary_git_push_produces_empty_stdout ... ok\ntest_ordinary_select_query_produces_empty_stdout ... ok\ntest_quote_obfuscated_force_push_is_still_denied ... ok\ntest_secure_delete_shred_is_denied ... ok\ntest_sql_drop_table_is_denied ... ok\ntest_unrelated_tool_name_produces_empty_stdout ... ok\ntest_destructive_trap_commands_do_not_fire_pattern_feed_guard ... ok\ntest_pattern_feed_trap_commands_do_not_fire_destructive_guard ... ok\ntest_pattern_sets_share_no_pattern_name ... ok\n\nRan 15 tests in 0.474s\n\nOK\n\nFull-suite regression check: $ /Users/m5/.venv/bin/python3 -m unittest discover -s . -t .\nRan 144 tests in 2.050s\n\nOK",
+      "recorded": "2026-09-02T22:10:00Z",
+      "verified_by": "dev-harness-run2 implementing session (DEVH-16), real subprocess run captured this session",
+      "note": "PatternDisjointnessTests is the load-bearing half: both directions (guard_pattern_feed against guard_destructive's trap commands, and guard_destructive against guard_pattern_feed's trap commands) produced empty stdout, proving disjoint ownership rather than asserting it."
     }
   ],
   "amendments": [
@@ -402,10 +433,19 @@
         "note": "Recorded here because foreman:design-and-scope's falsification step is NOT mechanically enforced -- no hook checks for a review record the way architecture_gate.py checks for ARCHITECTURE-REVIEW.md. Without this block, a frozen file would be indistinguishable from a reviewed one."
       },
       "at": "2026-09-02T21:20:51Z"
+    },
+    {
+      "criterion_id": null,
+      "change": "criterion appended (C17), R15b's design decision recorded",
+      "from": "C9-C16 covered R14a/R14b/R14c/R15a/R15b's build requirements, but R15b's own text (PatternFeedGuard subsumes-or-is-disjoint-from guard_destructive.py) was left with no positive criterion -- F13 named the risk (duplication) but no C-numbered test proved either resolution. bollard/guard_pattern_feed.py did not exist yet.",
+      "to": "R15b decided DISJOINT BY CONSTRUCTION, not subsume: guard_pattern_feed.py owns a genuinely different set of destructive-command shapes (secure-delete, disk-erase, git history rewrite, SQL schema drop) than guard_destructive.py's existing DESTRUCTIVE_PATTERNS (recursive-force-delete, git-force-clean, device-level overwrite), and guard_destructive.py is unmodified -- its own C5 criterion, frozen under the original C1-C8 freeze, is not reopened by this change. C17 appended as the positive criterion R15b's own text implies but C9-C16 did not carry; scope_estimate.test_criteria moves 16 to 17.",
+      "reason": "R15b named the decision explicit-required but left it open at design-and-scope (PRD-DELTA-R14-R15.md section 5: either it subsumes that pattern list and the old one is retired, or the two sets are disjoint by construction). Decided while building PatternFeedGuard, per the dispatching session's own framing: a bounded technical call, not an escalation. Disjoint chosen over subsume because (1) guard_destructive.py is already shipped and its C5 criterion is outside this freeze's scope to reopen, (2) disjointness is the property a real, cheap, bidirectional subprocess test can prove mechanically (F13's own suggested test shape), and (3) it matches the additive-only framing this whole guard layer already carries rather than making PatternFeedGuard's presence load-bearing for coverage guard_destructive.py already provides alone.",
+      "requested_by": "dev-harness-run2 implementing session, dispatched by agent-remediation-aa citing DEVH-16",
+      "at": "2026-09-02T22:10:00Z"
     }
   ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:009a66078f256111a22a2f48c906b2ea461dfca079600bf6e5d9cdbbdd136d33",
+    "criteria_hash_at_freeze": "sha256:3bbf3938f34419071760ec1cc2860fc7b55872a507ebe68aecdfc035db72e485",
     "match": null
   },
   "scope_note": "This file now carries two work units and, unusually, two TESSERA projects: the original preflight remedy carve-out under project FORE, and R24 under DEVH. The 'project' field is left as FORE because that is what the completed C1-C4 work was filed under; R24's own ticket is DEVH-2. One GOALS.json per component makes this unavoidable today and it is disclosed rather than tidied away. As of the R14/R15 freeze this file carries a third work unit (DEVH-16, R14a/R14b/R14c/R15a/R15b), also under DEVH. Same disclosure, same reason: one GOALS.json per component is what goals_freeze_gate resolves."
