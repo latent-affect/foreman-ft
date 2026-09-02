@@ -48,28 +48,30 @@ location. Five distinct search terms: the filename, `OSSandboxGuard`, `SemanticR
 `AllowlistGuard`, `PatternFeedGuard`. A third pass over this repository added `su""do`,
 `layered_command`, `allowlist inversion` and `capability by construction`.
 
-**Precise statement of the result, corrected after independent falsification
-(`ARCHITECTURE-REVIEW.md` finding 1, re-run and confirmed in this session):** zero hits in
-executable code anywhere in that scope. The terms do appear, in six files, every one of them a
-narrative document describing the guard rather than implementing it:
+**Precise statement of the result, and it is deliberately an invariant rather than a file
+list.** Zero hits in executable code anywhere in that scope. Every hit, without exception, is a
+narrative document describing or discussing the guard rather than implementing it: the three
+successive revisions of the source brief, this pipeline's own PRD, architecture, design-and-scope
+and handoff records, and a muse enumeration written the same night.
 
-```
-/Users/m5/Downloads/dev-harness-BUILD-BRIEF.md
-/Users/m5/Downloads/dev-harness-BUILD-BRIEF_1.md
-/Users/m5/Downloads/dev-harness-BUILD-BRIEF_2.md   <- this PRD's own cited input
-/Users/m5/dev/dev-harness-run2/PRD.md              <- this document
-/Users/m5/dev/dev-harness-run2/ARCHITECTURE.md     <- this pipeline's own architecture pass
-/Users/m5/agent-remediation/HANDOFF-20260901-OVERNIGHT-RUN2-PIPELINE.md
-```
+**The count is not stable and must not be quoted as one.** Two earlier revisions of this section
+have already been wrong about it. The first claimed "zero hits on any term in either search",
+which was false — `/Users/m5/Downloads` and `/Users/m5/agent-remediation` are inside the stated
+scope and both produced hits. The second corrected that but enumerated six specific paths, which
+went stale within the hour: the filename search actually returned eight, and two of the
+additions (`DESIGN-AND-SCOPE.md`, a muse enumeration) exist *because this pipeline kept writing
+documents about the search*. Every document produced in the course of investigating this question
+becomes another hit in it. This document is itself on the list.
 
-An earlier revision of this section said "zero hits on any term in either search" over that
-scope, which is not accurate: `/Users/m5/Downloads` and `/Users/m5/agent-remediation` are both
-inside the stated scope and both produced hits. The disposition does not change, and no working
-implementation exists anywhere. But this sentence is the sole evidentiary basis for the
-highest-severity operator escalation in this document, so it gets stated at the precision that
-weight demands. The distinction the earlier revision already drew correctly for its search of
-this repository — hits in prose describing a design are not hits on the design — is the one that
-needed extending to the machine-wide claim, and now does.
+So the claim is stated as the property that survives that feedback loop: **no executable
+implementation exists anywhere in the searched scope, and the set of prose mentions grows
+monotonically as this investigation is written up.** A reader re-running the search will find
+more files than any snapshot here names, and that is expected rather than a discrepancy. This is
+the same correction R18 needed for the same reason — a snapshot count that this project's own
+output keeps invalidating.
+
+That precision matters here more than anywhere else in the document, because this sentence is the
+sole evidentiary basis for the highest-severity operator escalation in it.
 
 One thing the corrected result adds rather than removes: the design is described in three
 successive revisions of the source brief, and no implementation appeared alongside any of them.
