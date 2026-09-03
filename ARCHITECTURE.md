@@ -553,6 +553,17 @@ account for.
   may have already diverged, per this project's own previously-named registry-sync gap.
 - **`repo_context_part_*.txt`'s exact provenance is inferred from its own section headers, not
   confirmed against a specific commit or session that generated it.**
+- **PatternFeedGuard (R14/R15) and the already-shipped `guard_destructive.py` both deny on
+  raw-string regex matching, not on a parsed command.** A cross-family audit (Fable 5.1, read-only,
+  against this project's real corpus —
+  `/Users/m5/agent-remediation/docs/letter-versus-intent/HOOK-EVASION-PATTERNS-AND-CATCHES.md`)
+  argues this is structurally an arms race rather than a control: every fix closes exactly the
+  spelling it was tested against and leaves the next enumerable one open, observed three times in
+  this repo's own corpus tonight. Their recommendation — parse the command (`shlex`/AST) and deny
+  on unparseable-or-obfuscated content itself, rather than matching known-bad strings — is the same
+  shape as this document's own constraint on `SemanticResolutionGuard` (classify without
+  evaluating, above). Explicitly out of scope for this pass — Jon's call, REQ-13a territory, needs
+  its own architecture stage — named here only so it isn't lost before that stage starts.
 
 ## Addendum — found during design-and-scope, 2026-09-02
 
