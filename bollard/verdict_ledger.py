@@ -69,6 +69,36 @@ STOLEN = "stolen"
 VALID_DECISIONS = ("deny", "defer", "ask", "allow")
 
 
+def _write_fallback_marker(resolved_handler_id, verdict, data, exc):
+    """Best-effort, structurally distinct record for a verdict the main write lost.
+
+    DEVH-77: a missing line in VERDICT_LOG was ambiguous between "the guard correctly
+    stayed quiet" (record() never called) and "record() was called and the write failed"
+    (swallowed below, stderr-only) -- which defeats this module's own stated purpose of
+    telling those apart. `ledger_write_failed` makes the second case a distinct, queryable
+    shape instead of silence. Never raises: a fallback that itself fails just leaves the
+    stderr print as the last resort, same as before this existed.
+    """
+    try:
+        now = datetime.now(timezone.utc)
+        fallback_obj = {
+            "ts": now.isoformat().replace("+00:00", "Z"),
+            "epoch_ms": int(now.timestamp() * 1000),
+            "handler_id": resolved_handler_id,
+            "ledger_write_failed": True,
+            "attempted_verdict": verdict if isinstance(verdict, str) else repr(verdict),
+            "error": repr(exc),
+            "session_id": data.get("session_id") if isinstance(data, dict) else None,
+        }
+        fallback_obj = {k: v for k, v in fallback_obj.items() if v is not None}
+        VERDICT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with VERDICT_LOG.open("a") as handle:
+            handle.write(json.dumps(fallback_obj) + "\n")
+        os.chmod(VERDICT_LOG, 0o600)
+    except Exception as fallback_exc:
+        print(f"[verdict_ledger] fallback write also failed: {fallback_exc}", file=sys.stderr)
+
+
 def record(data, verdict, kind=None, duration_ms=None, handler_id=None, target=None,
            decision=None, rule_id=None):
     """Append one verdict line. Must never raise and must never block a hook.
@@ -82,6 +112,7 @@ def record(data, verdict, kind=None, duration_ms=None, handler_id=None, target=N
     and the event that provoked it share a probe identity without either knowing about the
     other.
     """
+    resolved_handler_id = handler_id or os.path.basename(sys.argv[0])
     try:
         if decision is not None and decision not in VALID_DECISIONS:
             raise ValueError(f"unknown decision {decision!r}, expected one of {VALID_DECISIONS}")
@@ -137,3 +168,6 @@ def record(data, verdict, kind=None, duration_ms=None, handler_id=None, target=N
         # quietly stopped recording would manufacture exactly the "correct silence" the
         # experiment is trying to measure, which is the worst possible way for this to fail.
         print(f"[verdict_ledger] write failed: {exc}", file=sys.stderr)
+        # DEVH-77: stderr alone still leaves a lost row indistinguishable from correct
+        # silence to anything reading VERDICT_LOG. Record that it was lost, distinctly.
+        _write_fallback_marker(resolved_handler_id, verdict, data, exc)
