@@ -96,13 +96,20 @@ This would not be my call if the gap were novel or the scope were production. It
   DEVH-68 (the third item from the original gate's §7) is correctly `closed` as of 18:30 today — so
   this isn't a systemic gap, just these two. Ticket status lagging real state is the exact shape of
   problem this whole review exists to catch; close both to match reality.
-- **This worktree (`dev-harness-run2-qa-security`) has no TESSERA project registration** — checked
-  the live `projects` table directly, no row for `qa-security`, `qa-general`, or `qa-evasion`.
-  `register_qa_worktrees.py` (DEVH-90) wired `.claude/settings.json` in all three but did not
-  register any of them as TESSERA projects. This is the same blocker `qa-security-b8`'s handoff
-  named hours ago (two files still `git add`-staged, uncommitted) — it has not actually cleared,
-  contrary to what a stale reading of "register_qa_worktrees.py has run" would suggest. Confirmed
-  live by attempting to commit this very document (see reply for outcome).
+- **Corrected in-line, not carried forward wrong**: this section originally claimed no TESSERA
+  project resolves for `qa-security` at all. Attempting the real commit disproved that — the `projects`
+  table indeed has no dedicated row for `qa-security`/`qa-general`/`qa-evasion`, but `tessguard`'s
+  commit-msg gate resolved this repo to a real registered project (`DEVH`) via some fallback and
+  blocked only because my first commit message cited no ticket. Re-committing with `DEVH-95, DEVH-66:
+  ...` in the message passed clean, no override used. So DEVH-95 and DEVH-66's fixes are now recorded
+  in git for real (`a722ee3`), and the actual, narrower gap is: **`register_qa_worktrees.py` (DEVH-90)
+  wired `.claude/settings.json` in the three QA forks but did not give any of them their own TESSERA
+  project row** — `qa-security-b8`'s two staged, unrelated test files (`bollard/test_guard_
+  shared_pattern_near_miss.py`, `bollard/test_guard_session_level_sequences.py`) remain uncommitted;
+  I did not commit them myself since they aren't this pass's work and b8's handoff should stay the
+  record of what they are. Worth a follow-up ticket, not a Go/Hold blocker: this fallback resolution
+  is undocumented and its exact mechanism (which project, by what rule) wasn't chased further here —
+  bounded pass.
 
 ## Files referenced above (full paths)
 
