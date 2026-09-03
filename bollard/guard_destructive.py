@@ -53,14 +53,36 @@ DESTRUCTIVE_PATTERNS = [
 # of the boundary rather than a comment that quietly goes stale. If one of them starts being
 # denied, that test fails on purpose -- update the declaration deliberately, do not delete the case.
 KNOWN_NOT_ENUMERATED = [
+    # These two are BELOW the enumeration's own destructiveness threshold, not oversights. The
+    # threshold was measured against the shipped guards rather than inferred from the list:
+    # `rm <file>` and `rm -f <file>` both PASS today; only the recursive/bulk forms (rm -rf,
+    # find -delete, dd to a device, mkfs) are denied. Enumerating a single-file truncate or unlink
+    # would make this guard stricter about those than it is about rm itself, which is incoherent
+    # rather than safer. If the threshold is ever deliberately lowered to any-single-file
+    # destruction, these two come off this list together with plain `rm` -- as one decision, not
+    # three separate ones.
     ("truncate_in_place", "truncate -s 0 /tmp/devh92-target/file",
-     "destroys file contents without any enumerated verb"),
+     "destroys one file's contents with no enumerated verb; single-target, so below the same "
+     "threshold that lets plain `rm <file>` through today (measured, not assumed)"),
     ("unlink_single_file", "unlink /tmp/devh92-target/file",
-     "the single-file sibling of rm, never enumerated"),
-    ("interpreter_hosted_delete", "python3 -c import shutil;shutil.rmtree('/tmp/devh92-target')",
-     "the destructive verb lives inside an interpreter argument, so the enumerated shell verbs "
-     "never appear -- the general form of this is unbounded, since any interpreter on PATH is "
-     "another spelling"),
+     "the single-file sibling of rm; plain `rm <file>` passes today, so denying this one would "
+     "be stricter about unlink than about rm"),
+    # Both interpreter forms Clint's DEVH-92 verdict named, declared rather than enumerated. The
+    # verdict named find-delete, shutil.rmtree AND perl-unlink; find-delete landed as a pattern
+    # above, these two did not, and the reasoning is on the ticket (comment 1357). Both are here
+    # so a named-but-not-delivered item exists somewhere on disk rather than only in prose -- which
+    # is the job this declaration exists to do, applied to its own scope.
+    ("interpreter_hosted_delete_python",
+     "python3 -c import shutil;shutil.rmtree('/tmp/devh92-target')",
+     "the destructive verb lives inside an interpreter argument, so no enumerated shell verb "
+     "appears -- and the general form is unbounded, since any interpreter on PATH is another "
+     "spelling. Enumerating this exact string would also deny every command that merely mentions "
+     "it, including this declaration's own example"),
+    ("interpreter_hosted_delete_perl", "perl -e unlink('/tmp/devh92-target/file')",
+     "the second interpreter form the DEVH-92 verdict named. Same unbounded class as the python "
+     "one; the class spans both single-target spellings like this and bulk ones "
+     "(perl -MFile::Path -e rmtree(...)), which is why enumerating any single spelling of it "
+     "reads as coverage without being coverage"),
 ]
 
 
