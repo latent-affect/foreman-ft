@@ -81,17 +81,41 @@ def _profile_can_deny(profile_path: Path) -> bool:
     guard at all, since the upstream layer that would have blocked the unwrapped command is
     bypassed and nothing replaces it (F17).
 
-    Strips Seatbelt ';' line comments before matching (C19 case (d), Priya's own finding against
-    the shipped code): a profile whose only deny rule reads `; (deny file-write*)` still contains
-    the literal substring "(deny" and would pass a raw-text search, which is exactly the door
-    F17 exists to close -- a commented-out deny rule is indistinguishable from a real one to a
-    search that doesn't know what a comment is.
+    Strips Seatbelt ';' line comments (C19 case (d), Priya's own finding) AND the CONTENTS of
+    double-quoted string literals (DEVH-80, cf's own finding, empirically confirmed against real
+    sandbox-exec) before matching. Both are the same class of gap: a raw substring/regex search
+    over the whole file text cannot tell a real top-level `(deny ...)` rule apart from that same
+    text sitting inside a comment or inside a string argument of a harmless `(allow ...)` rule --
+    e.g. `(allow file-read* (literal "(deny file-write*)"))` denies nothing but would pass a
+    search that doesn't know what a string literal is. String contents are stripped BEFORE
+    comment-stripping so a ';' inside a string can't be misread as a real comment start either.
     """
     try:
         text = profile_path.read_text()
     except OSError:
         return False
-    active_text = "\n".join(line.split(";", 1)[0] for line in text.splitlines())
+
+    without_strings_chars = []
+    in_string = False
+    escaped = False
+    for ch in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            if ch == "\n":
+                without_strings_chars.append(ch)
+            continue
+        if ch == '"':
+            in_string = True
+            continue
+        without_strings_chars.append(ch)
+    without_strings = "".join(without_strings_chars)
+
+    active_text = "\n".join(line.split(";", 1)[0] for line in without_strings.splitlines())
     return bool(re.search(r"\(deny\b", active_text))
 
 

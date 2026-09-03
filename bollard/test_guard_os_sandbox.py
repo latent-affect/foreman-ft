@@ -228,6 +228,23 @@ class TestGuardOsSandboxRefusesUnusableProfile(unittest.TestCase):
         self.assertEqual(hso["permissionDecision"], "deny")
         self.assertNotIn("updatedInput", hso)
 
+    def test_profile_with_deny_text_inside_a_string_literal_denies_rather_than_rewrites(self):
+        # DEVH-80, cf's own finding, empirically confirmed against real sandbox-exec: the
+        # literal text "(deny" inside a STRING ARGUMENT of a harmless (allow ...) rule still
+        # passes a raw substring/regex search, even though the rule itself denies nothing --
+        # (allow default) grants everything and the second rule is a no-op allow for a bogus
+        # path. Running this profile for real: sandbox-exec exits 0, marker written, zero
+        # protection.
+        string_literal_deny = self.scratch / "string_literal_deny.sb"
+        string_literal_deny.write_text(
+            '(version 1)\n(allow default)\n(allow file-read* (literal "(deny file-write*)"))\n'
+        )
+        proc = self._run_with_override(string_literal_deny)
+        out = json.loads(proc.stdout)
+        hso = out["hookSpecificOutput"]
+        self.assertEqual(hso["permissionDecision"], "deny")
+        self.assertNotIn("updatedInput", hso)
+
     def test_nonexistent_profile_path_denies_rather_than_rewrites(self):
         proc = self._run_with_override(self.scratch / "does-not-exist.sb")
         out = json.loads(proc.stdout)
