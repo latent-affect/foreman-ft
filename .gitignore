@@ -23,3 +23,7 @@ token_bloat_diagnostic.txt
 # Unreviewed binary. Nothing goes into a public repo that has not been read, and a PDF cannot be
 # read by the scan that cleared the files around it.
 dev-harness Run 2 build.pdf
+# Credential-target descriptors are machine-local configuration: each one names a specific tool
+# installed on a specific machine, and the filename alone discloses which. The committed part is
+# example.sh.template, which is not matched by this pattern. Write your own descriptor from it.
+bollard/lib/credential_targets/*.sh

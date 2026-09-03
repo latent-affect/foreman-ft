@@ -1,0 +1,77 @@
+# credential_targets/<name>.sh -- descriptor template
+#
+# Copy this to <name>.sh in this directory and edit. Real descriptors are
+# gitignored: each one names a specific tool installed on a specific machine,
+# which is local configuration rather than something this repo should carry.
+# The template is the committed part; your descriptor is yours.
+#
+# neutralize_credentials.sh walks every *.sh here, asks each whether it claims
+# the target root it was given, and stops at the first match. A descriptor
+# defines exactly two functions, both prefixed with the file's own basename.
+#
+# ---------------------------------------------------------------------------
+# 1. <name>_target_roots
+#
+# Prints one absolute path per line: the project roots this descriptor answers
+# for. List several when one tool holds the credential and others shell out to
+# it -- a wrapper that subprocesses the real binary inherits that binary's
+# credential resolution, so a trial against the wrapper is a trial against the
+# same fallback and needs the same neutralization.
+
+example_target_roots() {
+  printf '%s\n' \
+    "$HOME/src/your-tool" \
+    "$HOME/src/your-wrapper"
+}
+
+# ---------------------------------------------------------------------------
+# 2. <name>_discover_credential_fields
+#
+# Prints exactly two lines on success:
+#   line 1: the environment variable name the tool reads for its API key
+#   line 2: the credential-store item name it falls back to, or empty string
+#
+# ASK THE TOOL, DO NOT HARDCODE. Query the installed binary's own config
+# output and parse the field values out of it. A hardcoded guess silently
+# stops matching the day the tool renames a field, and it fails OPEN: the
+# wrapper unsets a variable nothing reads any more and reports success while
+# the real credential resolves untouched. That failure is invisible unless
+# something is checking, which is the whole reason this indirection exists.
+#
+# Return non-zero and print NOTHING if the binary is missing or its config
+# cannot be parsed. The caller treats that as "cannot determine config" and
+# refuses to run the command at all -- it must never be confusable with "this
+# tool declares no credential fields," which would run the command unprotected.
+
+example_discover_credential_fields() {
+  local bin
+  bin="$(command -v your-tool 2>/dev/null)" || return 1
+  [ -x "$bin" ] || return 1
+
+  local cfg
+  cfg="$("$bin" config 2>/dev/null)" || return 1
+  [ -n "$cfg" ] || return 1
+
+  # Parse cfg and print the two lines. Fail closed on any unexpected shape:
+  # a partial parse that yields an empty env var name must return non-zero
+  # rather than print a blank first line.
+  printf '%s\n' "$cfg" | /usr/bin/python3 -c '
+import json, sys
+raw = sys.stdin.read()
+# Adjust to your tool. This skeleton expects a header line then a JSON body.
+head, _, body = raw.partition("\n")
+try:
+    doc = json.loads(body)
+except Exception:
+    sys.exit(1)
+section = doc.get("ai")
+if not isinstance(section, dict):
+    sys.exit(1)
+env_name = section.get("api_key_env")
+store_name = section.get("api_key_keychain")
+if not isinstance(env_name, str) or not env_name:
+    sys.exit(1)
+print(env_name)
+print(store_name if isinstance(store_name, str) else "")
+'
+}
