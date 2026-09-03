@@ -20,6 +20,27 @@ TESSERA_CWD = os.environ.get("TESSERA_CWD", "/path/to/ticket-system")
 OVERRIDE_FILENAME = "tessera-prefix"
 
 
+def _git_worktree_paths(cwd):
+    """DEVH-59, mirroring tessguard/gitutil.py's DEVH-54 helper (not imported directly --
+    this module stays dependency-free of the tessguard component per its own docstring).
+    All worktree paths sharing cwd's repository (`git worktree list`), or [] if cwd isn't
+    inside a git working tree or the command fails for any reason -- never raises."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(cwd), "worktree", "list", "--porcelain"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return []
+    if proc.returncode != 0:
+        return []
+    return [
+        line[len("worktree "):].strip()
+        for line in proc.stdout.splitlines()
+        if line.startswith("worktree ")
+    ]
+
+
 def run_cli(args, timeout=10):
     """Run the tessera CLI, returning (ok, parsed_json_or_None, stderr_text)."""
     try:
@@ -73,6 +94,19 @@ def resolve(project_root):
 
     root_str = str(Path(project_root).resolve())
     matches = [p["prefix"] for p in projects if p.get("source_root") == root_str]
+    if len(matches) == 0:
+        # DEVH-59: project_root itself may be a git worktree distinct from the one a project
+        # was registered against. Try every sibling worktree path before giving up -- the
+        # fallback must not manufacture a match where none exists (a non-git or
+        # zero-sibling root just falls through to unregistered below).
+        for sibling in _git_worktree_paths(project_root):
+            sibling_str = str(Path(sibling).resolve())
+            if sibling_str == root_str:
+                continue
+            sibling_matches = [p["prefix"] for p in projects if p.get("source_root") == sibling_str]
+            if sibling_matches:
+                matches = sibling_matches
+                break
     if len(matches) == 0:
         return {"status": "unregistered"}
     if len(matches) == 1:
