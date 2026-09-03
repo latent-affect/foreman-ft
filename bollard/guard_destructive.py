@@ -13,6 +13,16 @@ Matches on the NORMALIZED command text (quote and backslash characters stripped)
 string, so a quote-split obfuscation (rm -r""f, r'm' -rf) collapses to the same text a literal
 spelling would produce and is caught by the same pattern. This is the same evasion class this
 project's own PRD.md R13 names as the su""do class -- pattern-match the class, not each spelling.
+
+DESTRUCTIVE_PATTERNS BELOW IS READ BY ANOTHER GUARD, AND WIDENING IT HAS A SECOND EFFECT.
+guard_os_sandbox.py imports this list by live reference (not a copy) and uses it to decide WHEN to
+wrap a command in sandbox-exec. Inside that wrapped class it returns allow plus updatedInput, which
+deliberately bypasses the operator's own permission prompt -- the substituted control there is the
+kernel-level sandbox, per PRD-DELTA-R14-R15.md section 3, Option C. So adding a pattern here does
+not only add a deny: it also widens the set of commands whose permission prompt is replaced by a
+sandbox. The live reference means the two never drift, which is by design and verified, but it also
+means the coupling is invisible from this file unless it is written down. Found by a real
+security-review pass (DEVH-16 comment 1368) which noted the disclosure ran only one way.
 """
 
 import re
