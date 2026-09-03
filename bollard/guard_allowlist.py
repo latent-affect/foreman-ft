@@ -34,8 +34,43 @@ import hook_common as hc  # noqa: E402
 RULE_ID = "GUARD-ALLOWLIST"
 
 # Each entry: (capability name, compiled pattern against the NORMALIZED command text).
+#
+# DEVH-92 Class C: `sudo` was the only enumerated member of this capability, so any other
+# privilege-escalation binary passed the guard untouched -- not an obfuscated spelling of `sudo`,
+# a different program achieving the same thing, which no amount of quote-collapse or chr()/hex/
+# base64 resolution turns into `sudo`. Measured through the real 5-guard chain before this landed:
+# doas, pkexec, sudoedit and run0 all reached the agent unimpeded.
+#
+# The four added here are each a distinctive multi-character token, so matching them in this same
+# shape carries no realistic false-positive cost on ordinary command text. `su` is deliberately
+# NOT here -- see KNOWN_NOT_ENUMERATED below, which records why and proves it is still open.
 DENIED_CAPABILITIES = [
     ("privilege_escalation_sudo", re.compile(r"\bsudo\b")),
+    ("privilege_escalation_doas", re.compile(r"\bdoas\b")),
+    ("privilege_escalation_pkexec", re.compile(r"\bpkexec\b")),
+    ("privilege_escalation_sudoedit", re.compile(r"\bsudoedit\b")),
+    ("privilege_escalation_run0", re.compile(r"\brun0\b")),
+]
+
+# THE COVERAGE BOUNDARY, DECLARED RATHER THAN IMPLIED (DEVH-92 Class C).
+#
+# Clint's architecture verdict on DEVH-92 says this in prose: Class C is NOT closed by landing an
+# enumeration, any non-enumerated tool evades identically, and expanding the list on each discovery
+# is the correct and only available response until a non-enumeration layer is designed. Prose in a
+# ticket comment is a caveat someone has to go and find. This list is the same statement as an
+# artifact that fails when the boundary silently moves.
+#
+# Each entry: (name, an example that is NOT denied today, why it is out).
+# test_class_c_coverage_boundary.py asserts every example still passes the real chain. If one
+# starts being denied, that test fails -- which is the point: either the enumeration grew and this
+# declaration is now stale, or something changed matching behaviour without saying so. Update this
+# list deliberately; do not delete the failing case.
+KNOWN_NOT_ENUMERATED = [
+    ("privilege_escalation_su", "su root -c id",
+     "a bare \\bsu\\b in this matching shape denies ordinary text too -- normalization strips "
+     "quotes, so `git commit -m \"su\"` collapses to a match. Catching it needs command-position "
+     "awareness, which is a change to HOW matching works, not to the list, and therefore out of "
+     "scope for this ticket by its own review boundary."),
 ]
 
 
