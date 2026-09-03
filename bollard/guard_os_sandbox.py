@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
 """OSSandboxGuard -- R14a (PRD.md R13/R14, TESSERA DEVH-16, DEVH-61 through DEVH-64,
 PRD-DELTA-R14-R15.md). Removes the destructive-filesystem-write CAPABILITY at the OS level for
-a Bash command in a declared capability class, regardless of how the command string is
-obfuscated -- the layer PRD.md R13 requires to still deny the `su""do` class even when every
-detection-layer guard is disabled.
+a Bash command in a declared capability class -- the layer PRD.md R13 requires to still deny
+the `su""do` class even when every detection-layer guard is disabled.
+
+SCOPE, STATED ACCURATELY (F18, found by Priya against the shipped guards): the capability is
+removed regardless of how the command STRING is obfuscated or spelled -- quote-split, built by
+concatenation, or otherwise constructed, since CAPABILITY_CLASS_PATTERNS matches on normalized
+text, not a literal spelling. It does NOT cover a destructive operation that never appears in a
+Bash command string at all: a script written via Write and executed as `sh <script>` routes
+around this guard entirely, because there is no command text here for a command-string matcher
+to see, regardless of how well it resists obfuscation. That is a routing gap, not a spelling
+gap, and C16's own claim (the capability-removal pair denies when detection is absent) still
+holds for the traffic this guard actually sees. A real fix is an architecture-stage scope call
+(the REQ-13a parse-then-deny redesign), not something this file patches around on its own.
 
 STRUCTURALLY NOT A PEER OF guard_destructive.py / guard_prodconfig.py, even though it shares
 their input contract and subprocess entry-point convention (DEVH-63). Those two guards decide
@@ -139,7 +149,7 @@ def main(data):
         reason=(
             f"guard_os_sandbox: this command matches a destructive-operation shape "
             f"({matched}); its filesystem-write capability is removed at the OS level "
-            f"regardless of how the command string is obfuscated."
+            f"regardless of how this command STRING is spelled or obfuscated."
         ),
     )
 
