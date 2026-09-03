@@ -1,50 +1,50 @@
 ======================================================================
 FOREMAN QUALITY BASELINE -- SUMMARY
 ======================================================================
-Files analyzed: 197
-Functions analyzed: 1423
+Files analyzed: 219
+Functions analyzed: 1633
 
 Simple average health (1-10):        8.3
-SLOC-weighted average health (1-10):  7.12
+SLOC-weighted average health (1-10):  7.19
   -> CodeScene's own docs warn simple averages misrepresent a codebase (their published example: 7.33 simple vs 2.18 weighted, same repo). Trust the weighted number more.
 
 ----------------------------------------------------------------------
 TOP 15 HOTSPOTS (complexity x git churn -- fix these first)
 ----------------------------------------------------------------------
   token_bloat_diagnostic.py  signal=60  max_cc=20  commits=3  MI=28.83 (A)
+  bollard/guard_os_sandbox.py  signal=60  max_cc=10  commits=6  MI=69.03 (A)
   bollard/component_coupling.py  signal=54  max_cc=27  commits=2  MI=41.21 (A)
   tessera/api/cli.py  signal=51  max_cc=51  commits=1  MI=33.1 (A)
-  foreman_quality_baseline.py  signal=44  max_cc=22  commits=2  MI=38.85 (A)
+  monitoring/foreman-status/foreman_status_dashboard_data.py  signal=45  max_cc=15  commits=3  MI=65.18 (A)
+  foreman_quality_baseline.py  signal=44  max_cc=22  commits=2  MI=39.02 (A)
   skills/foreman/scripts/foreman_init.py  signal=40  max_cc=20  commits=2  MI=43.55 (A)
   monitoring/compliance-cron/skill_broadscan.py  signal=36  max_cc=36  commits=1  MI=51.35 (A)
   atlas/ingest/run_pull.py  signal=34  max_cc=17  commits=2  MI=59.38 (A)
   security_privacy_convergence.py  signal=32  max_cc=16  commits=2  MI=32.25 (A)
-  monitoring/foreman-status/foreman_status_dashboard_data.py  signal=30  max_cc=15  commits=2  MI=63.36 (A)
+  bollard/tessera_resolver/tessera_resolver.py  signal=30  max_cc=15  commits=2  MI=62.56 (A)
   bollard/architecture_gate.py  signal=28  max_cc=14  commits=2  MI=69.83 (A)
+  monitoring/build_dashboard_data.py  signal=26  max_cc=26  commits=1  MI=23.33 (A)
+  bollard/verdict_ledger.py  signal=26  max_cc=13  commits=2  MI=66.94 (A)
   tessera/tessguard/transcript.py  signal=25  max_cc=25  commits=1  MI=64.32 (A)
-  tessera/store/store.py  signal=24  max_cc=8  commits=3  MI=22.3 (A)
-  skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py  signal=22  max_cc=22  commits=1  MI=62.58 (A)
-  skills/code-safety/skills/adversarial-code-review/scripts/posttooluse_hook.py  signal=20  max_cc=20  commits=1  MI=65.53 (A)
-  tessera/api/sql_query.py  signal=19  max_cc=19  commits=1  MI=57.56 (A)
 
 ----------------------------------------------------------------------
 TOP 15 WORST MAINTAINABILITY INDEX SCORES
 ----------------------------------------------------------------------
-  tessera/store/store.py  MI=22.3 (A)  SLOC=937
-  monitoring/build_dashboard_data.py  MI=26.26 (A)  SLOC=441
-  token_bloat_diagnostic.py  MI=28.83 (A)  SLOC=422
-  security_privacy_convergence.py  MI=32.25 (A)  SLOC=441
-  tessera/api/cli.py  MI=33.1 (A)  SLOC=381
-  tessera/api/http_api.py  MI=35.82 (A)  SLOC=458
-  atlas/warehouse/dq_runner.py  MI=37.44 (A)  SLOC=414
-  foreman_quality_baseline.py  MI=38.85 (A)  SLOC=403
-  tessera/api/tests/test_http_api.py  MI=40.9 (A)  SLOC=417
-  bollard/component_coupling.py  MI=41.21 (A)  SLOC=227
-  skills/code-safety/skills/adversarial-code-review/scripts/scan.py  MI=42.19 (A)  SLOC=328
-  skills/foreman/scripts/foreman_init.py  MI=43.55 (A)  SLOC=361
-  tessera/api/tests/test_cli.py  MI=43.97 (A)  SLOC=288
-  tessera/tessguard/tests/test_transcript.py  MI=46.17 (A)  SLOC=62
-  tessera/tessguard/tests/test_audit.py  MI=46.36 (A)  SLOC=195
+  tessera/store/store.py  MI=22.3 (A)  max_cc=8  SLOC=937
+  monitoring/build_dashboard_data.py  MI=23.33 (A)  max_cc=26  SLOC=473
+  token_bloat_diagnostic.py  MI=28.83 (A)  max_cc=20  SLOC=422
+  security_privacy_convergence.py  MI=32.25 (A)  max_cc=16  SLOC=441
+  tessera/api/cli.py  MI=33.1 (A)  max_cc=51  SLOC=381
+  tessera/api/http_api.py  MI=35.82 (A)  max_cc=10  SLOC=458
+  atlas/warehouse/dq_runner.py  MI=37.44 (A)  max_cc=10  SLOC=414
+  foreman_quality_baseline.py  MI=39.02 (A)  max_cc=22  SLOC=407
+  tessera/api/tests/test_http_api.py  MI=40.9 (A)  max_cc=5  SLOC=417
+  bollard/component_coupling.py  MI=41.21 (A)  max_cc=27  SLOC=227
+  skills/code-safety/skills/adversarial-code-review/scripts/scan.py  MI=42.19 (A)  max_cc=13  SLOC=328
+  skills/foreman/scripts/foreman_init.py  MI=43.55 (A)  max_cc=20  SLOC=361
+  tessera/api/tests/test_cli.py  MI=43.97 (A)  max_cc=7  SLOC=288
+  tessera/tessguard/tests/test_gitgate.py  MI=44.08 (A)  max_cc=3  SLOC=312
+  tessera/tessguard/tests/test_transcript.py  MI=46.17 (A)  max_cc=1  SLOC=62
 
 ----------------------------------------------------------------------
 TOP 20 MOST COMPLEX FUNCTIONS (by cyclomatic complexity)
@@ -54,11 +54,13 @@ TOP 20 MOST COMPLEX FUNCTIONS (by cyclomatic complexity)
   bollard/component_coupling.py::extract_bash_write_targets  CC=27 (High risk)  NLOC=57
   monitoring/build_dashboard_data.py::report_cost_metric  CC=26 (High risk)  NLOC=37
   tessera/tessguard/transcript.py::scan_internal  CC=25 (High risk)  NLOC=54
-  foreman_quality_baseline.py::build_report  CC=22 (High risk)  NLOC=105
+  monitoring/build_dashboard_data.py::build_snapshot  CC=25 (High risk)  NLOC=63
+  foreman_quality_baseline.py::build_report  CC=22 (High risk)  NLOC=109
   skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py::main  CC=22 (High risk)  NLOC=53
   token_bloat_diagnostic.py::parse_transcripts  CC=20 (Moderate risk)  NLOC=50
   skills/foreman/scripts/foreman_init.py::verify_hooks_live_mid_build  CC=20 (Moderate risk)  NLOC=97
   skills/code-safety/skills/adversarial-code-review/scripts/posttooluse_hook.py::main  CC=20 (Moderate risk)  NLOC=76
+  monitoring/build_dashboard_data.py::check_gate_artifacts  CC=20 (Moderate risk)  NLOC=48
   token_bloat_diagnostic.py::detect_invalidation_spikes  CC=19 (Moderate risk)  NLOC=43
   tessera/api/sql_query.py::run_readonly_query  CC=19 (Moderate risk)  NLOC=46
   token_bloat_diagnostic.py::write_txt_summary  CC=18 (Moderate risk)  NLOC=87
@@ -67,8 +69,6 @@ TOP 20 MOST COMPLEX FUNCTIONS (by cyclomatic complexity)
   security_privacy_convergence.py::cross_reference_code_findings  CC=16 (Moderate risk)  NLOC=29
   bollard/cross_project_routing/routing_table.py::classify  CC=16 (Moderate risk)  NLOC=23
   security_privacy_convergence.py::write_txt_summary  CC=15 (Moderate risk)  NLOC=53
-  token_bloat_diagnostic.py::analyze_launch_clusters  CC=15 (Moderate risk)  NLOC=33
-  monitoring/build_dashboard_data.py::build_snapshot  CC=15 (Moderate risk)  NLOC=48
 
 ----------------------------------------------------------------------
 EXACT-DUPLICATE BLOCKS (heuristic, >= 6 lines) -- top matches
@@ -78,16 +78,16 @@ EXACT-DUPLICATE BLOCKS (heuristic, >= 6 lines) -- top matches
   6 lines, 12 occurrences: tessera/api/tests/test_sse.py:15, tessera/store/tests/test_projection.py:11, tessera/store/tests/test_sql_identifier_safety.py:42, tessera/store/tests/test_column_descriptions.py:11
   6 lines, 11 occurrences: tessera/store/tests/test_projection.py:2, tessera/store/tests/test_idempotency.py:4, tessera/store/tests/test_sql_identifier_safety.py:33, tessera/store/tests/test_datasets.py:2
   6 lines, 9 occurrences: atlas/snapshot/tests/test_publish_refusal.py:4, atlas/resolve/tests/test_override.py:4, atlas/resolve/tests/test_matching.py:4, atlas/ingest/tests/test_growth_and_partial_lines.py:4
+  6 lines, 8 occurrences: tests/test_hotspot_signal_relabel.py:10, tests/test_measurement_provenance.py:19, scripts/test_install_fail_closed.py:6, tessera/tessguard/tests/test_gitgate.py:2
   6 lines, 8 occurrences: tessera/store/tests/test_projection.py:1, tessera/store/tests/test_sql_identifier_safety.py:32, tessera/store/tests/test_datasets.py:1, tessera/store/tests/test_column_descriptions.py:1
-  6 lines, 7 occurrences: tests/test_hotspot_signal_relabel.py:10, tests/test_measurement_provenance.py:19, scripts/test_install_fail_closed.py:6, tessera/tessguard/tests/test_gitgate.py:2
   6 lines, 6 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:4, atlas/snapshot/tests/test_index_shape.py:4, atlas/snapshot/tests/test_unresolved_shards.py:8, atlas/snapshot/tests/test_shard_sharing.py:4
   6 lines, 6 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:5, atlas/snapshot/tests/test_index_shape.py:5, atlas/snapshot/tests/test_unresolved_shards.py:9, atlas/snapshot/tests/test_shard_sharing.py:5
   6 lines, 6 occurrences: atlas/resolve/tests/test_override.py:19, atlas/ingest/tests/test_stream_identity.py:41, atlas/ingest/tests/test_growth_and_partial_lines.py:17, atlas/ingest/tests/test_growth_and_partial_lines.py:44
+  6 lines, 6 occurrences: bollard/test_guard_prodconfig.py:6, bollard/test_guard_semantic_resolution.py:19, bollard/test_class_c_coverage_boundary.py:30, bollard/test_guard_untrusted_web.py:10
+  6 lines, 6 occurrences: bollard/guard_allowlist.py:89, bollard/guard_pattern_feed.py:84, bollard/ship_readiness_gate.py:140, bollard/guard_destructive.py:111
   6 lines, 5 occurrences: tests/test_hotspot_signal_relabel.py:9, tests/test_measurement_provenance.py:18, scripts/test_install_fail_closed.py:5, bollard/test_ship_readiness_gate.py:9
   6 lines, 5 occurrences: tessera/store/store.py:470, tessera/store/store.py:497, tessera/store/store.py:514, tessera/store/store.py:540
-  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:6, atlas/snapshot/tests/test_index_shape.py:6, atlas/snapshot/tests/test_unresolved_shards.py:10, atlas/snapshot/tests/test_shard_sharing.py:6
-  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:7, atlas/snapshot/tests/test_index_shape.py:7, atlas/snapshot/tests/test_unresolved_shards.py:11, atlas/snapshot/tests/test_shard_sharing.py:7
-  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:8, atlas/snapshot/tests/test_index_shape.py:8, atlas/snapshot/tests/test_unresolved_shards.py:12, atlas/snapshot/tests/test_shard_sharing.py:8
+  6 lines, 5 occurrences: bollard/test_guard_prodconfig.py:5, bollard/test_guard_semantic_resolution.py:18, bollard/test_guard_untrusted_web.py:9, bollard/test_guard_destructive.py:6
 
 ======================================================================
 THRESHOLD SOURCES (see JSON report meta.thresholds_source for full text)

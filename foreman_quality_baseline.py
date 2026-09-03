@@ -366,7 +366,13 @@ def approximate_health_score(mi_score, max_cc):
     A standalone 1-10 approximation, NOT a CodeScene score and not claimed
     to match CodeScene's proprietary weighting or biomarker set. Blends
     normalized MI and worst-function CC into a single number so files can
-    be ranked, nothing more.
+    be ranked against each other, nothing more.
+
+    DEVH-97: the CC half saturates at max_cc > 50 (cc_component pins to 1
+    regardless of whether max_cc is 51 or 5000), so this blended number
+    loses information above that band. Do not use it as a per-file
+    pass/fail threshold -- compare mi_rank and max_cc directly for that
+    (see per_file_detail, hotspots_top15, worst_maintainability_top15).
     """
     mi_component = max(0, min(10, mi_score / 10))
     if max_cc <= 10:
@@ -461,7 +467,10 @@ def build_report(root: Path):
                 "maintainability_index": "radon's documented mi_rank(): A>=20, 10<=B<20, C<10 "
                                           "(0-100 scale) -- see radon.readthedocs.io",
                 "health_score_1_to_10": "standalone approximation for THIS script only, "
-                                         "not a CodeScene score",
+                                         "not a CodeScene score. Whole-repo ranking use only "
+                                         "(DEVH-97) -- it saturates above max_cc=50, so a "
+                                         "per-file pass/fail threshold judgment should compare "
+                                         "mi_rank and max_cc directly instead.",
             },
             "hotspot_signal_degenerate_churn": churn_is_degenerate,
         },
@@ -488,6 +497,7 @@ def build_report(root: Path):
                 "file_path": f["file_path"],
                 "mi_score": f["maintainability_index"]["score"],
                 "mi_rank": f["maintainability_index"]["rank"],
+                "max_cc": f["cyclomatic_complexity"]["max"],
                 "sloc": f["raw"].get("sloc"),
             }
             for f in worst_mi
@@ -542,7 +552,7 @@ def write_txt_summary(report, out_path: Path):
     lines.append("TOP 15 WORST MAINTAINABILITY INDEX SCORES")
     lines.append("-" * 70)
     for w in report["worst_maintainability_top15"]:
-        lines.append(f"  {w['file_path']}  MI={w['mi_score']} ({w['mi_rank']})  SLOC={w['sloc']}")
+        lines.append(f"  {w['file_path']}  MI={w['mi_score']} ({w['mi_rank']})  max_cc={w['max_cc']}  SLOC={w['sloc']}")
     lines.append("")
     lines.append("-" * 70)
     lines.append("TOP 20 MOST COMPLEX FUNCTIONS (by cyclomatic complexity)")
