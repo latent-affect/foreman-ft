@@ -1,0 +1,89 @@
+{
+  "html_file": "/Users/m5/agent-remediation/scratch/foreman-cheat-sheet.html",
+  "data_file": null,
+  "timestamp": "2026-08-29T11:52:36.159157",
+  "threshold_pct": 1.0,
+  "tabs": [
+    {
+      "label": "OVERVIEW",
+      "screenshot": "01_OVERVIEW.png",
+      "max_diff_pct": 7.884,
+      "max_diff_changed_units": 272545,
+      "max_diff_total_units": 3456900,
+      "max_diff_vs": "WHY_GATES",
+      "pass_basis": "pct",
+      "passed": true
+    },
+    {
+      "label": "BUILD_STATUS",
+      "screenshot": "02_BUILD_STATUS.png",
+      "max_diff_pct": 7.982,
+      "max_diff_changed_units": 275917,
+      "max_diff_total_units": 3456900,
+      "max_diff_vs": "WHY_GATES",
+      "pass_basis": "pct",
+      "passed": true
+    },
+    {
+      "label": "SETUP_BLUEPRINT",
+      "screenshot": "03_SETUP_BLUEPRINT.png",
+      "max_diff_pct": 8.08,
+      "max_diff_changed_units": 279330,
+      "max_diff_total_units": 3456900,
+      "max_diff_vs": "GAMING_&_AUDIT_TRAIL",
+      "pass_basis": "pct",
+      "passed": true
+    },
+    {
+      "label": "WHY_GATES",
+      "screenshot": "04_WHY_GATES.png",
+      "max_diff_pct": 9.433,
+      "max_diff_changed_units": 326085,
+      "max_diff_total_units": 3456900,
+      "max_diff_vs": "GAMING_&_AUDIT_TRAIL",
+      "pass_basis": "pct",
+      "passed": true
+    },
+    {
+      "label": "GAMING_&_AUDIT_TRAIL",
+      "screenshot": "05_GAMING_&_AUDIT_TRAIL.png",
+      "max_diff_pct": 9.433,
+      "max_diff_changed_units": 326085,
+      "max_diff_total_units": 3456900,
+      "max_diff_vs": "WHY_GATES",
+      "pass_basis": "pct",
+      "passed": true
+    },
+    {
+      "label": "LETTER_VS._INTENT",
+      "screenshot": "06_LETTER_VS._INTENT.png",
+      "max_diff_pct": 9.142,
+      "max_diff_changed_units": 316029,
+      "max_diff_total_units": 3456900,
+      "max_diff_vs": "WHY_GATES",
+      "pass_basis": "pct",
+      "passed": true
+    }
+  ],
+  "passed": 6,
+  "failed": 0,
+  "errors": [],
+  "harness_errors": [],
+  "notes": [
+    "No content container was isolated, so every comparison below is over the full 1280x900 viewport including page chrome and the tab controls themselves. On a dense page a real content change is a small fraction of that, so a FAIL at the 1.0% threshold is not by itself evidence of a stuck tab. Confirm against the changed-units column before acting on it.",
+    "Diff backend was not pure pixel comparison: ['no-pypng', 'raw-scanline-bytes']. pypng is not installed, so no image was decoded. The 1.0% threshold was applied to that quantity, not to pixels, and the two are not interchangeable."
+  ],
+  "render": {
+    "textLen": 4620,
+    "elements": 644,
+    "rows": 13,
+    "graphics": 18,
+    "emptyMarkers": 0,
+    "looksEmpty": false,
+    "height": 2123
+  },
+  "diff_backends": [
+    "no-pypng",
+    "raw-scanline-bytes"
+  ]
+}

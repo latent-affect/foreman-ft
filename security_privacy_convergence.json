@@ -1,0 +1,4920 @@
+{
+  "meta": {
+    "root": "/Users/m5/dev/dev-harness",
+    "python_files_scanned": 175,
+    "manifests_found": [
+      "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+    ],
+    "dependency_pins_parsed": 32,
+    "dependency_lines_skipped_unparsed": 0,
+    "unparsed_manifests": [],
+    "quality_baseline_cross_referenced": true
+  },
+  "audit_trail": {
+    "note": "This section exists so a zero-findings result can be checked, not just trusted -- it shows what was actually queried/parsed, not only what fired.",
+    "parsed_pins": [
+      {
+        "name": "mcp",
+        "specifier": "==",
+        "version": "2.0.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "trio",
+        "specifier": "==",
+        "version": "0.34.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "annotated-types",
+        "specifier": "==",
+        "version": "0.8.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "anyio",
+        "specifier": "==",
+        "version": "4.14.2",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "attrs",
+        "specifier": "==",
+        "version": "26.1.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "cffi",
+        "specifier": "==",
+        "version": "2.1.1",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "click",
+        "specifier": "==",
+        "version": "8.4.2",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "cryptography",
+        "specifier": "==",
+        "version": "50.0.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "h11",
+        "specifier": "==",
+        "version": "0.16.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "httpcore2",
+        "specifier": "==",
+        "version": "2.12.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "httpx2",
+        "specifier": "==",
+        "version": "2.12.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "idna",
+        "specifier": "==",
+        "version": "3.19",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "jsonschema",
+        "specifier": "==",
+        "version": "4.26.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "jsonschema-specifications",
+        "specifier": "==",
+        "version": "2025.9.1",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "mcp-types",
+        "specifier": "==",
+        "version": "2.0.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "opentelemetry-api",
+        "specifier": "==",
+        "version": "1.44.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "outcome",
+        "specifier": "==",
+        "version": "1.3.0.post0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "pycparser",
+        "specifier": "==",
+        "version": "3.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "pydantic",
+        "specifier": "==",
+        "version": "2.13.4",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "pydantic_core",
+        "specifier": "==",
+        "version": "2.46.4",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "PyJWT",
+        "specifier": "==",
+        "version": "2.13.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "python-multipart",
+        "specifier": "==",
+        "version": "0.0.32",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "referencing",
+        "specifier": "==",
+        "version": "0.37.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "rpds-py",
+        "specifier": "==",
+        "version": "2026.6.3",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "sniffio",
+        "specifier": "==",
+        "version": "1.3.1",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "sortedcontainers",
+        "specifier": "==",
+        "version": "2.4.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "sse-starlette",
+        "specifier": "==",
+        "version": "3.4.8",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "starlette",
+        "specifier": "==",
+        "version": "1.6.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "truststore",
+        "specifier": "==",
+        "version": "0.10.4",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "typing-inspection",
+        "specifier": "==",
+        "version": "0.4.4",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "typing_extensions",
+        "specifier": "==",
+        "version": "4.16.0",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "name": "uvicorn",
+        "specifier": "==",
+        "version": "0.52.4",
+        "exact_pin": true,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      }
+    ],
+    "skipped_lines_in_manifests": [],
+    "osv_dev_queried_packages": [
+      {
+        "package": "mcp",
+        "version": "2.0.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "trio",
+        "version": "0.34.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "annotated-types",
+        "version": "0.8.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "anyio",
+        "version": "4.14.2",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "attrs",
+        "version": "26.1.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "cffi",
+        "version": "2.1.1",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "click",
+        "version": "8.4.2",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "cryptography",
+        "version": "50.0.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "h11",
+        "version": "0.16.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "httpcore2",
+        "version": "2.12.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "httpx2",
+        "version": "2.12.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "idna",
+        "version": "3.19",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "jsonschema",
+        "version": "4.26.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "jsonschema-specifications",
+        "version": "2025.9.1",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "mcp-types",
+        "version": "2.0.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "opentelemetry-api",
+        "version": "1.44.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "outcome",
+        "version": "1.3.0.post0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "pycparser",
+        "version": "3.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "pydantic",
+        "version": "2.13.4",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "pydantic_core",
+        "version": "2.46.4",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "PyJWT",
+        "version": "2.13.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "python-multipart",
+        "version": "0.0.32",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "referencing",
+        "version": "0.37.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "rpds-py",
+        "version": "2026.6.3",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "sniffio",
+        "version": "1.3.1",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "sortedcontainers",
+        "version": "2.4.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "sse-starlette",
+        "version": "3.4.8",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "starlette",
+        "version": "1.6.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "truststore",
+        "version": "0.10.4",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "typing-inspection",
+        "version": "0.4.4",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "typing_extensions",
+        "version": "4.16.0",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      },
+      {
+        "package": "uvicorn",
+        "version": "0.52.4",
+        "exact_pin": true,
+        "vulns_found": 0,
+        "source_file": "/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt"
+      }
+    ]
+  },
+  "tool_availability": {
+    "bandit": true,
+    "detect-secrets": true,
+    "pip-audit": true,
+    "osv.dev (direct API)": true,
+    "presidio": false
+  },
+  "install_commands_for_missing_tools": {
+    "presidio": "pip install presidio-analyzer && python -m spacy download en_core_web_lg"
+  },
+  "tool_errors": {
+    "bandit": null,
+    "detect_secrets": null,
+    "pip_audit": null,
+    "osv_dev": null,
+    "presidio": "not requested"
+  },
+  "raw_findings": {
+    "bandit": [
+      {
+        "file_path": "atlas/ingest/audit.py",
+        "line": 49,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/gitrepo_pull.py",
+        "line": 26,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/gitrepo_pull.py",
+        "line": 55,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/gitrepo_pull.py",
+        "line": 55,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tessera_pull.py",
+        "line": 39,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tessera_pull.py",
+        "line": 60,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+        "line": 11,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+        "line": 29,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+        "line": 29,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 6,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 34,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 34,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 50,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 50,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 101,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 101,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 102,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 102,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 103,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 103,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 105,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 105,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 106,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "line": 106,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_tessera_pull.py",
+        "line": 23,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_tessera_pull.py",
+        "line": 40,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/ingest/verdicts.py",
+        "line": 81,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/query/facade.py",
+        "line": 112,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "LOW",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/dq_runner.py",
+        "line": 249,
+        "test_id": "B105",
+        "test_name": "hardcoded_password_string",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "cwe": 259,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/dq_runner.py",
+        "line": 250,
+        "test_id": "B105",
+        "test_name": "hardcoded_password_string",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "cwe": 259,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/dq_runner.py",
+        "line": 251,
+        "test_id": "B105",
+        "test_name": "hardcoded_password_string",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "cwe": 259,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/dq_runner.py",
+        "line": 254,
+        "test_id": "B105",
+        "test_name": "hardcoded_password_string",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "cwe": 259,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/dq_runner.py",
+        "line": 256,
+        "test_id": "B105",
+        "test_name": "hardcoded_password_string",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "cwe": 259,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/tests/test_dq_runner.py",
+        "line": 39,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/tests/test_trust_gate.py",
+        "line": 101,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "atlas/warehouse/tests/test_trust_gate.py",
+        "line": 114,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review.py",
+        "line": 88,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_accountable.py",
+        "line": 118,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_gemini.py",
+        "line": 21,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_gemini.py",
+        "line": 37,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_gemini.py",
+        "line": 37,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_gemini.py",
+        "line": 51,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_gemini.py",
+        "line": 51,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_gemini.py",
+        "line": 68,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/local_review/local_review_grounded.py",
+        "line": 83,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/ship_readiness_gate.py",
+        "line": 31,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/ship_readiness_gate.py",
+        "line": 94,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/stamp_ship_charter.py",
+        "line": 14,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/stamp_ship_charter.py",
+        "line": 25,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/stamp_ship_charter.py",
+        "line": 25,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/tessera_resolver/tessera_resolver.py",
+        "line": 15,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/tessera_resolver/tessera_resolver.py",
+        "line": 26,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_pre_implementation_brief_gate.py",
+        "line": 20,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_pre_implementation_brief_gate.py",
+        "line": 36,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_pre_implementation_brief_gate.py",
+        "line": 161,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 10,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 45,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 45,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 46,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 46,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 47,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 47,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 49,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 49,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 50,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 50,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 51,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 51,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 61,
+        "test_id": "B105",
+        "test_name": "hardcoded_password_string",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "cwe": 259,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 105,
+        "test_id": "B105",
+        "test_name": "hardcoded_password_string",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "cwe": 259,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 136,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 136,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 137,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 137,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 145,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 145,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 147,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 147,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 155,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 155,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 156,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 156,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 158,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 158,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 159,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "line": 159,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "foreman_quality_baseline.py",
+        "line": 54,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "foreman_quality_baseline.py",
+        "line": 220,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "foreman_quality_baseline.py",
+        "line": 220,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "foreman_quality_baseline.py",
+        "line": 411,
+        "test_id": "B110",
+        "test_name": "try_except_pass",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 703,
+        "source": "bandit"
+      },
+      {
+        "file_path": "monitoring/compliance-cron/skill_broadscan.py",
+        "line": 89,
+        "test_id": "B112",
+        "test_name": "try_except_continue",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 703,
+        "source": "bandit"
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "line": 5,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "line": 21,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "line": 21,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "line": 40,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "line": 42,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "line": 42,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "line": 51,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 58,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 171,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 171,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 203,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 203,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 242,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 276,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 323,
+        "test_id": "B112",
+        "test_name": "try_except_continue",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 703,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 327,
+        "test_id": "B112",
+        "test_name": "try_except_continue",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 703,
+        "source": "bandit"
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "line": 450,
+        "test_id": "B110",
+        "test_name": "try_except_pass",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 703,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+        "line": 19,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+        "line": 29,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/seeded/sample_service.py",
+        "line": 65,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "LOW",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/foreman/scripts/foreman_init.py",
+        "line": 69,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/foreman/scripts/foreman_init.py",
+        "line": 200,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/foreman/scripts/foreman_init.py",
+        "line": 200,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/foreman/scripts/foreman_init.py",
+        "line": 476,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "skills/foreman/scripts/foreman_init.py",
+        "line": 476,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/discrepancy.py",
+        "line": 1,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/discrepancy.py",
+        "line": 81,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/discrepancy.py",
+        "line": 81,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_cli.py",
+        "line": 128,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_cli.py",
+        "line": 135,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 1,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 12,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 12,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 31,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 31,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 81,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 81,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 104,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 198,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "line": 198,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_http_api.py",
+        "line": 54,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_http_api.py",
+        "line": 397,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_http_api.py",
+        "line": 423,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_http_api.py",
+        "line": 436,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_sse.py",
+        "line": 2,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/api/tests/test_sse.py",
+        "line": 31,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/gitops.py",
+        "line": 2,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/gitops.py",
+        "line": 38,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/gitops.py",
+        "line": 38,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 1,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 12,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 12,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 24,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 24,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 30,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 30,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 67,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "line": 67,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/reviewui/tests/test_headers.py",
+        "line": 25,
+        "test_id": "B310",
+        "test_name": "blacklist",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "HIGH",
+        "cwe": 22,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/store/store.py",
+        "line": 799,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/store/store.py",
+        "line": 1651,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/store/store.py",
+        "line": 1663,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/store/store.py",
+        "line": 1806,
+        "test_id": "B608",
+        "test_name": "hardcoded_sql_expressions",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 89,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/audit.py",
+        "line": 161,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/audit.py",
+        "line": 164,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/audit.py",
+        "line": 164,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/gitutil.py",
+        "line": 12,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/gitutil.py",
+        "line": 18,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/gitutil.py",
+        "line": 18,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/fixtures.py",
+        "line": 13,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_audit.py",
+        "line": 216,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_audit.py",
+        "line": 217,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_audit.py",
+        "line": 217,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_audit.py",
+        "line": 218,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_audit.py",
+        "line": 218,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_event_activity.py",
+        "line": 29,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_event_activity.py",
+        "line": 42,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_event_activity.py",
+        "line": 51,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 2,
+        "test_id": "B404",
+        "test_name": "blacklist",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 14,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 14,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 15,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 15,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 16,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 16,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 233,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 233,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 241,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 241,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 271,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 271,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 280,
+        "test_id": "B607",
+        "test_name": "start_process_with_partial_path",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "line": 280,
+        "test_id": "B603",
+        "test_name": "subprocess_without_shell_equals_true",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "cwe": 78,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 12,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 13,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 14,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 20,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 21,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 24,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 31,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 32,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 37,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "line": 38,
+        "test_id": "B108",
+        "test_name": "hardcoded_tmp_directory",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "MEDIUM",
+        "cwe": 377,
+        "source": "bandit"
+      }
+    ],
+    "detect_secrets": [
+      {
+        "file_path": "atlas/warehouse/tests/test_credential_scan.py",
+        "line": 55,
+        "secret_type": "AWS Access Key",
+        "source": "detect-secrets"
+      },
+      {
+        "file_path": "tessera/common/tests/test_hashing.py",
+        "line": 23,
+        "secret_type": "Hex High Entropy String",
+        "source": "detect-secrets"
+      },
+      {
+        "file_path": "tessera/common/tests/test_hashing.py",
+        "line": 27,
+        "secret_type": "Hex High Entropy String",
+        "source": "detect-secrets"
+      },
+      {
+        "file_path": "tessera/tessguard/config.py",
+        "line": 45,
+        "secret_type": "Hex High Entropy String",
+        "source": "detect-secrets"
+      },
+      {
+        "file_path": "tessera/tessguard/config.py",
+        "line": 47,
+        "secret_type": "Hex High Entropy String",
+        "source": "detect-secrets"
+      }
+    ],
+    "pip_audit": [],
+    "osv_dev": [],
+    "presidio": null
+  },
+  "convergence": {
+    "code_findings_flagged_by_2plus_sources": [],
+    "code_findings_single_source_only": [
+      {
+        "file_path": "atlas/ingest/audit.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/ingest/audit.py",
+            "line": 49,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/ingest/gitrepo_pull.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/ingest/gitrepo_pull.py",
+            "line": 26,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/gitrepo_pull.py",
+            "line": 55,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/gitrepo_pull.py",
+            "line": 55,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/ingest/tessera_pull.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/ingest/tessera_pull.py",
+            "line": 39,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tessera_pull.py",
+            "line": 60,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+            "line": 11,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+            "line": 29,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_gitrepo_pull.py",
+            "line": 29,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_run_pull.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 6,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 34,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 34,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 50,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 50,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 101,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 101,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 102,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 102,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 103,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 103,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 105,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 105,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 106,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_run_pull.py",
+            "line": 106,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/ingest/tests/test_tessera_pull.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/ingest/tests/test_tessera_pull.py",
+            "line": 23,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/ingest/tests/test_tessera_pull.py",
+            "line": 40,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/ingest/verdicts.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/ingest/verdicts.py",
+            "line": 81,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/query/facade.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/query/facade.py",
+            "line": 112,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "LOW",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/warehouse/dq_runner.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/warehouse/dq_runner.py",
+            "line": 249,
+            "test_id": "B105",
+            "test_name": "hardcoded_password_string",
+            "issue_severity": "LOW",
+            "issue_confidence": "MEDIUM",
+            "cwe": 259,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/warehouse/dq_runner.py",
+            "line": 250,
+            "test_id": "B105",
+            "test_name": "hardcoded_password_string",
+            "issue_severity": "LOW",
+            "issue_confidence": "MEDIUM",
+            "cwe": 259,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/warehouse/dq_runner.py",
+            "line": 251,
+            "test_id": "B105",
+            "test_name": "hardcoded_password_string",
+            "issue_severity": "LOW",
+            "issue_confidence": "MEDIUM",
+            "cwe": 259,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/warehouse/dq_runner.py",
+            "line": 254,
+            "test_id": "B105",
+            "test_name": "hardcoded_password_string",
+            "issue_severity": "LOW",
+            "issue_confidence": "MEDIUM",
+            "cwe": 259,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/warehouse/dq_runner.py",
+            "line": 256,
+            "test_id": "B105",
+            "test_name": "hardcoded_password_string",
+            "issue_severity": "LOW",
+            "issue_confidence": "MEDIUM",
+            "cwe": 259,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/warehouse/tests/test_dq_runner.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/warehouse/tests/test_dq_runner.py",
+            "line": 39,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/warehouse/tests/test_trust_gate.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "atlas/warehouse/tests/test_trust_gate.py",
+            "line": 101,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          },
+          {
+            "file_path": "atlas/warehouse/tests/test_trust_gate.py",
+            "line": 114,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/local_review/local_review.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/local_review/local_review.py",
+            "line": 88,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/local_review/local_review_accountable.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/local_review/local_review_accountable.py",
+            "line": 118,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/local_review/local_review_gemini.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/local_review/local_review_gemini.py",
+            "line": 21,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/local_review/local_review_gemini.py",
+            "line": 37,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/local_review/local_review_gemini.py",
+            "line": 37,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/local_review/local_review_gemini.py",
+            "line": 51,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/local_review/local_review_gemini.py",
+            "line": 51,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/local_review/local_review_gemini.py",
+            "line": 68,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/local_review/local_review_grounded.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/local_review/local_review_grounded.py",
+            "line": 83,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/ship_readiness_gate.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/ship_readiness_gate.py",
+            "line": 31,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/ship_readiness_gate.py",
+            "line": 94,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/stamp_ship_charter.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/stamp_ship_charter.py",
+            "line": 14,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/stamp_ship_charter.py",
+            "line": 25,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/stamp_ship_charter.py",
+            "line": 25,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/tessera_resolver/tessera_resolver.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/tessera_resolver/tessera_resolver.py",
+            "line": 15,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/tessera_resolver/tessera_resolver.py",
+            "line": 26,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/test_pre_implementation_brief_gate.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/test_pre_implementation_brief_gate.py",
+            "line": 20,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_pre_implementation_brief_gate.py",
+            "line": 36,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_pre_implementation_brief_gate.py",
+            "line": 161,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "bollard/test_ship_readiness_gate.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 10,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 45,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 45,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 46,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 46,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 47,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 47,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 49,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 49,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 50,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 50,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 51,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 51,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 61,
+            "test_id": "B105",
+            "test_name": "hardcoded_password_string",
+            "issue_severity": "LOW",
+            "issue_confidence": "MEDIUM",
+            "cwe": 259,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 105,
+            "test_id": "B105",
+            "test_name": "hardcoded_password_string",
+            "issue_severity": "LOW",
+            "issue_confidence": "MEDIUM",
+            "cwe": 259,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 136,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 136,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 137,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 137,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 145,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 145,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 147,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 147,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 155,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 155,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 156,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 156,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 158,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 158,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 159,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "bollard/test_ship_readiness_gate.py",
+            "line": 159,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "foreman_quality_baseline.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "foreman_quality_baseline.py",
+            "line": 54,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "foreman_quality_baseline.py",
+            "line": 220,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "foreman_quality_baseline.py",
+            "line": 220,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "foreman_quality_baseline.py",
+            "line": 411,
+            "test_id": "B110",
+            "test_name": "try_except_pass",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 703,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "monitoring/compliance-cron/skill_broadscan.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "monitoring/compliance-cron/skill_broadscan.py",
+            "line": 89,
+            "test_id": "B112",
+            "test_name": "try_except_continue",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 703,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "scripts/test_install_fail_closed.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "scripts/test_install_fail_closed.py",
+            "line": 5,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "scripts/test_install_fail_closed.py",
+            "line": 21,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "scripts/test_install_fail_closed.py",
+            "line": 21,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "scripts/test_install_fail_closed.py",
+            "line": 40,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "scripts/test_install_fail_closed.py",
+            "line": 42,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "scripts/test_install_fail_closed.py",
+            "line": 42,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "scripts/test_install_fail_closed.py",
+            "line": 51,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "security_privacy_convergence.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 58,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 171,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 171,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 203,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 203,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 242,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 276,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 323,
+            "test_id": "B112",
+            "test_name": "try_except_continue",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 703,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 327,
+            "test_id": "B112",
+            "test_name": "try_except_continue",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 703,
+            "source": "bandit"
+          },
+          {
+            "file_path": "security_privacy_convergence.py",
+            "line": 450,
+            "test_id": "B110",
+            "test_name": "try_except_pass",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 703,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+            "line": 19,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+            "line": 29,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/seeded/sample_service.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/seeded/sample_service.py",
+            "line": 65,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "LOW",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "skills/foreman/scripts/foreman_init.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "skills/foreman/scripts/foreman_init.py",
+            "line": 69,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "skills/foreman/scripts/foreman_init.py",
+            "line": 200,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "skills/foreman/scripts/foreman_init.py",
+            "line": 200,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "skills/foreman/scripts/foreman_init.py",
+            "line": 476,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "skills/foreman/scripts/foreman_init.py",
+            "line": 476,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/api/discrepancy.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/api/discrepancy.py",
+            "line": 1,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/discrepancy.py",
+            "line": 81,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/discrepancy.py",
+            "line": 81,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/api/tests/test_cli.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/api/tests/test_cli.py",
+            "line": 128,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_cli.py",
+            "line": 135,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/api/tests/test_discrepancy.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 1,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 12,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 12,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 31,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 31,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 81,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 81,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 104,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 198,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_discrepancy.py",
+            "line": 198,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/api/tests/test_http_api.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/api/tests/test_http_api.py",
+            "line": 54,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_http_api.py",
+            "line": 397,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_http_api.py",
+            "line": 423,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_http_api.py",
+            "line": 436,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/api/tests/test_sse.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/api/tests/test_sse.py",
+            "line": 2,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/api/tests/test_sse.py",
+            "line": 31,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/gitops/gitops.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/gitops/gitops.py",
+            "line": 2,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/gitops.py",
+            "line": 38,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/gitops.py",
+            "line": 38,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/gitops/tests/test_stages.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 1,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 12,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 12,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 24,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 24,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 30,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 30,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 67,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/gitops/tests/test_stages.py",
+            "line": 67,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/reviewui/tests/test_headers.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/reviewui/tests/test_headers.py",
+            "line": 25,
+            "test_id": "B310",
+            "test_name": "blacklist",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "HIGH",
+            "cwe": 22,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/store/store.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/store/store.py",
+            "line": 799,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/store/store.py",
+            "line": 1651,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/store/store.py",
+            "line": 1663,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/store/store.py",
+            "line": 1806,
+            "test_id": "B608",
+            "test_name": "hardcoded_sql_expressions",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 89,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/tessguard/audit.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/tessguard/audit.py",
+            "line": 161,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/audit.py",
+            "line": 164,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/audit.py",
+            "line": 164,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/tessguard/gitutil.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/tessguard/gitutil.py",
+            "line": 12,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/gitutil.py",
+            "line": 18,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/gitutil.py",
+            "line": 18,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/tessguard/tests/fixtures.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/tessguard/tests/fixtures.py",
+            "line": 13,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_audit.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/tessguard/tests/test_audit.py",
+            "line": 216,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_audit.py",
+            "line": 217,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_audit.py",
+            "line": 217,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_audit.py",
+            "line": 218,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_audit.py",
+            "line": 218,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_event_activity.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/tessguard/tests/test_event_activity.py",
+            "line": 29,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_event_activity.py",
+            "line": 42,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_event_activity.py",
+            "line": 51,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_gitgate.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 2,
+            "test_id": "B404",
+            "test_name": "blacklist",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 14,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 14,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 15,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 15,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 16,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 16,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 233,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 233,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 241,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 241,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 271,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 271,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 280,
+            "test_id": "B607",
+            "test_name": "start_process_with_partial_path",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_gitgate.py",
+            "line": 280,
+            "test_id": "B603",
+            "test_name": "subprocess_without_shell_equals_true",
+            "issue_severity": "LOW",
+            "issue_confidence": "HIGH",
+            "cwe": 78,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+        "sources_firing": [
+          "bandit"
+        ],
+        "bandit": [
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 12,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 13,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 14,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 20,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 21,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 24,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 31,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 32,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 37,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          },
+          {
+            "file_path": "tessera/tessguard/tests/test_project_resolve.py",
+            "line": 38,
+            "test_id": "B108",
+            "test_name": "hardcoded_tmp_directory",
+            "issue_severity": "MEDIUM",
+            "issue_confidence": "MEDIUM",
+            "cwe": 377,
+            "source": "bandit"
+          }
+        ],
+        "detect_secrets": []
+      },
+      {
+        "file_path": "atlas/warehouse/tests/test_credential_scan.py",
+        "sources_firing": [
+          "detect_secrets"
+        ],
+        "bandit": [],
+        "detect_secrets": [
+          {
+            "file_path": "atlas/warehouse/tests/test_credential_scan.py",
+            "line": 55,
+            "secret_type": "AWS Access Key",
+            "source": "detect-secrets"
+          }
+        ]
+      },
+      {
+        "file_path": "tessera/common/tests/test_hashing.py",
+        "sources_firing": [
+          "detect_secrets"
+        ],
+        "bandit": [],
+        "detect_secrets": [
+          {
+            "file_path": "tessera/common/tests/test_hashing.py",
+            "line": 23,
+            "secret_type": "Hex High Entropy String",
+            "source": "detect-secrets"
+          },
+          {
+            "file_path": "tessera/common/tests/test_hashing.py",
+            "line": 27,
+            "secret_type": "Hex High Entropy String",
+            "source": "detect-secrets"
+          }
+        ]
+      },
+      {
+        "file_path": "tessera/tessguard/config.py",
+        "sources_firing": [
+          "detect_secrets"
+        ],
+        "bandit": [],
+        "detect_secrets": [
+          {
+            "file_path": "tessera/tessguard/config.py",
+            "line": 45,
+            "secret_type": "Hex High Entropy String",
+            "source": "detect-secrets"
+          },
+          {
+            "file_path": "tessera/tessguard/config.py",
+            "line": 47,
+            "secret_type": "Hex High Entropy String",
+            "source": "detect-secrets"
+          }
+        ]
+      }
+    ],
+    "dependency_findings_flagged_by_both_sources": [],
+    "dependency_findings_single_source_only": [],
+    "compounding_risk_quality_plus_security": [
+      {
+        "file_path": "bollard/ship_readiness_gate.py",
+        "security_sources_firing": [
+          "bandit"
+        ],
+        "quality_hotspot_signal": 15,
+        "note": "flagged by BOTH a security source and the complexity/maintainability hotspot pass -- compounding-risk candidate."
+      },
+      {
+        "file_path": "monitoring/compliance-cron/skill_broadscan.py",
+        "security_sources_firing": [
+          "bandit"
+        ],
+        "quality_hotspot_signal": 36,
+        "note": "flagged by BOTH a security source and the complexity/maintainability hotspot pass -- compounding-risk candidate."
+      },
+      {
+        "file_path": "skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py",
+        "security_sources_firing": [
+          "bandit"
+        ],
+        "quality_hotspot_signal": 22,
+        "note": "flagged by BOTH a security source and the complexity/maintainability hotspot pass -- compounding-risk candidate."
+      },
+      {
+        "file_path": "skills/foreman/scripts/foreman_init.py",
+        "security_sources_firing": [
+          "bandit"
+        ],
+        "quality_hotspot_signal": 20,
+        "note": "flagged by BOTH a security source and the complexity/maintainability hotspot pass -- compounding-risk candidate."
+      },
+      {
+        "file_path": "tessera/store/store.py",
+        "security_sources_firing": [
+          "bandit"
+        ],
+        "quality_hotspot_signal": 32,
+        "note": "flagged by BOTH a security source and the complexity/maintainability hotspot pass -- compounding-risk candidate."
+      }
+    ]
+  },
+  "known_coverage_gaps": [
+    {
+      "category": "Business logic / authorization flaws",
+      "why_uncovered": "SAST tools (Bandit) pattern-match known-dangerous constructs; they cannot evaluate whether an authorization check is logically correct."
+    },
+    {
+      "category": "TOCTOU / race conditions (CWE-367, CWE-362)",
+      "why_uncovered": "Requires reasoning about concurrent execution order, not static pattern matching. None of the tools here detect this class."
+    },
+    {
+      "category": "MCP-specific trust-boundary risks (tool poisoning, rug-pull updates)",
+      "why_uncovered": "A recognized 2025-2026 attack category (OWASP MCP Tool Poisoning; CVE-2025-54136) with no mature free static scanner yet. Needs manual review of atlas/mcp/server.py's trust boundary, not a tool run."
+    },
+    {
+      "category": "PII in TESSERA ticket free-text fields",
+      "why_uncovered": "Presidio (if run) scans SOURCE CODE here, not the ticket database's actual free-text content (comments, repro_steps, environment, description) -- which is where real PII risk in this project would actually live. Needs a separate pass against a DB export."
+    },
+    {
+      "category": "Weak-oracle / structurally-unfalsifiable tests",
+      "why_uncovered": "Already documented in this project's own literature review as a known recurring pattern. No tool here checks whether a passing test could ever actually fail."
+    }
+  ]
+}

@@ -11,3 +11,15 @@ ROADMAP.md
 ARCHITECTURE-REVIEW.md
 prepare_notebook.py
 repo_context_part_*.txt
+# token_bloat_diagnostic's OUTPUT, never its source. This is the public repo, and meta.projects_seen
+# in that report enumerates every project directory on the machine -- 35 of them, including several
+# that have nothing to do with this repo and should not be inferable from it. The tool is worth
+# publishing; a machine-wide directory census is not. Root cause is the tool's own --project-hint
+# being broad enough ("m5-dev-") to match everything, which also left meta.scope_warning null, so
+# the report gave no sign it had over-collected. Narrow the hint when regenerating; do not commit
+# the output either way.
+token_bloat_diagnostic.json
+token_bloat_diagnostic.txt
+# Unreviewed binary. Nothing goes into a public repo that has not been read, and a PDF cannot be
+# read by the scan that cleared the files around it.
+dev-harness Run 2 build.pdf

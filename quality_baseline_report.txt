@@ -1,0 +1,94 @@
+======================================================================
+FOREMAN QUALITY BASELINE -- SUMMARY
+======================================================================
+Files analyzed: 173
+Functions analyzed: 1165
+
+Simple average health (1-10):        8.36
+SLOC-weighted average health (1-10):  6.86
+  -> CodeScene's own docs warn simple averages misrepresent a codebase (their published example: 7.33 simple vs 2.18 weighted, same repo). Trust the weighted number more.
+
+----------------------------------------------------------------------
+TOP 15 HOTSPOTS (complexity x git churn -- fix these first)
+----------------------------------------------------------------------
+  tessera/api/cli.py  signal=51  max_cc=51  commits=1  MI=33.1 (A)
+  monitoring/compliance-cron/skill_broadscan.py  signal=36  max_cc=36  commits=1  MI=51.35 (A)
+  tessera/store/store.py  signal=32  max_cc=32  commits=1  MI=4.78 (C)
+  bollard/component_coupling.py  signal=27  max_cc=27  commits=1  MI=41.45 (A)
+  tessera/tessguard/transcript.py  signal=25  max_cc=25  commits=1  MI=64.32 (A)
+  skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py  signal=22  max_cc=22  commits=1  MI=62.58 (A)
+  skills/foreman/scripts/foreman_init.py  signal=20  max_cc=20  commits=1  MI=43.53 (A)
+  skills/code-safety/skills/adversarial-code-review/scripts/posttooluse_hook.py  signal=20  max_cc=20  commits=1  MI=65.53 (A)
+  tessera/api/sql_query.py  signal=19  max_cc=19  commits=1  MI=57.56 (A)
+  bollard/audit_lib.py  signal=18  max_cc=9  commits=2  MI=51.25 (A)
+  atlas/ingest/run_pull.py  signal=16  max_cc=16  commits=1  MI=59.9 (A)
+  bollard/cross_project_routing/routing_table.py  signal=16  max_cc=16  commits=1  MI=74.24 (A)
+  bollard/ship_readiness_gate.py  signal=15  max_cc=15  commits=1  MI=55.82 (A)
+  bollard/pre_implementation_brief_gate.py  signal=15  max_cc=15  commits=1  MI=58.06 (A)
+  bollard/architecture_gate.py  signal=14  max_cc=14  commits=1  MI=69.83 (A)
+
+----------------------------------------------------------------------
+TOP 15 WORST MAINTAINABILITY INDEX SCORES
+----------------------------------------------------------------------
+  tessera/store/store.py  MI=4.78 (C)  SLOC=1443
+  tessera/api/cli.py  MI=33.1 (A)  SLOC=381
+  tessera/api/http_api.py  MI=35.82 (A)  SLOC=458
+  atlas/warehouse/dq_runner.py  MI=37.44 (A)  SLOC=414
+  foreman_quality_baseline.py  MI=40.68 (A)  SLOC=367
+  tessera/api/tests/test_http_api.py  MI=40.9 (A)  SLOC=417
+  bollard/component_coupling.py  MI=41.45 (A)  SLOC=217
+  skills/code-safety/skills/adversarial-code-review/scripts/scan.py  MI=42.19 (A)  SLOC=328
+  skills/foreman/scripts/foreman_init.py  MI=43.53 (A)  SLOC=361
+  tessera/api/tests/test_cli.py  MI=43.97 (A)  SLOC=288
+  tessera/tessguard/tests/test_transcript.py  MI=46.17 (A)  SLOC=62
+  tessera/tessguard/tests/test_audit.py  MI=46.36 (A)  SLOC=195
+  bollard/test_ship_readiness_gate.py  MI=46.37 (A)  SLOC=145
+  tessera/store/tests/test_reassign_project.py  MI=47.21 (A)  SLOC=77
+  tessera/tessguard/tests/test_gitgate.py  MI=48.04 (A)  SLOC=231
+
+----------------------------------------------------------------------
+TOP 20 MOST COMPLEX FUNCTIONS (by cyclomatic complexity)
+----------------------------------------------------------------------
+  tessera/api/cli.py::dispatch_internal  CC=51 (Very high risk / untestable)  NLOC=146
+  monitoring/compliance-cron/skill_broadscan.py::main  CC=36 (High risk)  NLOC=94
+  tessera/store/store.py::replay_event_internal  CC=32 (High risk)  NLOC=188
+  bollard/component_coupling.py::extract_bash_write_targets  CC=27 (High risk)  NLOC=57
+  tessera/tessguard/transcript.py::scan_internal  CC=25 (High risk)  NLOC=54
+  skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py::main  CC=22 (High risk)  NLOC=53
+  skills/foreman/scripts/foreman_init.py::verify_hooks_live_mid_build  CC=20 (Moderate risk)  NLOC=97
+  skills/code-safety/skills/adversarial-code-review/scripts/posttooluse_hook.py::main  CC=20 (Moderate risk)  NLOC=76
+  tessera/api/sql_query.py::run_readonly_query  CC=19 (Moderate risk)  NLOC=46
+  foreman_quality_baseline.py::build_report  CC=16 (Moderate risk)  NLOC=87
+  atlas/ingest/run_pull.py::run  CC=16 (Moderate risk)  NLOC=73
+  bollard/cross_project_routing/routing_table.py::classify  CC=16 (Moderate risk)  NLOC=23
+  bollard/ship_readiness_gate.py::main  CC=15 (Moderate risk)  NLOC=62
+  bollard/pre_implementation_brief_gate.py::main  CC=15 (Moderate risk)  NLOC=32
+  bollard/architecture_gate.py::main  CC=14 (Moderate risk)  NLOC=29
+  bollard/concept_gate.py::main  CC=14 (Moderate risk)  NLOC=29
+  foreman_quality_baseline.py::find_exact_duplicate_blocks  CC=13 (Moderate risk)  NLOC=21
+  skills/foreman/scripts/foreman_init.py::verify_real_session  CC=13 (Moderate risk)  NLOC=47
+  skills/code-safety/skills/adversarial-code-review/scripts/scan.py::silent_failures  CC=13 (Moderate risk)  NLOC=32
+  atlas/hookclient/reader.py::read_index  CC=13 (Moderate risk)  NLOC=38
+
+----------------------------------------------------------------------
+EXACT-DUPLICATE BLOCKS (heuristic, >= 6 lines) -- top matches
+----------------------------------------------------------------------
+  6 lines, 11 occurrences: tessera/api/tests/test_sse.py:13, tessera/store/tests/test_projection.py:9, tessera/store/tests/test_column_descriptions.py:9, tessera/store/tests/test_schema.py:12
+  6 lines, 11 occurrences: tessera/api/tests/test_sse.py:14, tessera/store/tests/test_projection.py:10, tessera/store/tests/test_column_descriptions.py:10, tessera/store/tests/test_schema.py:13
+  6 lines, 11 occurrences: tessera/api/tests/test_sse.py:15, tessera/store/tests/test_projection.py:11, tessera/store/tests/test_column_descriptions.py:11, tessera/store/tests/test_schema.py:14
+  6 lines, 10 occurrences: tessera/store/tests/test_projection.py:2, tessera/store/tests/test_idempotency.py:4, tessera/store/tests/test_datasets.py:2, tessera/store/tests/test_column_descriptions.py:2
+  6 lines, 9 occurrences: atlas/snapshot/tests/test_publish_refusal.py:4, atlas/resolve/tests/test_override.py:4, atlas/resolve/tests/test_matching.py:4, atlas/ingest/tests/test_growth_and_partial_lines.py:4
+  6 lines, 7 occurrences: tessera/store/tests/test_projection.py:1, tessera/store/tests/test_datasets.py:1, tessera/store/tests/test_column_descriptions.py:1, tessera/store/tests/test_stage_heads.py:1
+  6 lines, 6 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:4, atlas/snapshot/tests/test_index_shape.py:4, atlas/snapshot/tests/test_unresolved_shards.py:8, atlas/snapshot/tests/test_shard_sharing.py:4
+  6 lines, 6 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:5, atlas/snapshot/tests/test_index_shape.py:5, atlas/snapshot/tests/test_unresolved_shards.py:9, atlas/snapshot/tests/test_shard_sharing.py:5
+  6 lines, 6 occurrences: atlas/resolve/tests/test_override.py:19, atlas/ingest/tests/test_stream_identity.py:41, atlas/ingest/tests/test_growth_and_partial_lines.py:17, atlas/ingest/tests/test_growth_and_partial_lines.py:44
+  6 lines, 5 occurrences: tessera/store/store.py:790, tessera/store/store.py:808, tessera/store/store.py:825, tessera/store/store.py:851
+  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:6, atlas/snapshot/tests/test_index_shape.py:6, atlas/snapshot/tests/test_unresolved_shards.py:10, atlas/snapshot/tests/test_shard_sharing.py:6
+  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:7, atlas/snapshot/tests/test_index_shape.py:7, atlas/snapshot/tests/test_unresolved_shards.py:11, atlas/snapshot/tests/test_shard_sharing.py:7
+  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:8, atlas/snapshot/tests/test_index_shape.py:8, atlas/snapshot/tests/test_unresolved_shards.py:12, atlas/snapshot/tests/test_shard_sharing.py:8
+  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:16, atlas/snapshot/tests/test_index_shape.py:27, atlas/snapshot/tests/test_unresolved_shards.py:24, atlas/snapshot/tests/test_shard_sharing.py:16
+  6 lines, 4 occurrences: atlas/snapshot/tests/test_publish_atomicity.py:17, atlas/snapshot/tests/test_index_shape.py:28, atlas/snapshot/tests/test_unresolved_shards.py:25, atlas/snapshot/tests/test_shard_sharing.py:17
+
+======================================================================
+THRESHOLD SOURCES (see JSON report meta.thresholds_source for full text)
+======================================================================

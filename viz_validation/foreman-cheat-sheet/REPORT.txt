@@ -1,0 +1,37 @@
+============================================================
+VIZ VALIDATOR — REPORT
+============================================================
+HTML:      /Users/m5/agent-remediation/scratch/foreman-cheat-sheet.html
+Data:      none
+Run:       2026-08-29T11:52:36.159157
+Threshold: 1.0% pixel difference to pass
+
+PASSED: 6   FAILED: 0
+
+TAB RESULTS
+------------------------------------------------------------
+  [PASS]  OVERVIEW                        max_diff=7.88%  (272,545 units, vs WHY_GATES, basis=pct)  -> 01_OVERVIEW.png
+  [PASS]  BUILD_STATUS                    max_diff=7.98%  (275,917 units, vs WHY_GATES, basis=pct)  -> 02_BUILD_STATUS.png
+  [PASS]  SETUP_BLUEPRINT                 max_diff=8.08%  (279,330 units, vs GAMING_&_AUDIT_TRAIL, basis=pct)  -> 03_SETUP_BLUEPRINT.png
+  [PASS]  WHY_GATES                       max_diff=9.43%  (326,085 units, vs GAMING_&_AUDIT_TRAIL, basis=pct)  -> 04_WHY_GATES.png
+  [PASS]  GAMING_&_AUDIT_TRAIL            max_diff=9.43%  (326,085 units, vs WHY_GATES, basis=pct)  -> 05_GAMING_&_AUDIT_TRAIL.png
+  [PASS]  LETTER_VS._INTENT               max_diff=9.14%  (316,029 units, vs WHY_GATES, basis=pct)  -> 06_LETTER_VS._INTENT.png
+
+NOTES (not verdicts, do not affect exit status)
+------------------------------------------------------------
+  --  No content container was isolated, so every comparison below is over the full 1280x900 viewport including page chrome and the tab controls themselves. On a dense page a real content change is a small fraction of that, so a FAIL at the 1.0% threshold is not by itself evidence of a stuck tab. Confirm against the changed-units column before acting on it.
+  --  Diff backend was not pure pixel comparison: ['no-pypng', 'raw-scanline-bytes']. pypng is not installed, so no image was decoded. The 1.0% threshold was applied to that quantity, not to pixels, and the two are not interchangeable.
+
+INTERPRETATION
+------------------------------------------------------------
+  Each tab is compared against EVERY OTHER captured state and scored on its
+  single largest difference. This is NOT a before-versus-after-click test, and
+  an earlier version of this text wrongly said it was.
+
+  PASS = this tab differs from at least one other state, by percentage OR by
+         absolute changed units (either alone is sufficient).
+  FAIL = this tab matches EVERY other state within both thresholds.
+         Likely cause: the render function is not branching on the active tab.
+         Note two tabs that legitimately look alike will both FAIL here; that is
+         a limit of the comparison, not necessarily a defect in the page.
+============================================================

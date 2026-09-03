@@ -1,0 +1,84 @@
+======================================================================
+SECURITY & PRIVACY CONVERGENCE -- SUMMARY
+======================================================================
+Files scanned: 175
+Manifests found: ['/Users/m5/dev/dev-harness/atlas/mcp/requirements.txt']
+
+Tool availability in this environment:
+  [available]  bandit
+  [available]  detect-secrets
+  [available]  pip-audit
+  [available]  osv.dev (direct API)
+  [NOT available]  presidio
+
+To install missing tools:
+  pip install presidio-analyzer && python -m spacy download en_core_web_lg
+
+----------------------------------------------------------------------
+AUDIT TRAIL -- what was actually checked (so 0 findings is verifiable)
+----------------------------------------------------------------------
+Dependency lines parsed as pins: 32
+Dependency lines skipped/unparsed: 0
+OSV.dev packages actually queried: 32
+    mcp==2.0.0  vulns_found=0
+    trio==0.34.0  vulns_found=0
+    annotated-types==0.8.0  vulns_found=0
+    anyio==4.14.2  vulns_found=0
+    attrs==26.1.0  vulns_found=0
+    cffi==2.1.1  vulns_found=0
+    click==8.4.2  vulns_found=0
+    cryptography==50.0.0  vulns_found=0
+    h11==0.16.0  vulns_found=0
+    httpcore2==2.12.0  vulns_found=0
+    httpx2==2.12.0  vulns_found=0
+    idna==3.19  vulns_found=0
+    jsonschema==4.26.0  vulns_found=0
+    jsonschema-specifications==2025.9.1  vulns_found=0
+    mcp-types==2.0.0  vulns_found=0
+    opentelemetry-api==1.44.0  vulns_found=0
+    outcome==1.3.0.post0  vulns_found=0
+    pycparser==3.0  vulns_found=0
+    pydantic==2.13.4  vulns_found=0
+    pydantic_core==2.46.4  vulns_found=0
+    PyJWT==2.13.0  vulns_found=0
+    python-multipart==0.0.32  vulns_found=0
+    referencing==0.37.0  vulns_found=0
+    rpds-py==2026.6.3  vulns_found=0
+    sniffio==1.3.1  vulns_found=0
+    sortedcontainers==2.4.0  vulns_found=0
+    sse-starlette==3.4.8  vulns_found=0
+    starlette==1.6.0  vulns_found=0
+    truststore==0.10.4  vulns_found=0
+    typing-inspection==0.4.4  vulns_found=0
+    typing_extensions==4.16.0  vulns_found=0
+    uvicorn==0.52.4  vulns_found=0
+----------------------------------------------------------------------
+CODE FINDINGS -- flagged by 2+ independent sources (higher confidence)
+----------------------------------------------------------------------
+
+----------------------------------------------------------------------
+COMPOUNDING RISK -- security finding + complexity/maintainability hotspot
+----------------------------------------------------------------------
+  bollard/ship_readiness_gate.py  security=['bandit']  quality_signal=15
+  monitoring/compliance-cron/skill_broadscan.py  security=['bandit']  quality_signal=36
+  skills/code-safety/skills/adversarial-code-review/corpus/run_corpus.py  security=['bandit']  quality_signal=22
+  skills/foreman/scripts/foreman_init.py  security=['bandit']  quality_signal=20
+  tessera/store/store.py  security=['bandit']  quality_signal=32
+
+----------------------------------------------------------------------
+DEPENDENCY FINDINGS -- confirmed by BOTH pip-audit and OSV.dev
+----------------------------------------------------------------------
+
+----------------------------------------------------------------------
+KNOWN GAPS -- nothing in this scan can see these
+----------------------------------------------------------------------
+  Business logic / authorization flaws
+    -> SAST tools (Bandit) pattern-match known-dangerous constructs; they cannot evaluate whether an authorization check is logically correct.
+  TOCTOU / race conditions (CWE-367, CWE-362)
+    -> Requires reasoning about concurrent execution order, not static pattern matching. None of the tools here detect this class.
+  MCP-specific trust-boundary risks (tool poisoning, rug-pull updates)
+    -> A recognized 2025-2026 attack category (OWASP MCP Tool Poisoning; CVE-2025-54136) with no mature free static scanner yet. Needs manual review of atlas/mcp/server.py's trust boundary, not a tool run.
+  PII in TESSERA ticket free-text fields
+    -> Presidio (if run) scans SOURCE CODE here, not the ticket database's actual free-text content (comments, repro_steps, environment, description) -- which is where real PII risk in this project would actually live. Needs a separate pass against a DB export.
+  Weak-oracle / structurally-unfalsifiable tests
+    -> Already documented in this project's own literature review as a known recurring pattern. No tool here checks whether a passing test could ever actually fail.
