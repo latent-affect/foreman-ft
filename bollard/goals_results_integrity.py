@@ -21,6 +21,27 @@ own Case 8 comment already documents a regression for (DEVH-85/cf's fixture) -- 
 artifact's own internal check self-contained.
 """
 
+def current_by_criterion(results):
+    """DEVH-78: results[] rows are append-only (check_append_only above), so a criterion_id
+    with more than one row -- supersession, per this file's own stated convention -- has no
+    field marking which row is current. That was legible only from array order plus prose
+    ("Second C16 row...", "Supersedes the NOT_MET row above it"). Editing old rows to add a
+    marker would violate append-only itself, so this derives the answer instead of storing it:
+    last row wins, same rule the prose already states everywhere it supersedes anything.
+
+    Returns {criterion_id: index}, mapping each criterion_id present in results[] to the index
+    of its current (most recently appended) row. Non-dict rows and rows with no criterion_id
+    are skipped rather than raising, matching check_evidence_quality's tolerance of malformed
+    rows -- this function answers "what's current", not "is this row well-formed"."""
+    current = {}
+    for i, row in enumerate(results):
+        if isinstance(row, dict):
+            cid = row.get("criterion_id")
+            if cid is not None:
+                current[cid] = i
+    return current
+
+
 MIN_EVIDENCE_LEN = 40
 VALID_STATUSES = {"MET", "NOT_MET", "UNVERIFIED"}
 # verified_by is deliberately NOT required: checked against this file's own real committed

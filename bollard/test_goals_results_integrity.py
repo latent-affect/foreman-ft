@@ -8,7 +8,7 @@ import subprocess
 import unittest
 from pathlib import Path
 
-from goals_results_integrity import check_append_only, check_evidence_quality
+from goals_results_integrity import check_append_only, check_evidence_quality, current_by_criterion
 
 BOLLARD_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BOLLARD_DIR.parent
@@ -164,6 +164,62 @@ class TestEvidenceQualityAdversarial(unittest.TestCase):
         results = _committed_results("HEAD")
         violations = check_evidence_quality(results)
         self.assertEqual(violations, [], violations)
+
+
+class TestCurrentByCriterionAdversarial(unittest.TestCase):
+    """DEVH-78. Deliberately broken inputs first, per this file's own header rule -- a naive
+    'first row wins' implementation (e.g. dict comprehension misuse, or setdefault instead of
+    plain assignment) would pass every single-row-per-id case and only fail here."""
+
+    def test_single_row_per_id_maps_to_itself(self):
+        results = [dict(GOOD_ROW, criterion_id="C1"), dict(GOOD_ROW, criterion_id="C2")]
+        self.assertEqual(current_by_criterion(results), {"C1": 0, "C2": 1})
+
+    def test_duplicated_id_picks_the_last_row_not_the_first(self):
+        # The real shape: C1 recorded MET, then later found to need re-verification and
+        # superseded by a NOT_MET row for the same criterion_id. A first-wins bug would
+        # report the stale MET as current.
+        results = [
+            dict(GOOD_ROW, criterion_id="C1", status="MET"),
+            dict(GOOD_ROW, criterion_id="C2"),
+            dict(GOOD_ROW, criterion_id="C1", status="NOT_MET"),
+        ]
+        current = current_by_criterion(results)
+        self.assertEqual(current["C1"], 2)
+        self.assertEqual(results[current["C1"]]["status"], "NOT_MET")
+
+    def test_four_rows_same_id_picks_the_final_one(self):
+        # Real shape from bollard/GOALS.json's own C19: MET -> NOT_MET -> MET -> ... across
+        # multiple criterion amendments. Only the last index is current regardless of how the
+        # statuses zigzag in between.
+        results = [dict(GOOD_ROW, criterion_id="C19", status=s)
+                   for s in ("NOT_MET", "MET", "NOT_MET", "MET")]
+        self.assertEqual(current_by_criterion(results), {"C19": 3})
+
+    def test_non_dict_row_is_skipped_not_raised(self):
+        results = [dict(GOOD_ROW, criterion_id="C1"), "not a dict"]
+        self.assertEqual(current_by_criterion(results), {"C1": 0})
+
+    def test_row_missing_criterion_id_is_skipped(self):
+        row = dict(GOOD_ROW)
+        del row["criterion_id"]
+        self.assertEqual(current_by_criterion([row]), {})
+
+    def test_empty_results_returns_empty_map(self):
+        self.assertEqual(current_by_criterion([]), {})
+
+    def test_against_real_committed_results_matches_manual_derivation(self):
+        # Real data, not a fixture. Manually derived by inspecting bollard/GOALS.json's actual
+        # results[] (recorded timestamps confirm array order == chronological order for every
+        # duplicated id): C9 -> idx 24 (MET), C16 -> idx 19 (MET), C18 -> idx 18 (MET),
+        # C19 -> idx 26 (MET). Fails if a future append changes what "current" means for these
+        # ids without this test being updated alongside it -- which is the point.
+        results = _committed_results("HEAD")
+        current = current_by_criterion(results)
+        expected = {"C9": 24, "C16": 19, "C18": 18, "C19": 26}
+        for cid, idx in expected.items():
+            self.assertEqual(current.get(cid), idx, f"{cid}: expected current index {idx}")
+            self.assertEqual(results[idx]["status"], "MET")
 
 
 if __name__ == "__main__":
