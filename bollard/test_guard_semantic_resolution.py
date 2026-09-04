@@ -23,6 +23,9 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import isolate_verdict_ledger  # noqa: E402,F401 -- FORE-314: must precede the hook_common import
+# guard_semantic_resolution pulls in transitively, so tests never write to the operator's real
+# ~/.claude/telemetry/verdicts.jsonl.
 from guard_semantic_resolution import find_forbidden_calls  # noqa: E402
 
 HOOK = Path(__file__).resolve().parent / "guard_semantic_resolution.py"

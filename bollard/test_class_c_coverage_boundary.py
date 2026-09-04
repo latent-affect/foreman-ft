@@ -35,6 +35,9 @@ from pathlib import Path
 
 BOLLARD = Path(__file__).resolve().parent
 sys.path.insert(0, str(BOLLARD))
+import isolate_verdict_ledger  # noqa: E402,F401 -- FORE-314: must precede the hook_common import
+# that guard_allowlist/guard_destructive pull in transitively, so tests never write to the
+# operator's real ~/.claude/telemetry/verdicts.jsonl.
 import guard_allowlist  # noqa: E402
 import guard_destructive  # noqa: E402
 

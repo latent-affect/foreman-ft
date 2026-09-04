@@ -17,6 +17,11 @@ import sys
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import isolate_verdict_ledger  # noqa: E402,F401 -- FORE-314: redirects HOME before any guard
+# subprocess spawns below, so tests never write to the operator's real
+# ~/.claude/telemetry/verdicts.jsonl.
+
 PATTERN_FEED_HOOK = Path(__file__).resolve().parent / "guard_pattern_feed.py"
 DESTRUCTIVE_HOOK = Path(__file__).resolve().parent / "guard_destructive.py"
 

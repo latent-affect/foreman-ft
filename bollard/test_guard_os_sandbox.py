@@ -10,6 +10,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import isolate_verdict_ledger  # noqa: E402,F401 -- FORE-314: redirects HOME before any guard
+# subprocess spawns below, so tests never write to the operator's real
+# ~/.claude/telemetry/verdicts.jsonl.
+
 BOLLARD_DIR = Path(__file__).resolve().parent
 GUARD = BOLLARD_DIR / "guard_os_sandbox.py"
 DENY_CAPABILITY_SB = BOLLARD_DIR / "lib" / "deny_capability.sb"

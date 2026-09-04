@@ -30,6 +30,9 @@ HERE = Path(__file__).resolve().parent
 HOOK = HERE / "guard_allowlist.py"
 
 sys.path.insert(0, str(HERE))
+import isolate_verdict_ledger  # noqa: E402,F401 -- FORE-314: must precede hook_common so
+# run_body_capture's in-process calls never write to the operator's real
+# ~/.claude/telemetry/verdicts.jsonl under the test runner's own argv as handler_id.
 import hook_common as hc  # noqa: E402
 import guard_allowlist  # noqa: E402
 import guard_destructive  # noqa: E402
