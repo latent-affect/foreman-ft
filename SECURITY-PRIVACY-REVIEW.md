@@ -220,3 +220,205 @@ Recommended, for the gate owner rather than decided here:
 
 None of the three needs to block ship on its own. F2 is the one I would fix first, because it is
 the only one a caller can trigger today.
+
+---
+
+## Addendum — R14a/R15a guard chain (bollard capability-scoping layer), 2026-09-04
+
+**Stage:** `foreman:security-privacy-review`, closing a HOLD Priya Desai's Validate-stage render
+named: `guard_allowlist.py`, `guard_semantic_resolution.py`, `guard_pattern_feed.py`,
+`guard_os_sandbox.py`, `deny_capability.sb`, `capability_scope.sh` were entirely absent from this
+document. Confirmed absent before this addendum by direct grep, zero matches on all six names.
+**Reviewer:** Nadia Osei persona, rendered in-session (`dev-harness-run2-93`), not as a subagent.
+Authored none of the six components under review.
+**Method:** same as above — STRIDE-per-interaction against named boundaries, not per-component;
+DREAD used only to order the two real findings, with its limitation restated.
+**Input, bounded:** the six named files, read in full this pass, not recalled from a prior pass in
+this session; `hook_common.py`'s `run()`/`run_body()` (lines 261-304) for the fail-open/fail-closed
+contract each guard claims to participate in; the git history behind each file's own docstring
+claims, checked rather than trusted.
+
+**Not a clean pass.** Two new findings, both Tampering-class, one with an Elevation-of-Privilege
+consequence. Neither is FATAL. One is exploitable only under a malformed-input precondition the
+normal harness does not produce; the other is a real, live gap in a documented invariant that
+nothing currently enforces.
+
+### Trust boundaries named (continuing B1-B4 above)
+
+| # | Boundary | Crossing | Status |
+|---|---|---|---|
+| B5 | `guard_os_sandbox.py`'s match+rewrite decision → `capability_scope.sh` + `deny_capability.sb` kernel enforcement | A detected destructive-shape command → a rewritten, auto-"allow"ed sandbox-exec invocation | Reviewed this pass, not previously in this document |
+| B6 | `guard_semantic_resolution.py` / `guard_pattern_feed.py` (additive-only detection) → `guard_os_sandbox.py` / `guard_allowlist.py` (capability-removal/deny layer) | A frozen DEVH-62 contract: neither capability-removal guard may treat the detection pair's presence, absence, or crash as evidence of safety | Reviewed this pass |
+| B7 | Bash `tool_input` (agent/session-controlled) → `guard_allowlist.py`'s fail-closed guarantee | Untrusted tool-call shape → a guard whose whole reason to exist is not failing open | Reviewed this pass |
+| B8 | `capability_scope.sh` as a standalone, directly-invokable artifact → its caller, independent of `guard_os_sandbox.py`'s wrapper | A caller-supplied shell command string → `sandbox-exec` | Reviewed this pass |
+| B9 | `guard_os_sandbox.py`'s capability-class match → `deny_capability.sb`'s actually-enforced scope | The declared capability ("destructive filesystem writes") → what the kernel profile actually removes | Reviewed this pass |
+
+### STRIDE findings
+
+### F4 — Tampering (T), boundary B7. `guard_allowlist.py`'s fail-closed backstop covers capability matching, not `tool_input`'s own shape. Tracked as `DEVH-104`.
+
+`guard_allowlist.py:91-100`:
+
+```python
+def main(data):
+    if data.get("tool_name") != "Bash":
+        return
+    command = (data.get("tool_input") or {}).get("command", "")
+    if not command:
+        return
+
+    try:
+        matched = _matched_capability(command)
+    except Exception as exc:
+```
+
+The module's own docstring states the design intent plainly: "classification here is wrapped in
+its own try/except that calls `hc.deny()` directly, rather than letting the exception reach
+`hook_common.run()`'s outer handler" — because `hook_common.run()`'s outer handler fails **open**
+(`hook_common.py:291-304`: `main_fn(data)` raising anything results in "no decision emitted =>
+tool proceeds"), and R13/DEVH-61 name this guard specifically as one of the two layers the deny
+must survive on even when everything else has failed.
+
+Line 94 sits **before** the `try` block that starts at line 98. If `data.get("tool_input")`
+resolves to a truthy non-dict value (a string, a list — anything without a `.get` method), `.get`
+raises `AttributeError` outside the guarded region, reaches `hook_common.run_body`'s outer
+handler, and this guard fails open — the exact failure shape its own docstring says must not be
+this guard's last word.
+
+**Currently exploitable: not against a normally-shaped Claude Code hook payload.** Every real
+`tool_input` this session observed for a `Bash` PreToolUse call is a JSON object. This is not a
+caller-triggerable bypass today. It is a real gap in the guard's own stated coverage claim,
+independent of how likely the precondition is: the code says the try/except exists so this guard
+never reaches the outer fail-open path, and for this one input shape, it still can.
+
+### F5 — Tampering / Elevation of privilege (T/E), boundary B5. `BOLLARD_DENY_CAPABILITY_SB_OVERRIDE` has no runtime guard against being set outside a test process. Tracked as `DEVH-105`.
+
+`guard_os_sandbox.py:55-62`:
+
+```python
+# BOLLARD_DENY_CAPABILITY_SB_OVERRIDE exists ONLY so C16's live-harness negative-control arm and
+# C18's own negative control can point this guard's real, unmodified code path at a profile with
+# the deny rule removed ... It is never set in normal operation; the shipped guard always resolves
+# to lib/deny_capability.sb.
+DENY_CAPABILITY_SB = Path(
+    os.environ.get("BOLLARD_DENY_CAPABILITY_SB_OVERRIDE") or str(LIB_DIR / "deny_capability.sb")
+)
+```
+
+Grepped the whole `dev-harness-run2` tree for this name. Two hits, both already known:
+`guard_os_sandbox.py` itself and `test_guard_os_sandbox.py` (which sets it deliberately for C16's
+negative control). **Nothing else references it** — no startup assertion, no check in `main()`, no
+CI guard — that confirms it is unset whenever a real (non-test) hook process runs.
+
+`_profile_can_deny` (`guard_os_sandbox.py:71-119`) is the only gate standing between this override
+and a silent bypass, and its own docstring is explicit that it is "deliberately shallow": it
+"parses for the presence of a `(deny ...)` rule," not that the rule denies the *right* capability.
+A profile containing any syntactically real `(deny ...)` clause — `(deny network-outbound)`, or a
+`(deny file-write* (subpath "/nonexistent"))` that denies nothing reachable — passes this check.
+
+The consequence compounds with B5's other half: on a match, `main()` (`guard_os_sandbox.py:171-178`)
+calls `hc.rewrite(...)`, and per this file's own docstring (lines 33-38), a rewrite carries an
+automatic **"allow"** that bypasses the operator's own permission prompt for that call — "the cost
+this design exists to bound." So a leaked or forgotten override does not just weaken the sandbox;
+it removes the sandbox's real protection *and* keeps the automatic bypass of the human checkpoint
+that would otherwise have caught the unprotected command.
+
+**Currently exploitable: not via `tool_input`** — this is process environment, not something a Bash
+command's own arguments can set from inside the sandbox. It is a real, live gap in an invariant the
+code states as fact ("never set in normal operation") but nothing enforces: a stray `export` left
+in a shell profile, an inherited CI environment, or a test command copy-pasted and run outside
+`unittest` would all silently reproduce this. Reproducible and high-damage once the precondition
+holds; the precondition itself is an operational-hygiene question, not a remote one.
+
+### Comparative ordering (DREAD, with its limit stated)
+
+| Finding | Damage | Reproducibility | Exploitability | Affected users | Discoverability | Ordering |
+|---|---|---|---|---|---|---|
+| F5 (T/E, B5) | High | High, once set | Med | One operator | Low — no runtime signal it happened | **1st** — a single environmental slip produces a silent, undetectable full bypass of the capability-removal layer while still auto-suppressing the permission prompt |
+| F4 (T, B7) | Med | Low | Low | One operator | Low | **2nd** — real gap in the guard's own coverage claim, but the harness does not produce the triggering input shape today |
+
+### Boundaries that came back clean, said explicitly
+
+**B6 holds structurally, not just by convention.** DEVH-62's frozen constraint says neither
+capability-removal guard may treat the detection pair's presence, absence, or crash as evidence of
+safety. Checked by reading the import graph rather than re-reading the prose:
+`guard_os_sandbox.py` imports only `hook_common` and `guard_destructive` (line 49);
+`guard_allowlist.py` imports only `hook_common`. Neither references `guard_semantic_resolution` or
+`guard_pattern_feed` at all — the constraint holds because no import path exists through which it
+could be violated, not merely because nobody has violated it yet.
+
+**B5's pattern-sharing side is clean, and already disclosed rather than found here.**
+`guard_os_sandbox.CAPABILITY_CLASS_PATTERNS` is a re-export of
+`guard_destructive.DESTRUCTIVE_PATTERNS` (`guard_os_sandbox.py:68`) — the same object, not a
+value-equal copy — so widening `guard_destructive`'s pattern list also silently widens which
+commands receive the automatic permission-bypass rewrite. That two-sided consequence was already
+found and disclosed this session: commit `6a4049f`, "DEVHR2-1: disclose that DESTRUCTIVE_PATTERNS
+also drives guard_os_sandbox's permission-bypass scope" (DEVH-16 comment 1368). Verified the
+disclosure is real by reading the commit, not restated from memory. Not re-raised as a new finding.
+
+**B8, `capability_scope.sh`'s own input handling, is clean.** `COMMAND="$*"` then
+`exec sandbox-exec -f "$PROFILE" /bin/sh -c "$COMMAND"` (`capability_scope.sh:62,64`) passes the
+joined string as one double-quoted expansion — no word-splitting or glob expansion before it
+reaches `sh -c`, and the script's entire purpose is to execute the caller-supplied command under
+the sandbox, so command execution here is the contract, not an injection vector. It refuses to run
+at all (exit 4) rather than degrade unprotected if the profile is missing or `sandbox-exec` is
+unavailable (`capability_scope.sh:51-56`) — checked that this is the real behavior in the code, not
+just asserted by its own header comment.
+
+**B9's scope is honestly declared, not a finding.** `deny_capability.sb` denies only
+`file-write*` (`deny_capability.sb:44`); network, process exec, and reads are untouched by design,
+and the file's own header says so plainly (lines 6-8, 28-34) rather than implying broader coverage.
+The actual blast-radius control is which commands `guard_os_sandbox.py` decides to wrap at all
+(`CAPABILITY_CLASS_PATTERNS`), not this profile pretending to cover more than it does.
+
+### Data-flow findings
+
+`bollard/verdict_ledger.py` (distinct from `claude-hooks-v2`'s own copy fixed under CHV2-1 earlier
+tonight — different module, different lineage) persists a deliberately narrow, allowlisted field
+set per record (`verdict_ledger.py:127-157`): `ts`, `handler_id`, `event`, `verdict`, `kind`,
+`session_id`, `cwd`, `probe_id`, `run_id`, `tool_name`, `tool_use_id`, `self_duration_ms`,
+`target`, `decision`, `rule_id` — never the raw `tool_input` or command text. Checked all six
+guards' `hc.deny()`/`hc.rewrite()` call sites directly: none passes raw command text into the
+message argument, only a short symbolic capability-class name (`privilege_escalation_sudo`,
+`secure_delete_shred`, etc., drawn from each guard's own name tuples) — the Bash command a user
+actually typed never reaches the ledger file. This is the allowlist shape F1 (above) says
+`atlas/mcp/server.py` should have used instead of a denylist; `verdict_ledger.py` chose it from the
+start. The one path-shaped field is `cwd` (line 135), written to a local, mode-0600 file
+(lines 97, 164) — the same "stays inside the decided boundary because local, not exported" status
+already established for B3's `audit_event.payload_json` above; not reopened here.
+
+### Referred elsewhere, not counted here
+
+- **`guard_allowlist.py`'s own `KNOWN_NOT_ENUMERATED`** (lines 68-74) already discloses that `su`
+  itself is not caught, tracked under DEVH-92 Class C, with its own regression test
+  (`test_class_c_coverage_boundary.py`) asserting the gap stays open rather than silently closing.
+  Same shape as F4 — an enumeration/shape boundary — but already ticketed and self-testing. Not
+  re-raised here.
+
+### Addendum disposition
+
+Two findings, F4 and F5, neither FATAL. F5 is the one I would fix first: it is the only one where
+a single environmental slip produces a silent, undetectable full bypass of the capability-removal
+layer while the automatic permission-prompt bypass stays in effect. Recommended, for the gate
+owner rather than decided here:
+
+1. **F5** — add a runtime assertion, outside test collection, that
+   `BOLLARD_DENY_CAPABILITY_SB_OVERRIDE` is unset whenever the process is not running under
+   `unittest`/the declared negative-control harness. `_profile_can_deny` is the wrong layer to
+   close this at — it is deliberately shallow and correctly scoped to a different question (does
+   the resolved profile deny *something*, not whether the override should exist at all).
+2. **F4** — move the `data.get("tool_input") or {}` extraction inside the same try/except
+   `guard_allowlist.py` already has, so the file's own documented invariant covers its full input
+   surface rather than only the capability-matching step.
+
+This closes the specific gap Priya Desai's HOLD named: all six of `guard_allowlist.py`,
+`guard_semantic_resolution.py`, `guard_pattern_feed.py`, `guard_os_sandbox.py`,
+`deny_capability.sb`, and `capability_scope.sh` now have a real STRIDE-per-interaction pass in this
+document, at the same rigor and format as the original three findings above. **Validate stage
+verdict (this document's scope only): go(unbound)** — per PDP.md §8, `go(unbound)` because the
+required machine-readable ledger-row mechanism for a formal stage-close does not exist for this
+kind of narrative security/privacy pass, matching this document's own original three findings,
+which never received a formal ledger-backed stamp either, only this same Disposition-prose
+convention. Two real findings recorded with dispositions, neither blocking on its own. I have no
+visibility into whether Priya's HOLD named anything beyond this six-file absence — if it did,
+that part is not addressed by this addendum and should be confirmed against her own render.
