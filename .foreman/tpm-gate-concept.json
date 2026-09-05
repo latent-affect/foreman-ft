@@ -1,0 +1,87 @@
+{
+  "stage": "concept",
+  "decision": "go",
+  "gate_owner_persona": "Priya Desai",
+  "tessera_ticket_ids": [
+    "DEVH-1",
+    "DEVH-2",
+    "DEVH-3",
+    "DEVH-4",
+    "DEVH-5"
+  ],
+  "decided_at": "2026-09-02T06:47:25Z",
+  "graded_content_sha": {
+    "PRD.md": {
+      "sha256": "643e6cdf9d56a51fcc5597bcd1e2f97864509612596ff9cba5d6b6c83c1aa12e",
+      "lines": 653
+    }
+  },
+  "summary": "Concept-stage gate over PRD.md (653 lines, commit 808558c, branch build-brief-run2), reviewed against its own source brief at /Users/m5/Downloads/dev-harness-BUILD-BRIEF_2.md. Decision is GO. The three things a concept gate exists to judge are all real here: the done-state is stated as seven metrics with thresholds and a named measuring command, with M5's threshold left explicitly open rather than faked; the out-of-scope list carries nine items each with its reason; and the falsification pass in section 7 changed four requirements and accepted two as weak on the record instead of gesturing at risk. I did not take the document's evidence on trust. Six load-bearing claims were re-derived in this context from the tree directly and every one held: the three named guards are absent from bollard/; store.py reads MI 4.78 grade C, max_cc 32, SLOC 1443; store.py churn is 1 against a 9-commit tree, so hotspot_signal reduces to max_cc exactly as R18 states; atlas/ingest/audit.py writes payload_json verbatim with no scrub; git ls-files returns zero for all three measurement scripts; and an independent fourth search over /Users/m5/dev for layered_command_guard.py and its four class names returns only PRD.md itself. GO rather than HOLD on the R14/R15 provenance question, deliberately. That question is already quarantined correctly - the PRD forbids R14/R15 entering a backlog or being sized until the operator settles it - so it is a drawn scope boundary, not a leak. It is also unresolvable by any action the architecture stage could take, which makes a Hold on it an open-ended Hold of the kind this skill's section 6 forbids, and it would stall roughly eighteen requirements that do not depend on it. It travels forward as an operator question with a default attached, per condition C1. One finding of my own, not inherited: section 8 records R0 as 'Closed by Run 1', and the evidence behind that closure does not hold up. This finding has been revised twice as better evidence arrived; revision 3 is the accurate statement and supersedes both earlier ones. Revision 1 said no dev-harness-scoped run existed - wrong, one does. Revision 2 said its 1.16x reading contradicted the brief's 0.96x, framed as two disagreeing measurements - also wrong, and wrong in a way that understated the real problem. There are at least four readings of this ratio on record: 0.96x and 1.1x from two dev-harness-7f runs around 22:3x-22:44 (terminal only, never written to a file), 1.16x from the 23:00:53 scoped run surviving at /Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt, and 0.64x in the m5-dev--scoped JSON that overwrote the raw output at 23:03:58. They are not competing measurements of one quantity. They are one unstable metric read at four moments, and the instability has an open ticket already: DEVH-5 records that day_over_day compares against a fixed historical day_one, so the ratio moves with whatever scope and session growth happen to be in the window. The current JSON demonstrates it - day_one is 2026-08-06, while dev-harness transcripts only reach back to Aug 23, so its day_one belongs to another project entirely. The actual defect in section 8 is therefore sharper than a disagreement: R0 was closed on a single favorable reading of a metric that this project's own open bug says is not stable enough to close anything on. DEVH-4 and DEVH-5 both remain open. Two attribution points, recorded because this package is the durable record. The 23:00 scoped file was NOT produced by dev-harness-7f - that was this session's inference from '7f ran R0', never something any peer stated, and 7f corrected it; its provenance is unestablished and nothing here should imply otherwise. And DEVH-3, open when this gate was first rendered, was transitioned to closed at 2026-09-02T09:32:04Z with a comment recording the retraction and the attribution fix, which resolves that leg of C2. Still no bearing on the gate: R0 is out of this PRD's scope and no R1-R24 requirement rests on it. This package was written by a session that did not author the PRD, did not author the brief, and holds none of the reasoning that produced either. Recorded explicitly because concept_gate.py's own docstring names the unenforceability of that separation as a known open limitation - the hook cannot check it, so the claim belongs on the record instead.",
+  "conditions": [
+    {
+      "id": "C1",
+      "requirement": "R14/R15",
+      "condition": "Operator confirms whether layered_command_guard.py was ever written.",
+      "owner": "operator",
+      "default_if_unanswered": "Treat as never written. R14 and R15 become build-from-nothing requirements sized at design-and-scope, and every R12-R15 technical claim resting only on the brief's narration is re-derived by Clint rather than inherited.",
+      "due": "architecture freeze",
+      "blocks_architecture_stage": false
+    },
+    {
+      "id": "C2",
+      "requirement": "PRD section 8, R0 row",
+      "condition": "Restate the R0 row. Not 'Closed by Run 1' in any wording implying a measured at-parity result. Accurate: R0's original 2.3x-3.1x premise is retracted as an unscoped-aggregation artifact, and no stable replacement measurement exists - four readings of the day_over_day ratio (0.96x, 1.1x, 1.16x, 0.64x) span under-target to over-target across runs and scopes, and DEVH-5 (open) records why the ratio is not stable. R0 is closed on a retracted premise, not on a confirmed parity finding. DEVH-3 is now closed (2026-09-02T09:32:04Z), so the open-ticket half of this condition is discharged. Do not overstate in either direction.",
+      "owner": "PRD author session (dev-harness-run2)",
+      "due": "before design-and-scope opens",
+      "blocks_architecture_stage": false,
+      "found_by": "this gate pass, not inherited from the PRD",
+      "revised_at_revision": 3,
+      "partially_discharged": "DEVH-3 transitioned to closed 2026-09-02T09:32:04Z"
+    },
+    {
+      "id": "C3",
+      "requirement": "R23, sequencing",
+      "condition": "R23 clears first in the backlog. Every quantitative claim in this PRD traces to three untracked scripts, and R3's before/after comparison is unfalsifiable until there is a tool SHA to pin. Note DEVH-4 and DEVH-5 are open bugs in one of those three, so R21 shall not formalize a KPI series on it until they close. Reinforced at revision 3: DEVH-4 and DEVH-5 are both still open, and DEVH-5 is the reason no reading of this metric can currently close anything.",
+      "owner": "design-and-scope stage",
+      "due": "first ticket cleared in implementation",
+      "blocks_architecture_stage": false
+    }
+  ],
+  "verified_independently_at_this_gate": [
+    "bollard/guard_destructive.py, guard_prodconfig.py, guard_untrusted_web.py all absent (R24)",
+    "store.py MI=4.78 (C), max_cc=32, SLOC=1443, commits=1 (R1a)",
+    "9 commits in tree; store.py churn=1; hotspot signal=32=max_cc (R18)",
+    "atlas/ingest/audit.py payload_json=json.dumps(obj), no scrub (R8)",
+    "git ls-files returns 0 for all three measurement scripts (R23)",
+    "4th independent search over /Users/m5/dev: layered_command_guard terms hit PRD.md only (R14)",
+    "concept_gate.py IS registered in .claude/settings.json on this project - the gate is live",
+    "R0 evidence, revision 2: /Users/m5/dev/investigation/dev-harness-token-bloat-diagnostic-scoped-20260901.txt read directly - 297 bytes, hint='dev-harness', 95.0% cache hit, 1.16x vs 1.1x target, 32 spikes. Contradicts the brief's 0.96x. Its JSON was overwritten in place.",
+    "Revision 3, verified directly: DEVH-3 status=closed, updated 2026-09-02T09:32:04Z; DEVH-4 and DEVH-5 still open. mtimes - scoped .txt 23:00:53, dev-harness .json/.txt 23:03:58 (the overwrite), both after dev-harness-7f's ~22:44 runs. Current JSON: hint 'm5-dev-', 149 files, latest_vs_day_one_ratio 0.64, day_one 2026-08-06."
+  ],
+  "notes": [
+    "PRD section 0 states the tree has 7 commits; it now has 9, the PRD's own two included. Stale by two, changes no conclusion, recorded so a later reader is not surprised by it.",
+    "foreman:tpm's own text still says concept_gate.py is registered on no project, dated 2026-08-22. That is now out of date: it is registered here and it fired. The skill text should be corrected separately."
+  ],
+  "revision": 4,
+  "revision_note": "Revision 4 adds verified within-run evidence for the metric-instability finding, which is independent of the attribution question that drove revisions 2 and 3. The per-day series was re-derived here rather than accepted: it matches, but the tenfold-spread framing is partly small-sample noise, so the record carries the >=1000-turn form that survives that objection. Decision unchanged (go). Conditions unchanged.",
+  "decided_at_revision_2": "2026-09-02T06:50:44Z",
+  "decided_at_revision_3": "2026-09-02T09:33:40Z",
+  "r0_metric_instability_evidence": {
+    "added_at_revision": 4,
+    "source": "/Users/m5/dev/dev-harness/token_bloat_diagnostic.json, day_over_day.per_day, read directly",
+    "scope_caveat": "project_hint is 'm5-dev-' (149 files, 35 projects) and day_one is 2026-08-06, which predates dev-harness's own transcripts (they start Aug 23). Nothing in this block is a dev-harness-specific number and none of it can reopen or settle R0's dev-harness question.",
+    "verified_series": {
+      "n_days": 17,
+      "min": 0.25,
+      "max": 2.5,
+      "spread": "10.0x against a 1.1 target",
+      "note": "Matches the series reported by Priya's session exactly. Confirmed, not accepted."
+    },
+    "objection_tested": "Tenfold spread alone is attackable as small-sample noise, and partly is: the three lowest ratios sit on the three thinnest days - 0.25x on 47 turns, 0.5x on 42, 0.64x on 106. A sceptic is right to discount those. The spread argument should not be leaned on in that form.",
+    "robust_form": "Restrict to days with >=1000 turns (n=9): 2.09, 2.11, 1.82, 1.25, 1.93, 2.14, 1.96, 1.78, 1.78. Median about 1.93. Every well-sampled day sits above the 1.1 target and not one is near parity. The instability finding survives the noise objection in this form, where the raw spread does not.",
+    "mechanism_demonstrated": "The headline latest_vs_day_one_ratio of 0.64 comes from 2026-09-01, a 106-turn partial day. So the headline is a two-point comparison between two arbitrary days, either of which may be thin. That is DEVH-5's defect shown working, not merely asserted, and it is why no single reading of this ratio - 0.96x, 1.1x, 1.16x or 0.64x - can close anything.",
+    "do_not_quote": "0.64x must never be cited as reassurance. It is a thin-day artifact on a cross-project scope, not a dev-harness measurement.",
+    "confidence": "High on the arithmetic, read directly from the JSON. Medium on the >=1000-turn cut being the right subset - that is this session's analysis choice, defensible but not independently validated. No causal claim is made about why per-turn tokens are higher on well-sampled days; workload change and metric defect both remain live explanations."
+  },
+  "decided_at_revision_4": "2026-09-02T09:39:08Z"
+}
