@@ -54,6 +54,12 @@ def parse_query_internal(path):
 @route("POST", r"^/tickets$")
 def create_ticket(ctx, m, body):
     require_internal(body, "ticket_type", "reporter", "actor")
+    # TESS-127: priority/severity are 0-4 scales where 0 (highest) is a valid, real value --
+    # require_internal's `not body.get(f)` truthiness check would wrongly treat an explicit 0
+    # as missing, so check presence directly instead of reusing it for these two fields.
+    missing = [f for f in ("priority", "severity") if body.get(f) is None]
+    if missing:
+        raise ValueError(f"missing required field(s): {', '.join(missing)}")
     tid = ctx.store.create_ticket(
         ticket_type=body["ticket_type"], reporter=body["reporter"], actor=body["actor"],
         priority=body.get("priority"), assignee=body.get("assignee"),

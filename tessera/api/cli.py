@@ -92,12 +92,13 @@ def build_parser():
     create.add_argument("--type", required=True, dest="ticket_type")
     create.add_argument("--reporter", required=True)
     create.add_argument("--actor", required=True)
-    create.add_argument("--priority", type=int, choices=[0, 1, 2, 3, 4],
-                         help="0=Highest (P0) .. 4=Lowest (P4)")
+    create.add_argument("--priority", type=int, choices=[0, 1, 2, 3, 4], required=True,
+                         help="0=Highest (P0) .. 4=Lowest (P4) -- required (TESS-127: silently "
+                              "null priority/severity was a systemic, undetected data gap)")
     create.add_argument("--assignee")
     create.add_argument("--parent")
-    create.add_argument("--severity", type=int, choices=[0, 1, 2, 3, 4],
-                         help="0=Highest (S0) .. 4=Lowest (S4)")
+    create.add_argument("--severity", type=int, choices=[0, 1, 2, 3, 4], required=True,
+                         help="0=Highest (S0) .. 4=Lowest (S4) -- required, see --priority")
     create.add_argument("--repro-steps")
     create.add_argument("--environment")
     create.add_argument("--idempotency-key")
