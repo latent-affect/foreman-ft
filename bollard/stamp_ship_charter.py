@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 """Restamp .foreman/SHIP-CHARTER.json's commit_hash to the real current HEAD.
 
-The charter file cannot contain the hash of the commit that adds it. Stamp
-against current HEAD, then commit only this file. ship_readiness_gate.py treats a
-charter-only child of commit_hash as still current, so do not restamp after that
-commit. Restamping after the commit recreates the dirty-tree loop. This script does
-not commit anything itself.
+Root cause this closes (found during the 2026-08-22 harness pilot postmortem, atlas-sonnet):
+SHIP-CHARTER.json's commit_hash cannot correctly name the commit that FIRST adds/updates the
+charter itself -- that commit's own hash is a function of its own tree content, which includes
+this file, so no value written into the file before that commit exists can equal the hash the
+commit will get. Every subsequent commit (even one wholly unrelated to ship-readiness, like a
+history rewrite) invalidates the charter the same way ship_readiness_gate.py's own
+current_commit_hash() check expects: an exact match against real current HEAD.
 
-A later non-charter commit still stale-denies, same as before.
+Observed pattern this was built to replace: atlas-sonnet's own history shows three
+"Correct SHIP-CHARTER.json's commit_hash to the real post-commit HEAD" commits, each landing
+10-20 seconds after the commit that invalidated it -- real, disciplined, immediate manual
+correction every time, not evidence left stale. This script removes the manual step, not the
+correction discipline: run it, it writes the real hash, you commit the result. It does not
+commit anything itself -- committing is a decision, this is just the computation ship_readiness_
+gate.py's own current_commit_hash() already makes, exposed as a reusable step instead of
+requiring someone to re-derive `git rev-parse HEAD` and hand-edit JSON each time.
 """
 
 import json

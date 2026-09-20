@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pre-flight gate. Before build work proceeds in a Foreman project, refuse (DENY)
+"""FORE-5: pre-flight gate. Before build work proceeds in a Foreman project, refuse (DENY)
 if open, blocking tickets exist for that project OR any project it structurally depends on
 (cross_project_routing.DEPENDS_ON) -- and ASK, separately, if an open ticket touching
 hook-code scope (per routing_table.classify() on its reference_docs) lacks human ratification.
@@ -12,7 +12,7 @@ Fail-direction, deliberate: tessera_resolver returning "unregistered" is silent 
 into TESSERA tracking, mirrors architecture_gate.py's own "never opted in, never gated").
 "ambiguous" or "unreachable" DENY -- "confirmed clean" and "couldn't check" must never look
 the same to whoever reads the outcome, the same asymmetry ticket_status_gate's design commits
-to (see its own C3 vs C4).
+to (FORE-3, C3 vs C4).
 """
 
 import sys
@@ -27,47 +27,6 @@ import tessera_resolver as tr  # noqa: E402
 import routing_table as rt  # noqa: E402
 
 RULE_ID = "FOREMAN-PREFLIGHT-GATE"
-
-
-def remedy_path(project_root):
-    return (Path(project_root) / ".foreman" / tr.OVERRIDE_FILENAME).resolve()
-
-
-def is_remedy_write(data, project_root):
-    """True only when the tool call's sole write target is the named override file.
-
-    The ambiguous/unreachable deny names that file as the escape. Without this
-    carve-out the same matcher that just denied also blocks the Write/Edit/Bash that would
-    create it. Identity is Path.resolve equality against remedy_path, not a suffix match,
-    and not a class-wide .foreman/ or control-file exemption.
-    """
-    tool_name = data.get("tool_name")
-    tool_input = data.get("tool_input") or {}
-    wanted = remedy_path(project_root)
-    if tool_name in ("Edit", "Write"):
-        file_path = tool_input.get("file_path")
-        if not file_path:
-            return False
-        candidate = Path(file_path)
-        if not candidate.is_absolute():
-            cwd = data.get("cwd")
-            if not cwd:
-                return False
-            candidate = Path(cwd) / candidate
-        try:
-            return candidate.resolve() == wanted
-        except (OSError, RuntimeError):
-            return False
-    if tool_name == "Bash":
-        command = tool_input.get("command", "")
-        targets = cc.extract_bash_write_targets(command, data.get("cwd"))
-        if len(targets) != 1:
-            return False
-        try:
-            return Path(targets[0]).resolve() == wanted
-        except (OSError, RuntimeError):
-            return False
-    return False
 
 
 def collect_blocking(prefixes):
@@ -127,18 +86,50 @@ def main(data):
         hc.set_rule(f"{RULE_ID}:not-tessera-registered")
         return
 
-    if status in ("ambiguous", "unreachable"):
-        if is_remedy_write(data, project_root):
-            hc.set_rule(f"{RULE_ID}:{status}-remedy-write")
-            return
-        hc.set_rule(f"{RULE_ID}:{status}")
-        detail = (f"candidates {result['candidates']}" if status == "ambiguous"
-                  else result.get("reason", "unknown"))
+    if status == "ambiguous":
+        hc.set_rule(f"{RULE_ID}:ambiguous")
         hc.deny(
-            f"Foreman preflight: could not confirm this project's TESSERA registration is "
-            f"safe to build against ({status}: {detail}). Write .foreman/tessera-prefix "
-            f"naming the correct prefix to disambiguate, then retry."
+            f"Foreman preflight: this project's TESSERA registration is ambiguous "
+            f"(candidates {result['candidates']}). Write .foreman/tessera-prefix naming the "
+            f"correct one of these, e.g. `echo \"<PREFIX>\" > .foreman/tessera-prefix` "
+            f"with <PREFIX> replaced by whichever of {result['candidates']} actually matches "
+            f"this project, then retry."
         )
+        return
+
+    if status == "unreachable":
+        hc.set_rule(f"{RULE_ID}:unreachable")
+        # FORE-659 (Stage 2): "unreachable" used to get ONE remedy ("write
+        # .foreman/tessera-prefix") regardless of cause, but that remedy is actively wrong
+        # for cause="cli-error" -- tessera_resolver.resolve() returns before it ever reads
+        # the override file in that branch (confirmed by reading resolve()'s own source), so
+        # writing one and retrying reliably reproduces the identical denial. Branching on the
+        # now-machine-readable "cause" field (tessera_resolver.py, this same proposal) instead
+        # of giving one message for both.
+        cause = result.get("cause")
+        if cause == "invalid-override":
+            known = result.get("known_prefixes") or []
+            hc.deny(
+                f"Foreman preflight: .foreman/tessera-prefix names an invalid prefix "
+                f"({result.get('reason', 'unknown')}). Known valid prefixes right now: "
+                f"{known}. Fix the file, e.g. `echo \"<PREFIX>\" > "
+                f".foreman/tessera-prefix` with <PREFIX> replaced by whichever of {known} "
+                f"actually matches this project, then retry."
+            )
+        else:
+            # cause == "cli-error", or an older/unrecognized result shape with no "cause" at
+            # all (fails toward the safer, more honest message rather than assuming the
+            # override-file remedy is safe to suggest).
+            hc.deny(
+                f"Foreman preflight: TESSERA itself could not be queried "
+                f"({result.get('reason', 'unknown')}) -- this is NOT a prefix-naming "
+                f"problem, and writing .foreman/tessera-prefix will not fix it (the query "
+                f"that failed happens before that file is ever read). Reproduce directly to "
+                f"see the real error: `/usr/bin/python3 -m tessera.api.cli --db "
+                f"{tr.DB_PATH!r} list-projects` (run from directory {tr.TESSERA_CWD!r}). If "
+                f"that also fails, this needs an operator/human to look at TESSERA's own "
+                f"health -- retrying the build action that hit this gate will not help."
+            )
         return
 
     prefix = result["prefix"]

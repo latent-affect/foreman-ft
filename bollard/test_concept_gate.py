@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for concept_gate.py: package-existence, decision-field gating
+"""Regression tests for FORE-71's concept_gate.py: package-existence, decision-field gating
 (go opens, kill/hold/recycle all deny), Bash-write-target extraction, scope isolation from
 architecture_gate.py's own implementation-path coverage, and fail-closed behavior on a malformed
 package.
@@ -24,7 +24,7 @@ class ConceptGateMainTests(unittest.TestCase):
 
     def _write_package(self, decision="go", **extra):
         pkg = {"stage": "concept", "decision": decision,
-               "gate_owner_persona": "Priya Desai", "tessera_ticket_ids": ["DEMO-1"],
+               "gate_owner_persona": "Priya Desai", "tessera_ticket_ids": ["FORE-71"],
                "summary": "test package", **extra}
         pkg_path = self.tmp / cg.PACKAGE_RELPATH
         pkg_path.parent.mkdir(parents=True, exist_ok=True)

@@ -171,5 +171,94 @@ class PreImplementationBriefGateTests(unittest.TestCase):
         self.assertEqual(result.stdout.strip(), "")
 
 
+class CrossProjectJurisdictionTests(unittest.TestCase):
+    """FORE-581. project_root came from the payload cwd, so a write into ANOTHER project's
+    declared component was attributed to the writer's components and checked against the
+    writer's briefs -- which is to say, not checked at all.
+
+    THREE projects, not two, and the third is the point. A and C each declare a component the
+    other does not and neither records a brief, so both cross arms must newly deny, in both
+    directions. S records a real brief AND cites it in GOALS.json, so a cross-project write into
+    S must STAY SILENT. Without S every arm here is a deny and a gate that had simply become
+    stricter would score identically -- the same polarity check FORE-580's authored tests were
+    missing."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmpdir, ignore_errors=True)
+        self.a = self._project("proj-a", "widget", brief_ticket=None)
+        self.c = self._project("proj-c", "sprocket", brief_ticket=None)
+        self.satisfied = self._project("proj-s", "gizmo", brief_ticket="PROBE-77")
+        self.outsider = Path(self.tmpdir) / "outside-foreman"
+        self.outsider.mkdir()
+
+    def _project(self, dirname, component, brief_ticket):
+        root = Path(self.tmpdir) / dirname
+        (root / ".foreman" / "briefs").mkdir(parents=True)
+        (root / component).mkdir()
+        (root / "ARCHITECTURE.md").write_text(
+            f'# Fixture\n\n```yaml components\n{component}: ["{component}/"]\n```\n')
+        (root / "ARCHITECTURE-REVIEW.md").write_text("reviewed\n")
+        goals = {"component": component}
+        if brief_ticket:
+            (root / ".foreman" / "briefs" / f"{component}.json").write_text(
+                json.dumps({"ticket_id": brief_ticket, "persona": "dana-okafor"}))
+            goals["brief"] = brief_ticket
+        (root / component / "GOALS.json").write_text(json.dumps(goals))
+        return root
+
+    def _decision(self, result):
+        if not result.stdout.strip():
+            return None
+        return json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"]
+
+    def test_own_cwd_still_denies(self):
+        """Positive control: without this the cross arms could pass because nothing fires."""
+        result = run_hook(self.a, str(self.a / "widget" / "impl.py"))
+        self.assertEqual(self._decision(result), "deny")
+
+    def test_foreign_cwd_into_a_denies_and_names_a(self):
+        result = run_hook(self.c, str(self.a / "widget" / "impl.py"))
+        self.assertEqual(self._decision(result), "deny")
+        self.assertIn(str(self.a), json.loads(result.stdout)["hookSpecificOutput"]
+                      ["permissionDecisionReason"])
+
+    def test_foreign_cwd_into_c_denies_and_names_c(self):
+        """The other direction. Two projects declaring DIFFERENT components is what makes this
+        pair meaningful: a gate reading the writer's component map cannot attribute the other
+        project's path at all, so it goes quiet rather than reaching a wrong answer loudly."""
+        result = run_hook(self.a, str(self.c / "sprocket" / "impl.py"))
+        self.assertEqual(self._decision(result), "deny")
+        self.assertIn(str(self.c), json.loads(result.stdout)["hookSpecificOutput"]
+                      ["permissionDecisionReason"])
+
+    def test_foreign_cwd_into_a_satisfied_project_stays_silent(self):
+        """THE POLARITY CHECK. Jurisdiction moving to the target must consult the target's
+        brief, which here is satisfied -- so this must NOT deny. A gate that merely became
+        stricter fails only this test."""
+        result = run_hook(self.a, str(self.satisfied / "gizmo" / "impl.py"))
+        self.assertIsNone(self._decision(result))
+
+    def test_writer_outside_any_foreman_project_is_still_gated_by_the_target(self):
+        """The opt-in belongs to the project that declared the component and would have to
+        record the brief, not to the directory the writer happens to be standing in."""
+        result = run_hook(self.outsider, str(self.a / "widget" / "impl.py"))
+        self.assertEqual(self._decision(result), "deny")
+
+    def test_bash_write_into_a_foreign_component_denies(self):
+        payload = {"tool_name": "Bash", "session_id": "test", "cwd": str(self.c),
+                   "tool_input": {"command": f"cp /etc/hosts {self.a}/widget/impl.py"}}
+        result = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload),
+                                capture_output=True, text=True, timeout=10)
+        self.assertEqual(self._decision(result), "deny")
+
+    def test_bash_write_into_a_satisfied_foreign_component_stays_silent(self):
+        payload = {"tool_name": "Bash", "session_id": "test", "cwd": str(self.a),
+                   "tool_input": {"command": f"cp /etc/hosts {self.satisfied}/gizmo/impl.py"}}
+        result = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload),
+                                capture_output=True, text=True, timeout=10)
+        self.assertIsNone(self._decision(result))
+
+
 if __name__ == "__main__":
     unittest.main()

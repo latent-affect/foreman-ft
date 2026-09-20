@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Foreman gate -- catch a Bash command that would silently clobber a
+"""Foreman gate -- FORE-14: catch a Bash command that would silently clobber a
 project-declared hardened build artifact with an undeclared, lower-posture producer.
 
 Real incident this closes (gif-smith/gifsmith, not itself Foreman-gated): scripts/
@@ -13,7 +13,7 @@ reduction docs/CVE-AUDIT.md's security posture depended on. No existing hook und
 scripts, one output path, two different security postures" -- guard_install.py only checks
 PyPI package names for slopsquatting.
 
-DENY, not ASK. Under Claude Code auto mode (the Pro/Max/Team default as of 2026-08-14),
+DENY, not ASK. FORE-82: under Claude Code auto mode (the Pro/Max/Team default as of 2026-08-14),
 a PreToolUse permissionDecision of "ask" is not a hard gate. Official hooks guide: deny
 cancels the tool in every permission mode, including auto and bypassPermissions. Official
 permission-modes page: only explicit permissions.ask *rules* still force a prompt in auto;
@@ -93,14 +93,66 @@ def normalize_rel_path(path):
     return path[2:] if path.startswith("./") else path
 
 
-def path_token_in_line(line, rel_path):
-    """Does `line` mention rel_path as an actual path token -- word-boundary-safe, tolerant
-    of a leading ./ -- not as a substring of something else (e.g. 'bin/ffmpeg' must not match
-    inside 'bin/ffmpeg-old')?"""
+def path_token_in_line(line, rel_path, project_root):
+    r"""Does `line` mention rel_path as an actual path token -- including an ABSOLUTE spelling of
+    the same file -- and not as a substring of something else ('bin/ffmpeg' must not match inside
+    'bin/ffmpeg-old')?
+
+    FORE-583. The old pattern was anchored by `(?<![\w./-])`, which excludes `/`, and in an
+    absolute spelling the character immediately before `bin/tool` IS a `/`. So
+    `cp /tmp/other /abs/path/to/proj/bin/tool` matched no manifest key while
+    `cp /tmp/other bin/tool` matched -- same file on disk, same manifest entry, verdict decided by
+    how the path was spelled. Writing an absolute path is ordinary agent behaviour, not an evasion,
+    which made this a routine false negative rather than a corner case.
+
+    MANIFEST KEYS STAY PROJECT-RELATIVE. That is correct and is not what changed.
+
+    WHY THIS RESOLVES RATHER THAN ENUMERATING SPELLINGS, which is the part worth not undoing. My
+    first fix added the project root's own spelling and its .resolve()d spelling as extra regex
+    alternations, and it did not work: find_project_root() already resolves what it returns, so
+    both alternations were the same string -- /private/var/... -- while the command text said
+    /var/..., and neither covered it. Guessing spellings loses to the first pair that differ.
+
+    So: the regex finds CANDIDATE tokens whose tail is the key, and each candidate is resolved once
+    and compared against the resolved <project_root>/<key>. A text scan to locate, one filesystem
+    question to confirm. That is also what makes `..` segments and symlinked parent directories
+    match, which enumeration never would.
+
+    An unresolvable candidate is skipped rather than crashing the gate -- ValueError included,
+    which is not in the usual (OSError, RuntimeError) pair and is the escape FORE-595 documents
+    for the shared extractor. Skipping fails toward NOT gating, the same direction this module's
+    other disclosed blind spots already take.
+
+    `project_root` IS REQUIRED, and the reasoning is the mirror image of FORE-557's claim_once_only
+    earlier tonight. There, defaulting a new parameter was right because omitting it preserved the
+    STRICT behaviour, so the relaxation was opt-in and failed closed. Here, omitting it would
+    preserve the PERMISSIVE behaviour, so a default would hand a future call site a silent coverage
+    loss instead of a TypeError. Checked before making it required: the only callers are the two in
+    find_undeclared_clobbers below, and nothing outside this module calls either.
+    """
     norm = normalize_rel_path(rel_path)
     escaped = re.escape(norm)
-    pattern = re.compile(r"(?<![\w./-])(?:\./)?" + escaped + r"(?![\w./-])")
-    return bool(pattern.search(line))
+
+    # Bare or ./-prefixed, exactly as before -- the relative spelling that already worked.
+    if re.search(r"(?<![\w./-])(?:\./)?" + escaped + r"(?![\w./-])", line):
+        return True
+
+    if not project_root:
+        return False
+    try:
+        declared = (Path(project_root) / norm).resolve()
+    except (OSError, RuntimeError, ValueError):
+        return False
+
+    # Any token ending in the key, with a path separator in front of it: the absolute-spelling
+    # candidates. Each is confirmed by resolution, never by its text.
+    for m in re.finditer(r"(?<![\w.-])((?:[^\s'\"]*/)" + escaped + r")(?![\w./-])", line):
+        try:
+            if Path(m.group(1)).resolve() == declared:
+                return True
+        except (OSError, RuntimeError, ValueError):
+            continue
+    return False
 
 
 def invokes_producer_line(line, producer_norm):
@@ -178,7 +230,7 @@ def build_events(command, cwd, project_root):
     return events
 
 
-def find_undeclared_clobbers(events, manifest):
+def find_undeclared_clobbers(events, manifest, project_root):
     """For each manifest-declared artifact, walk `events` in order and track the LAST
     relevant one: the producer being invoked, the producer writing its own declared output
     (source == the producer's own path -- never counts as a clobber, regardless of verb), or
@@ -195,12 +247,14 @@ def find_undeclared_clobbers(events, manifest):
         last_event = None
         for source, line in events:
             if source == producer_norm:
-                if path_token_in_line(line, rel_path) and WRITE_VERB_RE.search(line):
+                if (path_token_in_line(line, rel_path, project_root)
+                        and WRITE_VERB_RE.search(line)):
                     last_event = "producer-write"
                 continue
             if invokes_producer_line(line, producer_norm):
                 last_event = "producer-invoked"
-            elif path_token_in_line(line, rel_path) and WRITE_VERB_RE.search(line):
+            elif (path_token_in_line(line, rel_path, project_root)
+                  and WRITE_VERB_RE.search(line)):
                 last_event = "clobber"
         if last_event == "clobber":
             yield rel_path, entry
@@ -234,42 +288,207 @@ def load_manifest(project_root):
     return data, "ok"
 
 
-def main(data):
-    if data.get("tool_name") != "Bash":
-        return
+# `install` as the COMMAND, not as a word anywhere in the segment. Same start-anchored shape
+# FORE-591 gave component_coupling.py's own write trigger: optional leading env assignments, an
+# optional sudo (recognized in text, never run), an optional command/env/nohup/time wrapper. The
+# anchor is the whole reason this is safe to have at all -- `npm install express` and `pip
+# install requests` do not match it, so the fleet-FATAL false-deny class is excluded at the
+# pattern rather than left for a downstream manifest lookup to absorb.
+INSTALL_CMD_RE = re.compile(
+    r"^\s*"
+    r"(?:\w+=\S*\s+)*"
+    r"(?:sudo\s+(?:-\S+\s+)*)?"
+    r"(?:(?:command|env|nohup|time)\s+)?"
+    r"install\b"
+)
 
-    project_root = cc.find_project_root(data.get("cwd"))
-    if project_root is None:
-        return  # never opted into Foreman at all -- never gated, same as every other hook here
 
-    manifest, manifest_state = load_manifest(project_root)
+def install_jurisdiction_hints(command, cwd):
+    """Project roots implicated by an `install` destination, which the shared extractor does not
+    see and must not be taught to see (component_coupling.py:620-634, the FATAL).
+
+    JURISDICTION-ONLY. A root returned here decides which manifest gets CONSULTED; it is never
+    itself an input to a deny. The deny stays manifest-driven downstream, so a wrongly-hinted
+    root loads a manifest, matches no declared artifact, and denies nothing. That asymmetry is
+    the entire argument for why a broad local hint is safe here when a broad SHARED trigger was
+    fatal there: those gates' deny decisions are not manifest-scoped, and this one's is.
+
+    Three constraints this function must keep, in the order they matter:
+      - LOCAL to this file. Moved into component_coupling it inherits the fatal profile.
+      - NEVER an input to a deny. If a hint ever reaches the deny path the argument above
+        collapses and this becomes the thing it replaced.
+      - AN UNRESOLVABLE HINT IS DROPPED, not failed closed. A real extracted write target that
+        will not resolve is a different case with a different answer; a hint only ever ADDS
+        jurisdiction, so failing closed on one would let any garbage token in a command text
+        deny the command outright.
+
+    The drop is disclosed to stderr rather than swallowed. Not to the verdict ledger: set_rule
+    holds a single slot that the final decision overwrites, so a rule_id here would be lost by
+    the time the hook exits. stderr is where this file already discloses a malformed manifest,
+    for the same reason -- a condition worth seeing that has no decision of its own to ride on.
+
+    The last non-flag token is taken as the destination, which is install's own conventional
+    argument order. No cd-awareness, unlike component_coupling.extract_bash_write_targets: a
+    `cd elsewhere && install -m 0755 src dst` resolves against the payload cwd, not the post-cd
+    directory. Disclosed, not modeled -- same residual build_events already carries for an
+    invoked script's internal cd, and lower-stakes here because this is a hint.
+    """
+    roots = []
+    dropped = []
+    for seg in re.split(r"[;&|\n]", strip_comments(command)):
+        if not INSTALL_CMD_RE.match(seg):
+            continue
+        tokens = re.findall(r'"[^"]+"|\'[^\']+\'|\S+', seg)
+        if len(tokens) < 2:
+            continue
+        candidate = tokens[-1].strip('"').strip("'")
+        if not candidate or candidate.startswith("-"):
+            continue
+        root = cc.project_root_for_target(candidate, cwd)
+        if root is not None:
+            if root not in roots:
+                roots.append(root)
+            continue
+        # None means either "resolved fine, but is not inside a Foreman project" or "did not
+        # resolve at all". Only the second is worth disclosing, so ask once, here, which it was.
+        # Jurisdiction itself stays derived in exactly one place -- the shared helper above.
+        try:
+            probe = Path(candidate)
+            if not probe.is_absolute():
+                probe = (Path(cwd) if cwd else Path.cwd()) / probe
+            probe.resolve()
+        except (OSError, RuntimeError, ValueError):
+            dropped.append(candidate)
+    if dropped:
+        print(f"[dependency_provenance_gate] dropped {len(dropped)} unresolvable install "
+              f"jurisdiction hint(s) ({', '.join(dropped[:3])}); a hint that will not resolve "
+              f"adds no jurisdiction and never fails a command closed",
+              file=sys.stderr)
+    return roots
+
+
+def implicated_roots(command, cwd):
+    """The Foreman projects whose artifact manifests this command could clobber, in discovery
+    order: every project that owns one of the command's write targets, then the writer's own
+    project as a floor.
+
+    FORE-578. project_root used to be resolved ONCE from the payload cwd -- the writer's own
+    location -- and THAT project's manifest was the only one ever consulted. Fired against two
+    sibling Foreman projects each declaring an artifact the other does not:
+
+        cwd=A   cp other A/bin/tool-a        DENY    the gate works when cwd matches
+        cwd=B   cp other A/bin/tool-a        ALLOW   the cross-project fail-open
+        cwd=A   cp other B/bin/tool-b        ALLOW   and in the other direction too
+        cwd=B   cp other A/bin/undeclared    ALLOW   the negative control
+
+    The project that declared the artifact never got asked about a write to its own artifact.
+    The two projects declaring DIFFERENT artifacts is what makes those arms carry a conclusion:
+    a gate reading the writer's cwd loads the wrong manifest, matches no key, and goes quiet,
+    so a passing arm cannot be a right answer reached for the wrong reason.
+
+    THE cwd FLOOR IS STRUCTURAL, NOT A HEDGE, and it is the part not to remove later. This
+    gate's WRITE_VERB_RE is install|ln|cp|mv|tee|rm|> -- strictly broader than the shared
+    extractor's redirect/tee/cp|mv|ln/sed -i. A command using only `install` extracts ZERO
+    targets, so deriving jurisdiction from extraction ALONE would return an empty root set and
+    open the gate, INCLUDING for the own-cwd case that is fully covered today (today's gate
+    does not gate on extraction at all). Extraction ADDS foreign-rooted jurisdiction on top of
+    the floor and never replaces it, so no own-cwd coverage can be lost by this change.
+
+    The obvious alternative -- widen the shared extractor instead -- is closed off by
+    component_coupling.py's own record at lines 620-634: adding install/ln there was tried,
+    went live-FATAL (`install` is also the package-manager subcommand, so architecture_gate and
+    goals_freeze_gate began falsely DENYING ordinary `npm install` and `pip install` across
+    every gated project), and was reverted. `ln` has since been restored there under a
+    start-anchored trigger (FORE-591); `install` has not, and should not be.
+
+    A writer standing entirely outside Foreman is now gated for a write INTO a Foreman project.
+    That is deliberate and it replaces this file's previous early return. The opt-in belongs to
+    the project that declared the artifact, not to the directory the writer happens to be
+    standing in, and it is the same change FORE-568/573/576 made to stage_order_gate,
+    concept_gate and architecture_gate.
+    """
+    roots = []
+    for target in cc.extract_bash_write_targets(command, cwd):
+        root = cc.project_root_for_target(target, cwd)
+        if root is not None and root not in roots:
+            roots.append(root)
+    for root in install_jurisdiction_hints(command, cwd):
+        if root not in roots:
+            roots.append(root)
+    floor = cc.find_project_root(cwd)
+    if floor is not None and floor not in roots:
+        roots.append(floor)
+    return roots
+
+
+def check_root(root, command, cwd):
+    """Evaluate the WHOLE, UNMODIFIED command against ONE project's manifest. Returns
+    (denied, manifest_state).
+
+    ROOT-MAJOR, NOT TARGET-MAJOR, and this is the one place this gate must NOT copy the shape
+    its three sibling gates use. Their unit of evaluation is a single target, so they loop
+    targets and ask each target's project about it. This gate's unit of evaluation is the whole
+    command: build_events splices an invoked script's body in at the point of invocation and
+    find_undeclared_clobbers tracks the LAST relevant event per declared artifact, which is
+    what tells the producer legitimately building its own output from something overwriting
+    that output later in the same command. Chopping the command into targets and evaluating
+    each independently would discard that ordering and silently reintroduce the
+    delegate-then-clobber bug this file was hardened against (see build_events' own docstring).
+    So jurisdiction becomes target-derived while the analysis stays whole-command.
+    """
+    manifest, manifest_state = load_manifest(root)
     if not manifest:
-        # Distinct rule suffixes so the verdict ledger can tell "never opted in" apart from
-        # "opted in and the manifest is broken" -- a review finding: both used to collapse
-        # into one rule_id, the exact ambiguity hook_common's own verdict ledger was built to
-        # eliminate.
-        hc.set_rule(f"{RULE_ID}:no-manifest" if manifest_state == "absent"
-                    else f"{RULE_ID}:manifest-malformed")
-        return
-
-    command = (data.get("tool_input") or {}).get("command", "")
-    cwd = data.get("cwd")
-    events = build_events(command, cwd, project_root)
-
-    for rel_path, entry in find_undeclared_clobbers(events, manifest):
+        return False, manifest_state
+    events = build_events(command, cwd, root)
+    for rel_path, entry in find_undeclared_clobbers(events, manifest, root):
         hc.set_rule(f"{RULE_ID}:undeclared-producer")
         hc.deny(
-            f"Foreman: {rel_path} is declared in .foreman/artifact-provenance.json as "
+            f"Foreman: {rel_path} is declared in "
+            f"{Path(root) / '.foreman' / 'artifact-provenance.json'} as "
             f"produced by {entry['producer']} "
             f"({entry.get('posture', 'no posture recorded')}), but this command doesn't "
             f"appear to invoke that script as the last relevant step. Overwriting it would "
             f"silently replace a declared artifact with a different security posture. "
             f"Use the declared producer, or run the rebuild outside this agent. "
-            f"(ask is not a hard gate under auto mode; this is a deny.)"
+            f"(FORE-82: ask is not a hard gate under auto mode; this is a deny.)"
         )
-        return  # one DENY is enough for this command, don't stack
+        return True, manifest_state
+    return False, manifest_state
 
-    hc.set_rule(f"{RULE_ID}:gate-open")
+
+def main(data):
+    if data.get("tool_name") != "Bash":
+        return
+
+    command = (data.get("tool_input") or {}).get("command", "")
+    cwd = data.get("cwd")
+
+    roots = implicated_roots(command, cwd)
+    if not roots:
+        # Neither the writer nor anything this command writes to is inside a Foreman project.
+        hc.set_rule(f"{RULE_ID}:not-a-foreman-project")
+        return
+
+    states = []
+    for root in roots:
+        denied, manifest_state = check_root(root, command, cwd)
+        if denied:
+            return  # one DENY is enough for this command, don't stack
+        states.append(manifest_state)
+
+    # Distinct rule suffixes so the verdict ledger can tell "never opted in" apart from "opted
+    # in and the manifest is broken" -- a review finding: both used to collapse into one
+    # rule_id, the exact ambiguity hook_common's own verdict ledger was built to eliminate.
+    # Root-major evaluation must not silently re-lose it, so the states are aggregated rather
+    # than overwritten, and MALFORMED WINS over both others: a project that opted in and whose
+    # manifest does not parse is protected by nothing, and that is the "looks alive, does
+    # nothing" condition worth surfacing even when some other implicated root read fine.
+    if any(s == "malformed" for s in states):
+        hc.set_rule(f"{RULE_ID}:manifest-malformed")
+    elif any(s == "ok" for s in states):
+        hc.set_rule(f"{RULE_ID}:gate-open")
+    else:
+        hc.set_rule(f"{RULE_ID}:no-manifest")
 
 
 if __name__ == "__main__":
