@@ -1,9 +1,15 @@
 __pycache__/
 *.pyc
-*.db
-*.db-wal
-*.db-shm
+# Broad on purpose -- *.db/*.db-wal/*.db-shm alone missed real backup snapshots named
+# atlas.db.pre-<ticket>-bak, atlas.db-shm.pre-<ticket>-bak, etc. (DEVH-114, real incident:
+# several GB of production warehouse content got committed locally before push, caught before
+# it reached GitHub). *.db* catches every variant of that shape, not just the exact names.
+*.db*
 .DS_Store
+# Runtime state, not source -- these are live operational artifacts (queued registry writes,
+# quarantined ingest rows), not code, and can carry real production content.
+**/staging/pending-assertions.jsonl
+**/quarantine/*.jsonl
 venv
 ROADMAP.md
 .claude/settings.json

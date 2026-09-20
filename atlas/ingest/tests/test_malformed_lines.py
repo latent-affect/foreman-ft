@@ -1,6 +1,6 @@
 """GOALS.json C6, C8. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_malformed_lines -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.ingest.tests.test_malformed_lines -v
 """
 
 import json

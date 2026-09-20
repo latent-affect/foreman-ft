@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "project": "atlas",
+  "project": "atlas-sonnet",
   "component": "snapshot",
   "scope_version": 1,
   "created": "2026-08-22T01:00:00Z",
@@ -83,7 +83,7 @@
   "out_of_scope": [
     "The real live TESSERA read (tessera_to_snapshot interface) -- this component consumes an injected ticket_rollup dict of the same shape a real TESSERA read would produce, matching resolve's own established pattern of consuming injected registry data. Real end-to-end wiring against the live TESSERA store is foreman:integration-test's job.",
     "hookclient, the reference reader of this artifact -- a separate component with its own GOALS.json, consuming exactly the format this component's tests already pin down in C5/C6.",
-    "The severity rubric content itself (still blocked) -- section 17's severity_rubric.status='absent' path is the only one this component builds, matching the architecture document's own stated blocker.",
+    "The severity rubric content itself (FORE-32, blocked) -- section 17's severity_rubric.status='absent' path is the only one this component builds, matching the architecture document's own stated blocker.",
     "Concurrent-writer SQLite lock behavior (section 5's measured 59.9ms busy-timeout failure) -- that is about the warehouse read path under a concurrent writer, not this component's own publish mechanism."
   ],
 
@@ -94,12 +94,12 @@
   ],
 
   "results": [
-    {"criterion_id": "C1", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity.PublishAtomicityTests.test_each_publish_creates_a_new_generation_never_mutates_the_last -v\nok\nOK", "recorded": "2026-08-22T01:30:00Z"},
-    {"criterion_id": "C2", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity.PublishAtomicityTests.test_a_resolved_path_stays_valid_and_unchanged_after_a_later_publish -v\nok\nOK", "recorded": "2026-08-22T01:30:00Z"},
-    {"criterion_id": "C3", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_retention -v\ntest_a_4th_publish_removes_only_the_generation_that_is_both_old_and_not_newest_3 ... ok\ntest_a_recent_generation_outside_the_newest_3_still_survives ... ok\ntest_newest_3_survive_even_when_old ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
-    {"criterion_id": "C4", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_refusal -v\ntest_a_refusal_after_a_successful_publish_does_not_disturb_current ... ok\ntest_refuses_when_ticket_rollup_identity_fails ... ok\ntest_refuses_when_warehouse_is_not_clean ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
-    {"criterion_id": "C5", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_index_shape -v\ntest_every_project_has_every_documented_key ... ok\ntest_index_json_has_every_documented_top_level_key ... ok\ntest_max_age_seconds_is_derived_not_independent ... ok\ntest_ticket_identity_holds_for_every_published_project ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
-    {"criterion_id": "C6", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_shard_sharing -v\ntest_index_roots_map_reflects_the_same_sharing ... ok\ntest_non_shared_project_gets_its_own_prefix_as_rollup_scope ... ok\ntest_shared_root_projects_get_ambiguous_rollup_scope ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"}
+    {"criterion_id": "C1", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity.PublishAtomicityTests.test_each_publish_creates_a_new_generation_never_mutates_the_last -v\nok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C2", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity.PublishAtomicityTests.test_a_resolved_path_stays_valid_and_unchanged_after_a_later_publish -v\nok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C3", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_retention -v\ntest_a_4th_publish_removes_only_the_generation_that_is_both_old_and_not_newest_3 ... ok\ntest_a_recent_generation_outside_the_newest_3_still_survives ... ok\ntest_newest_3_survive_even_when_old ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C4", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_refusal -v\ntest_a_refusal_after_a_successful_publish_does_not_disturb_current ... ok\ntest_refuses_when_ticket_rollup_identity_fails ... ok\ntest_refuses_when_warehouse_is_not_clean ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C5", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_index_shape -v\ntest_every_project_has_every_documented_key ... ok\ntest_index_json_has_every_documented_top_level_key ... ok\ntest_max_age_seconds_is_derived_not_independent ... ok\ntest_ticket_identity_holds_for_every_published_project ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"},
+    {"criterion_id": "C6", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_shard_sharing -v\ntest_index_roots_map_reflects_the_same_sharing ... ok\ntest_non_shared_project_gets_its_own_prefix_as_rollup_scope ... ok\ntest_shared_root_projects_get_ambiguous_rollup_scope ... ok\nOK", "recorded": "2026-08-22T01:30:00Z"}
   ],
   "amendments": [],
 

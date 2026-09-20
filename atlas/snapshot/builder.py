@@ -12,7 +12,7 @@ class TicketRollupIdentityError(ValueError):
 def check_ticket_rollup_identity(ticket_rollup):
     """Raises TicketRollupIdentityError naming every violating project if
     open_total != open_null_severity + sum(open_by_severity.values()) for any project --
-    An earlier review's fix, enforced here as the pre-publish gate (mirrors
+    FATAL-3's fix, enforced here as the pre-publish gate (mirrors
     atlas.warehouse.dq_runner.check_snapshot_ticket_rollup_identity's own logic, kept local so
     this component does not need a live warehouse connection just to validate its own input)."""
     violations = []

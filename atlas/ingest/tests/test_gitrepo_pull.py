@@ -1,6 +1,6 @@
 """GOALS.json C13-C17 (gitrepo_to_ingest amendment). Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_gitrepo_pull -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.ingest.tests.test_gitrepo_pull -v
 
 Uses a real temporary git repo and real `git` subprocess calls, per this project's own
 'executed means a real call ran, not that a mock returned a plausible value' convention
@@ -85,8 +85,8 @@ class TicketCandidateRegexTests(unittest.TestCase):
 
     def test_a_real_registered_style_prefix_is_extracted(self):
         self.assertEqual(
-            gitrepo_pull.extract_ticket_candidates("Fix override widening (DEMOPROJ-9)"),
-            ["DEMOPROJ-9"],
+            gitrepo_pull.extract_ticket_candidates("Fix override widening (ATLASSN-9)"),
+            ["ATLASSN-9"],
         )
 
     def test_lowercase_is_not_a_candidate(self):
@@ -98,7 +98,7 @@ class InsertAndValidationTests(unittest.TestCase):
         self.db = TempDb()
         self.db.conn.execute(
             "INSERT INTO dim_project (project_prefix, project_codename, source_root, "
-            "root_state, refreshed_at) VALUES ('DEMOPROJ', 'DEMOPROJ', '/x', 'git-repo', "
+            "root_state, refreshed_at) VALUES ('ATLASSN', 'ATLASSN', '/x', 'git-repo', "
             "'2026-01-01T00:00:00Z')"
         )
         self.db.conn.commit()
@@ -109,15 +109,15 @@ class InsertAndValidationTests(unittest.TestCase):
     def test_a_registered_prefix_candidate_becomes_a_real_ticket_link(self):
         commit = {
             "sha": "a" * 40, "committed_ts": "2026-08-22T00:00:00+00:00",
-            "author_raw": "someone@example.invalid", "subject": "Fix thing (DEMOPROJ-9)",
+            "author_raw": "someone@example.invalid", "subject": "Fix thing (ATLASSN-9)",
             "files": [("x.py", 3, 1)],
         }
-        gitrepo_pull.insert_commit(self.db.conn, "DEMOPROJ", commit, self.db.run_id, {"DEMOPROJ"})
+        gitrepo_pull.insert_commit(self.db.conn, "ATLASSN", commit, self.db.run_id, {"ATLASSN"})
         self.db.conn.commit()
         row = self.db.conn.execute(
             "SELECT ticket_id, origin FROM git_commit_ticket WHERE sha = ?", (commit["sha"],)
         ).fetchone()
-        self.assertEqual(row, ("DEMOPROJ-9", "commit-message-regex"))
+        self.assertEqual(row, ("ATLASSN-9", "commit-message-regex"))
         dropped = self.db.conn.execute("SELECT COUNT(*) FROM git_ticket_candidate_dropped").fetchone()[0]
         self.assertEqual(dropped, 0)
 
@@ -127,7 +127,7 @@ class InsertAndValidationTests(unittest.TestCase):
             "author_raw": "someone@example.invalid", "subject": "See P0-3 for the rubric",
             "files": [],
         }
-        gitrepo_pull.insert_commit(self.db.conn, "DEMOPROJ", commit, self.db.run_id, {"DEMOPROJ"})
+        gitrepo_pull.insert_commit(self.db.conn, "ATLASSN", commit, self.db.run_id, {"ATLASSN"})
         self.db.conn.commit()
         linked = self.db.conn.execute("SELECT COUNT(*) FROM git_commit_ticket").fetchone()[0]
         self.assertEqual(linked, 0)
@@ -142,7 +142,7 @@ class InsertAndValidationTests(unittest.TestCase):
             "author_raw": "real.person@example.invalid", "subject": "No ticket here",
             "files": [],
         }
-        gitrepo_pull.insert_commit(self.db.conn, "DEMOPROJ", commit, self.db.run_id, {"DEMOPROJ"})
+        gitrepo_pull.insert_commit(self.db.conn, "ATLASSN", commit, self.db.run_id, {"ATLASSN"})
         self.db.conn.commit()
         stored = self.db.conn.execute(
             "SELECT author_hash FROM git_commit WHERE sha = ?", (commit["sha"],)
@@ -153,11 +153,11 @@ class InsertAndValidationTests(unittest.TestCase):
     def test_reinserting_the_same_commit_is_a_no_op_not_a_duplicate(self):
         commit = {
             "sha": "d" * 40, "committed_ts": "2026-08-22T00:00:00+00:00",
-            "author_raw": "someone@example.invalid", "subject": "Idempotency check (DEMOPROJ-9)",
+            "author_raw": "someone@example.invalid", "subject": "Idempotency check (ATLASSN-9)",
             "files": [("x.py", 1, 0)],
         }
-        gitrepo_pull.insert_commit(self.db.conn, "DEMOPROJ", commit, self.db.run_id, {"DEMOPROJ"})
-        gitrepo_pull.insert_commit(self.db.conn, "DEMOPROJ", commit, self.db.run_id, {"DEMOPROJ"})
+        gitrepo_pull.insert_commit(self.db.conn, "ATLASSN", commit, self.db.run_id, {"ATLASSN"})
+        gitrepo_pull.insert_commit(self.db.conn, "ATLASSN", commit, self.db.run_id, {"ATLASSN"})
         self.db.conn.commit()
         self.assertEqual(self.db.conn.execute("SELECT COUNT(*) FROM git_commit").fetchone()[0], 1)
         self.assertEqual(self.db.conn.execute("SELECT COUNT(*) FROM git_commit_file").fetchone()[0], 1)
@@ -169,7 +169,7 @@ class PullOrchestrationTests(unittest.TestCase):
         self.db = TempDb()
         self.db.conn.execute(
             "INSERT INTO dim_project (project_prefix, project_codename, source_root, "
-            "root_state, refreshed_at) VALUES ('DEMOPROJ', 'DEMOPROJ', '/x', 'git-repo', "
+            "root_state, refreshed_at) VALUES ('ATLASSN', 'ATLASSN', '/x', 'git-repo', "
             "'2026-01-01T00:00:00Z')"
         )
         self.db.conn.commit()
@@ -180,17 +180,17 @@ class PullOrchestrationTests(unittest.TestCase):
         self.repo.cleanup()
 
     def test_pull_against_a_real_repo_ingests_every_commit_exactly_once_across_two_passes(self):
-        self.repo.commit("a.txt", "1\n", "First (DEMOPROJ-1)")
+        self.repo.commit("a.txt", "1\n", "First (ATLASSN-1)")
         self.repo.commit("b.txt", "2\n", "Second")
-        n1 = gitrepo_pull.pull_git_commits(self.db.conn, self.repo.path, "DEMOPROJ", {"DEMOPROJ"}, self.db.run_id)
+        n1 = gitrepo_pull.pull_git_commits(self.db.conn, self.repo.path, "ATLASSN", {"ATLASSN"}, self.db.run_id)
         self.assertEqual(n1, 2)
-        self.repo.commit("c.txt", "3\n", "Third (DEMOPROJ-2)")
-        n2 = gitrepo_pull.pull_git_commits(self.db.conn, self.repo.path, "DEMOPROJ", {"DEMOPROJ"}, self.db.run_id)
+        self.repo.commit("c.txt", "3\n", "Third (ATLASSN-2)")
+        n2 = gitrepo_pull.pull_git_commits(self.db.conn, self.repo.path, "ATLASSN", {"ATLASSN"}, self.db.run_id)
         self.assertEqual(n2, 3, "full re-walk sees all 3 commits; INSERT OR IGNORE makes re-seeing the first 2 free")
         total = self.db.conn.execute("SELECT COUNT(*) FROM git_commit").fetchone()[0]
         self.assertEqual(total, 3)
         linked = self.db.conn.execute("SELECT ticket_id FROM git_commit_ticket ORDER BY ticket_id").fetchall()
-        self.assertEqual([r[0] for r in linked], ["DEMOPROJ-1", "DEMOPROJ-2"])
+        self.assertEqual([r[0] for r in linked], ["ATLASSN-1", "ATLASSN-2"])
 
 
 if __name__ == "__main__":

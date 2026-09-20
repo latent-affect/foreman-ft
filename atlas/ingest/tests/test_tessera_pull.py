@@ -1,6 +1,6 @@
 """GOALS.json C10-C12 (tessera_to_ingest amendment). Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_tessera_pull -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.ingest.tests.test_tessera_pull -v
 """
 
 import sqlite3

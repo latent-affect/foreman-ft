@@ -1,6 +1,6 @@
 """Maps a raw verdicts.jsonl JSON object to a hook_verdict row dict, and inserts it.
 
-ts_resolution derivation is a fix for an earlier architecture-review finding: the naive rule
+ts_resolution derivation is MAJOR-6/MAJOR-7's fix (ARCHITECTURE-REVIEW.md): the naive rule
 "'.' in ts" mislabels 15,932 real rows as 'microsecond' when the two shell writers
 (session-log.sh, laa-commit-flow-advisory.sh) emit a fake-precision literal '.000000Z' suffix
 with real second-resolution timestamps underneath. The correct rule is epoch_ms % 1000 == 0
@@ -14,6 +14,13 @@ HOOK_VERDICT_COLUMNS = {
     "ts", "epoch_ms", "handler_id", "hook_event", "verdict", "kind", "session_id", "cwd",
     "tool_name", "tool_use_id", "self_duration_ms", "target", "decision", "rule_id",
     "probe_id", "run_id",
+    # ATLASSN-62 / FORE-273. Writer identity, stamped by both claude-hooks-v2 verdict writers.
+    # NOISE FILTER, NOT ATTRIBUTION: ledger_origin='harness-heuristic' is forgeable by any local
+    # process that sets CLAUDE_PID before spawning a descendant (FORE-291), which is why the value
+    # is named for the strength of its own claim. No security or evasion-detection query may read
+    # it as authentication. origin_signal carries the evidence for the classification so a
+    # misclassification is diagnosable from the warehouse rather than re-argued.
+    "ledger_origin", "origin_signal",
 }
 
 
@@ -64,6 +71,11 @@ def map_verdict_row(obj, raw_line=None):
         "rule_id": obj.get("rule_id"),
         "probe_id": obj.get("probe_id"),
         "run_id": obj.get("run_id"),
+        # Absent on any row written before the upstream writers carried these fields. That maps to
+        # SQL NULL and means "this row predates the field", which is a different fact from
+        # "origin unknown" -- the writers spell the latter 'unknown' explicitly.
+        "ledger_origin": obj.get("ledger_origin"),
+        "origin_signal": obj.get("origin_signal"),
     }
     return row
 

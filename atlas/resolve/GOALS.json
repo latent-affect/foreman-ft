@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "project": "atlas",
+  "project": "atlas-sonnet",
   "component": "resolve",
   "scope_version": 1,
   "created": "2026-08-22T00:00:00Z",
@@ -11,8 +11,8 @@
   "criteria": [
     {
       "id": "C1",
-      "statement": "Matching is path-component-aware, never a bare string prefix: a registered root that is a literal string prefix of another real, differently-registered path (e.g. /path/to/example-project vs /path/to/example-project-ft) must not match the wrong one just because the string overlaps.",
-      "verification": "atlas/resolve/tests/test_matching.py: registers two projects at /proj/example-project and /proj/example-project-ft; resolves a cwd of /proj/example-project-ft/src; asserts it resolves uniquely to the example-project-ft project, not ambiguously or to example-project.",
+      "statement": "Matching is path-component-aware, never a bare string prefix: a registered root that is a literal string prefix of another real, differently-registered path (e.g. /Users/m5/dev/glasshouse vs /Users/m5/dev/glasshouse-ft) must not match the wrong one just because the string overlaps.",
+      "verification": "atlas/resolve/tests/test_matching.py: registers two projects at /proj/glasshouse and /proj/glasshouse-ft; resolves a cwd of /proj/glasshouse-ft/src; asserts it resolves uniquely to the glasshouse-ft project, not ambiguously or to glasshouse.",
       "verifiable": true,
       "added": "2026-08-22T00:00:00Z"
     },
@@ -107,14 +107,14 @@
   ],
 
   "results": [
-    {"criterion_id": "C1", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_string_prefix_collision_does_not_falsely_match -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
-    {"criterion_id": "C2", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_unique_match_populates_consistent_triple -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
-    {"criterion_id": "C3", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_shared_root_resolves_ambiguous_with_both_candidates_recorded -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
-    {"criterion_id": "C4", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_no_matching_root_resolves_unregistered -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
-    {"criterion_id": "C5", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_override -v\ntest_no_override_file_leaves_shared_root_ambiguous ... ok\ntest_override_naming_a_non_candidate_prefix_is_ignored_not_silently_applied ... ok\ntest_valid_override_disambiguates_a_shared_root ... ok\nOK", "recorded": "2026-08-22T00:20:00Z"},
-    {"criterion_id": "C6", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency.IdempotencyTests.test_rerun_against_unchanged_registry_is_a_no_op -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
-    {"criterion_id": "C7", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency.IdempotencyTests.test_registry_change_updates_the_same_row_not_a_new_one -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
-    {"criterion_id": "C8", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest discover -s atlas -t . -v (whole suite, no CHECK-constraint bypass anywhere in resolve's tests)\nRan 41 tests in 0.238s\nOK", "recorded": "2026-08-22T00:20:00Z"}
+    {"criterion_id": "C1", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_string_prefix_collision_does_not_falsely_match -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C2", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_unique_match_populates_consistent_triple -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C3", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_shared_root_resolves_ambiguous_with_both_candidates_recorded -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C4", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_matching.PathComponentMatchingTests.test_no_matching_root_resolves_unregistered -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C5", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_override -v\ntest_no_override_file_leaves_shared_root_ambiguous ... ok\ntest_override_naming_a_non_candidate_prefix_is_ignored_not_silently_applied ... ok\ntest_valid_override_disambiguates_a_shared_root ... ok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C6", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency.IdempotencyTests.test_rerun_against_unchanged_registry_is_a_no_op -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C7", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency.IdempotencyTests.test_registry_change_updates_the_same_row_not_a_new_one -v\nok\nOK", "recorded": "2026-08-22T00:20:00Z"},
+    {"criterion_id": "C8", "status": "MET", "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest discover -s atlas -t . -v (whole suite, no CHECK-constraint bypass anywhere in resolve's tests)\nRan 41 tests in 0.238s\nOK", "recorded": "2026-08-22T00:20:00Z"}
   ],
   "amendments": [],
 

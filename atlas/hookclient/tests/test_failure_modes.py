@@ -1,6 +1,6 @@
 """GOALS.json C1, C4. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_failure_modes -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.hookclient.tests.test_failure_modes -v
 """
 
 import json

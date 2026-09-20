@@ -75,7 +75,7 @@ def publish_kwargs(**overrides):
         cursors={"verdicts_stream_id": "abc123", "verdicts_byte_offset": 1000, "tessera_max_event_id": 1},
         unresolved_scopes={"<ambiguous>": {"handlers": 1}, "<unregistered>": {"handlers": 0}, "<no-cwd>": {"handlers": 0}},
         rate_uninterpretable_handlers=["guard_untrusted_web.py"],
-        severity_rubric={"status": "absent", "version": None, "sha256": None, "blocker": "severity-rubric-pending", "consumer_contract": "status!='present' means CANNOT EVALUATE; never 'threshold not met'"},
+        severity_rubric={"status": "absent", "version": None, "sha256": None, "blocker": "FORE-32", "consumer_contract": "status!='present' means CANNOT EVALUATE; never 'threshold not met'"},
         refresh_cadence_seconds=300,
         warehouse_run_id=1,
         verdict_window_days=7,

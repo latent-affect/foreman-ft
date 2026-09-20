@@ -10,7 +10,7 @@ rolls back the whole transaction (row inserts happen before commit), so MAX(even
 stays where it was; nothing is lost or double-counted on retry.
 
 TESSERA_EVENT_COLUMNS is a strict subset of v_flat's real columns (verified against the live
-view at /path/to/ticket-system/data/tessera.db, 2026-08-22) -- tessera_event carries only
+view at /Users/m5/dev/ticket-system/data/tessera.db, 2026-08-22) -- tessera_event carries only
 the dimensions ARCHITECTURE.md's F-6/F-15 need, not v_flat's full analytical column set (raw
 comment bodies, per-ticket time-in-status breakdowns, etc. are deliberately not mirrored, per
 section 8's "Carried forward without re-litigation" boundary).
@@ -22,6 +22,13 @@ TESSERA_EVENT_COLUMNS = [
     "ticket_has_frozen_criteria", "ticket_criteria_frozen_before_work", "ticket_criteria_count",
     "ticket_claim_count", "ticket_lead_time_hours", "comment_has_code_snippet",
     "status_from", "status_to",
+    # FORE-97: the real file-level check (tessera.api.discrepancy.
+    # discrepancy_for_ticket_singlerepo(), wired into both close paths as of TESS-125),
+    # null on every event_type other than ClaimDiscrepancyChecked. Added so
+    # v_ticket_diff_binding can join against genuine claimed-vs-real-diff evidence instead
+    # of only the ticket-ID-shaped-string-in-a-commit-subject check git_commit_ticket carries.
+    "diff_check_matches", "diff_check_commit_sha",
+    "diff_check_touched_but_not_claimed_count", "diff_check_claimed_but_not_touched_count",
 ]
 
 

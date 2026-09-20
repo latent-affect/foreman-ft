@@ -1,7 +1,7 @@
-"""GOALS.json C5, C6 -- the permanent regression tests for two earlier fatal-severity findings. Run from the
+"""GOALS.json C5, C6 -- the permanent regression tests for FATAL-2 and FATAL-1. Run from the
 repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.warehouse.tests.test_trust_gate -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.warehouse.tests.test_trust_gate -v
 """
 
 import tempfile

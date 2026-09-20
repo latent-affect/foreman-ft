@@ -1,6 +1,6 @@
 """GOALS.json C7. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_zero_deps -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.hookclient.tests.test_zero_deps -v
 """
 
 import ast

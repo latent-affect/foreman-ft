@@ -1,6 +1,6 @@
 """GOALS.json C3. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_retention -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_retention -v
 """
 
 import datetime

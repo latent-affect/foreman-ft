@@ -1,0 +1,251 @@
+{
+  "project": "atlas-sonnet",
+  "component": "registry",
+  "scope_version": 1,
+  "created": "2026-09-12T14:05:00Z",
+  "criteria_frozen_at": "2026-09-20T00:00:00Z",
+  "done_state": "atlas/registry implements the enforcement-plane verification registry of ARCHITECTURE.md section 34 (bytes d2cd4ff2, landed e0f2871, review re-bound c2832ce): D1 four-clause transactional write path with revocation, D2 per-assertion fail-closed reads over the full availability matrix, D3 recency computation, D4 dual-derivation two-plane reconciliation, D5 class/lease fields with both trail emissions and the trigger-1 query definition, and 34.7 dispatch-record consultation -- field-level schema per DESIGN-REGISTRY-SCHEMA-AI5-ATLASSN-110-20260912.md (rev. post-muse-2), with AI-3's numbers and AI-4's binding mechanism external and no proposed value reachable in code.",
+  "criteria": [
+    {
+      "id": "C1",
+      "statement": "The write path accepts a role only from a dispatch record that exists, is authored by a session other than the one it names, predates the named session's first appearance in ~/.claude/telemetry/sessions.jsonl (a session absent from the stream is rejected, fail-closed), and whose scope contains the asserted edge under the schema doc's containment rule (exact repo-name equality plus component membership -- never substring); a payload-carried role claim alone is rejected.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_write_path_role exits 0; probes: payload-only role claim rejected; self-authored record rejected; record post-dating session start rejected; missing record rejected; ABSENT-SESSION probe (named session nowhere in sessions.jsonl) rejected with its named reason (G1); SCOPE-MISMATCH record (fully disjoint project) rejected; PREFIX-COLLISION record (repo_scope 'atlas', edge in 'atlas-sonnet') rejected (G5); valid in-scope record accepted (companion positive). Each rejection asserts its named reason string.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C2",
+      "statement": "An evidence reference is accepted only if it resolves in the verdict-ledger store TO A COMPLETED PostToolUse act (a resolving row of any other kind -- denied, PreToolUse, error -- is inadmissible, the 21.1%-slice rule made mechanical), carries the writing verifier's own session_id, is absent from spent_ref, and declares evidence_class observed-probe; spent-marking and the assertion write commit in one SQLite transaction so a crash between them burns nothing.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_write_path_evidence exits 0; probes: fabricated well-formed tool_use_id rejected; replayed spent reference rejected; cross-session reference rejected; WRONG-KIND-ROW probe (resolving, same-session, unspent reference whose ledger row is not a completed PostToolUse act) rejected with its named reason (G2); any evidence_class value other than observed-probe rejected at validation (not only by the SQL CHECK); resolving same-session unspent completed-act reference accepted; fault-injection kills the process between spend and assert -- on reopen spent_ref lacks the id AND assertion lacks the row.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C3",
+      "statement": "Clause (c) is resolution-then-exact with the transcript as target source (amended 34.1c): the referenced act's real target resolves from the session transcript (transcript_parse.py's extraction), with ledger exact-target rows (Write/Edit-shaped, lossless derivation) as a fast path and Bash targets extracted through this repo's own bash-shape parsing, never a second frozen parser; the resolved target maps to a component via the same frozen-ARCHITECTURE glob parse the reconciler uses, and that RESULT is compared string-exact to the assertion's component; payload-supplied strings are never the comparison inputs.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_write_path_component exits 0; probes: near-miss battery ('Registry', 'registry ', 'registryX') rejected; RESOLUTION probe -- a reference whose transcript-resolved real target maps to a different component is rejected even though the payload's own component strings match each other; UNMAPPED-TARGET probe (real target outside every declared glob) rejected with its named reason, never falling back to the payload's component claim (G3); exact resolved match accepted; parser-identity assertion: the mapping resolves through the same parser module as C9's structural derivation; ANTI-FIXTURE probes (34.1c + Dana H2): the suite resolves at least one REAL historical transcript row end-to-end through the production resolution seam, and at least one of those real rows is BASH-SHAPED specifically -- seeded fixtures alone cannot discharge this criterion, and an exact-target-only real row cannot discharge the Bash case (the case the ledger provably cannot resolve: 1.24% target coverage, 13 Bash rows lifetime).",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C4",
+      "statement": "A write evaluated while the dispatch-record store, the verdict ledger, the sessions stream (~/.claude/telemetry/sessions.jsonl), or the session-transcript store (clause (c)'s target source per amended 34.1c) is unreachable or unreadable is refused with a named retryable reason identifying the failed dependency; no dependency outage converts to an accepted write.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_write_dependency_failure exits 0; each of the FOUR dependencies made unavailable in turn (dir absent, file unreadable), write refused, reason names that dependency (sessions-stream row per G1; transcript-store row per the ATLASSN-131 amendment -- an unresolvable clause is a failed clause); all restored, the same write accepted.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C5",
+      "statement": "Read status is computed from stored state plus time at every read and stored nowhere: active iff state=live and 0 <= now-verified_at <= lease_s (boundary equality active); expired past lease; never-registered on no row; revoked reads DENY terminally while a later valid write on the same edge serves from the new assertion; a negative delta (verified_at in the future) is never active and denies with sub-reason clock-anomaly.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_status_computation exits 0; probes include exact-boundary equality (active), one-second-past (expired), revoked-then-new-write (reads resume from new row, revoked row retained), and NEGATIVE-DELTA (verified_at ahead of now -> DENY clock-anomaly, asserted not active).",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "Every availability-matrix row produces DENY with its named sub-reason in the audit event -- store-level: absent, locked past budget, corrupt, recovery-needed under a read-only opener (hot WAL), wrong schema_version, catch-all read/computation error; per-assertion: malformed field values deny that assertion only -- and none produces ALLOW or a silent skip, all distinguishable from never-registered.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_availability_matrix exits 0; seven fault probes (six store-level incl. a hot-WAL read-only open, one malformed-row) each assert DENY plus the specific sub-reason; the malformed probe asserts the healthy sibling still serves; companion positive: healthy store returns ALLOW. The fail-open mutant variant of this battery is a PERMANENT suite fixture (see F1), not a one-time act.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C7",
+      "statement": "Fail-closed granularity is per-assertion: a healthy assertion is served ALLOW in the same read pass in which an expired or revoked sibling assertion behind the same client denies.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_granularity exits 0; the pair probe from ATLASSN-119 plus the revoked-sibling variant.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C8",
+      "statement": "The D3 recency computation derives required_by from the decision's declared edges via the same parser module the reconciler uses, flags stale assertions FATAL, flags computed-empty-with-declared-dependencies FATAL, passes a genuinely dependency-free empty scope, and -- like every config consumer, read or write -- refuses with reason config-unsigned when the window is needed while config is absent, unparseable, or hash-mismatched.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_recency exits 0 running ATLASSN-120's three-probe battery; import-identity assertion for the shared parser; CONFIG-REFUSAL probe: recency API called with config absent and with decision-record hash mismatched -> each refused config-unsigned, no window value produced by any input (behavioural check, not a source grep).",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C9",
+      "statement": "D4 reconciliation computes declared-vs-asserted with two derivations in separate modules sharing no helper, joined on the canonical edge_id QUAD (repo:path:direction:name, per the ATLASSN-135 amendment -- declaration identity, so two edges sharing a repo:path:direction triple are two distinct claims, each requiring its own assertion); a forward gap yields exactly one finding naming that edge, a reverse orphan appears only in the reverse report, corrupting either derivation localizes the disagreement to that side, and a malformed reach edge (missing repo/path/direction) produces the parser's own named error surfacing as a named refusal, never a bare KeyError. Stated residual: two independently-imported modules sharing the same logical mis-parse agree wrongly and pass -- agreement is evidence, not proof (REQ-68's own residual).",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_reconciliation exits 0 running ATLASSN-121's battery (N/N pass, delete-one, corrupt-A, corrupt-B, orphan) PLUS: COLLISION probe -- a reach fixture with two edges sharing repo:path:direction (the real sec34.6 shape) yields BOTH in the declared set, an assertion citing one discharges only its named edge and the other reports a forward gap (the probe fails against any triple-keyed dict, where last-write-wins drops an edge); MALFORMED-EDGE probe -- an edge missing a field produces the named error, not KeyError; module-independence asserted by import-graph check.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C10",
+      "statement": "The two-plane cross-check compares the authoritative store against the ATLAS-ingested copy by assertion count and per-assertion content hash over the overlap window; a seeded divergence produces a ticketed finding object naming the assertion_uid, not a log line.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_two_plane exits 0; TWO seeds, specified: (1) content mutation at CONSTANT count -> exactly one finding carrying the assertion_uid (kills a count-only implementation); (2) row deletion (count change) -> finding; agreement -> none. Finding emission asserted against the reconciler's finding-object output (the tessera write is integration scope).",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C11",
+      "statement": "Assertions carry class and lease_s derived at write time from class plus a config whose validity is verified, not asserted: the named decision-record file must exist, hash-match decision_record_sha256, and textually contain each value the config claims (structural_s, in_flight_s, go_recency_window_s) -- a hash-bound record naming different values than the config claims is refused (presence check; positional/role correspondence is deferred to AI-3's structured record format, a stated partial); a payload-supplied lease_s is rejected; writes needing a default refuse config-unsigned while config is invalid; both trail emissions (write-audit, consumption) exist and the trigger-1 expiry-before-consumption query DEFINITION is shipped and validated on seeded analytics-copy fixtures (execution home is the analytics plane per section 34.5).",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_lease_config exits 0; probes: config absent -> refusal; decision-record file missing -> refusal; hash mismatch -> refusal; VALUE-MISMATCH probe (record hash-matches but does not contain a value the config claims) -> refused with named reason config-record-value-mismatch (B5); payload-supplied lease_s -> rejected; valid config with all claimed values present -> lease derived from class; consumption JSONL line emitted per gate-consulted read on a seeded pass; trigger-1 query run against seeded ingested-copy fixtures reproduces a hand-computed rate; behavioural no-number check: no input yields a lease or window value while config is invalid.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C12",
+      "statement": "Revocation is a D1-governed write passing all four clauses whose evidence reference is spent-marked in the same transaction exactly as an assert's (revocation references are NOT exempt from single-use -- one observed act cannot back arbitrarily many revocations), sets terminal revoked state, and a revoked-only edge is reported as a forward gap by the reconciler until a new valid assertion lands.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_revocation exits 0; probes: revocation with each clause individually broken rejected; valid revocation accepted; REPLAYED-REVOCATION-EVIDENCE probe (the revocation's reference re-submitted for any later write) rejected as spent (G4); post-revocation read DENY; reconciler emits the gap; new valid write clears it.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C13",
+      "statement": "Every accepted write appends one full-payload line (all NOT NULL assertion fields; revoke ops add the revocation triple) to the write-audit JSONL inside the same commit discipline, rejected writes append nothing, and replaying the trail reconstructs assertion and spent_ref uid-keyed and field-complete -- every column except the local rowid.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_write_audit exits 0; N seeded accepted writes (asserts and revokes) produce N full-field lines, rejected probes produce zero; the replay utility rebuilds a store whose assertion and spent_ref contents match the original on every field except rowid, compared uid-keyed.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C14",
+      "statement": "The write path appends the audit line (with fsync) before commit and ABORTS the transaction on append failure, refusing the write with reason audit-append-failed; the store never advances past its tamper-evidence trail, and an audit line without a store row (the crash window) is reported by replay as a detected divergence, never silently reconciled.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_audit_append_failure exits 0; probes: JSONL made unwritable -> write refused audit-append-failed AND store row absent; crash injected between append and commit -> replay reports the orphan line as a divergence event.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C15",
+      "statement": "Schema change is an additive migration bumping user_version: applying migration N+1 to a populated version-N store preserves every existing row, and a store at an unexpected version denies reads per C6 rather than being interpreted loosely.",
+      "verification": "/Users/m5/.venv/bin/python3 -m unittest atlas.registry.tests.test_migration exits 0; a seeded v1 store migrated by a test additive migration retains all rows field-for-field; the version-mismatch deny is cross-covered by C6's battery.",
+      "verifiable": true,
+      "added": "2026-09-12T14:05:00Z"
+    },
+    {
+      "id": "C16",
+      "statement": "The registry's config consumers (C8's recency computation, C11's lease/class derivation) resolve config from the real, single on-disk path `~/.claude/foreman/registry/config.json` -- the path named by ARCHITECTURE.md's `registry_config` reach pin (Build 8, ATLASSN-158) -- not a caller-supplied or test-only path in production code, and no second config location exists anywhere in the write or read path.",
+      "verification": "AST-walk or grep of the production entrypoint (registry_pull.py and the write/read modules) confirms exactly one hard-coded config path constant resolving to ~/.claude/foreman/registry/config.json; a real-file test places a config.json at that exact path and confirms C8/C11's consumers read it (not a fixture-injected override reachable in prod code paths).",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    },
+    {
+      "id": "C17",
+      "statement": "A config.json that exists at the real path but is unreadable (permission-denied) or is a directory rather than a file produces a refusal reason distinguishable from 'file absent' (already covered by C8/C11) -- first-boot (registry never configured) must read differently from a corrupted/inaccessible later state, since an operator's remedy differs (create vs. fix permissions/restore). Deliberately scoped as this component's own ablation/negative-control criterion for REQ-76, discharged at implementation per PDP.md section 3's design-scope clarification (real ablation fixtures at implementation, not a non-author prose falsification pass at this stage) -- not left implicitly deferred to a stage that may never open for this addition.",
+      "verification": "A real ablation fixture at implementation: (1) config.json absent -> existing C8/C11 refusal; (2) config.json replaced with a directory of the same name -> a distinct, named refusal; (3) config.json present but chmod 000 -> a distinct, named refusal. All three reasons must differ from each other in the audit event, not collapse to one generic 'config invalid' string.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    }
+  ],
+  "failure_criteria": [
+    {
+      "id": "F1",
+      "signature": 1,
+      "statement": "A guard fails open on the path that matters: any availability-matrix row, dependency outage, clock anomaly, or malformed input lands ALLOW or silent-skip instead of a named DENY/refusal.",
+      "detection": "Every deny/refusal path has a test asserting it rejects with its named reason; the C6 fail-open mutant battery is a PERMANENT suite fixture run on every pass (the toy-d2 lesson: absence and error are where fail-open hides) -- a change that lets the mutant pass is a regression."
+    },
+    {
+      "id": "F2",
+      "signature": 8,
+      "statement": "A number appears with no reproduction path -- in particular an AI-3 proposed value taking effect through code, config-without-valid-decision-record, or payload.",
+      "detection": "C8/C11's behavioural refusal probes (no input yields a value while config is invalid) -- deliberately not source greps, which int('1800') and 60*30 defeat."
+    },
+    {
+      "id": "F3",
+      "signature": 6,
+      "statement": "Code assumes a path exists that this component does not create: dispatch-records dir, sessions.jsonl, the ingested-copy tables, config.json, the decision-record file.",
+      "detection": "Every externally-owned path failure is an exercised probe (C4, C6, C8, C11) -- checked by test, not by startup assumption."
+    },
+    {
+      "id": "F4",
+      "signature": 2,
+      "statement": "A deny or divergence is written to a channel nobody reads: registry-unavailable sub-reasons that never reach the gate audit event, a two-plane disagreement logged instead of ticketed, or a replay-detected orphan line silently reconciled.",
+      "detection": "C6 asserts sub-reasons in the audit event payload; C10 asserts a finding object; C14 asserts the orphan line surfaces as a divergence event."
+    },
+    {
+      "id": "F5",
+      "signature": 1,
+      "statement": "A clause satisfied by string presence rather than resolution: evidence checked by shape without ledger resolution, component matched on payload strings without target resolution, dispatch record read from the payload's own claims, or config validity read from its own fields.",
+      "detection": "C1's self-asserted and scope-mismatch probes, C2's fabricated/replayed probes, C3's resolution probe, and C11's hash-mismatch probe stay in the suite permanently; a change that makes any of them pass is a regression, not a simplification."
+    },
+    {
+      "id": "F6",
+      "signature": 6,
+      "statement": "config.json's absence, corruption, or inaccessibility all produce the same undifferentiated refusal reason, or a permission/directory-shape failure is not distinguished from simple absence.",
+      "detection": "C17's three-fixture ablation battery -- each of absent/directory/unreadable must assert its own distinct reason string."
+    }
+  ],
+  "out_of_scope": [
+    "The two claude-hooks-v2 hooks (gate client registration, registry write guard) -- chv2's to build and register; this component ships the read/write library they call.",
+    "AI-3's lease and window values -- operator decision; this component reads them from a hash-verified decision record and refuses without it.",
+    "AI-4's permission-binding mechanism and the per-dispatch secret of 34.7's impersonation disposition -- consumed when they exist, not built here.",
+    "Interface-level end-to-end criteria (registry_to_ingest ingestion, gate-client wiring in a live hook, tessera CLI finding emission E2E) -- .foreman/GOALS.integration.json, owned by foreman:integration-test.",
+    "ATLAS's tenth-source ingestion of the registry and both JSONLs, and trigger-1 query EXECUTION on the analytics plane -- the ingest/analytics side; this component ships emissions and the query definition (C11).",
+    "Graduated responses (DENY/ASK/annotated-ALLOW) -- deferred at architecture (34.9), must not arrive as an implementation-stage souvenir.",
+    "Multi-repo reconciliation aggregation policy beyond parse+diff+localize, and the ticket-emission write itself -- integration scope.",
+    "An evidence-set (multi-act) table -- named future additive migration; v1 is single-act by stated design (schema doc, finding 5)."
+  ],
+  "constraints": [
+    "stdlib + sqlite3 only, matching the repo's existing components; no new dependency.",
+    "Registry reads stay off the per-tool-call blocking path (34.2's budget statement); any design putting them there re-measures against that path's own standard.",
+    "One SQLite file, journal_mode=WAL (decided, schema doc finding 8, with the missing-sidecar residual named there); spent_ref lives inside registry.db for clause-(b) transactionality.",
+    "The component never self-registers hooks; enforcement wiring is chv2's, consultation-side validation (34.7 clauses a-d) carries the load.",
+    "Schema changes are additive migrations bumping user_version (C15); the evidence_class CHECK widens only by migration, never by code interpreting the field loosely.",
+    "ALLOW's meaning is the schema doc's stated limit (finding 4): act + authority authenticated, outcome attested by the dispatch-accountable verifier, revocation as correction -- no consumer may document a stronger claim.",
+    "Field-level schema is DESIGN-REGISTRY-SCHEMA-AI5-ATLASSN-110-20260912.md (post-muse-2 revision); divergence between that doc and DDL is a defect in whichever moved without an amendment here."
+  ],
+  "results": [],
+  "amendments": [
+    {
+      "criterion_id": "C11",
+      "change": "statement+verification",
+      "from": "config validity = decision-record file exists + hash matches (naming requirement existed only in the schema doc's prose)",
+      "to": "adds the mechanical named-value presence check: the hash-bound record must textually contain each value the config claims, VALUE-MISMATCH probe refused config-record-value-mismatch; positional correspondence stated partial, deferred to AI-3's structured record format",
+      "reason": "Bob's B5 (implementing ATLASSN-128): hash-binding alone lets an operator-signed record for one value co-exist with a config claiming another -- the same rule-in-prose-not-mechanics defect class Dana's G2 named. Additive; no frozen criterion weakened.",
+      "requested_by": "bob (atlas-sonnet implementation, ATLASSN-128)",
+      "ratified_by": "priya-desai (design-scope decider)",
+      "at": "2026-09-12T15:20:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "change": "statement+verification",
+      "from": "target source implicitly the ledger row; anti-fixture requirement absent (fully dischargeable by seeded rows)",
+      "to": "target source is the session transcript per amended 34.1c (ledger exact-target fast path, Bash via bash-shape parsing); anti-fixture probes require >=1 real historical transcript row end-to-end through the production seam, >=1 of them Bash-shaped",
+      "reason": "ATLASSN-131 (Bob) measured the frozen assumption wrong -- ledger target field on 1.24% of rows, 13 Bash rows lifetime; Dana's delta H1 independently confirmed the GOALS-side gap and H2 pinned the Bash-shaped real-row requirement so a helper-replica or exact-target-only row cannot discharge the hard case. Ratified only after the architecture re-bind stamp (ed231b1e, 16:31Z) covered c7e07f3's bytes.",
+      "requested_by": "bob (ATLASSN-131) + dana (delta H1/H2)",
+      "ratified_by": "priya-desai (design-scope decider)",
+      "at": "2026-09-12T16:40:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "change": "statement+verification",
+      "from": "three probed write-path read dependencies (dispatch store, ledger, sessions stream)",
+      "to": "four -- the session-transcript store added, with its own outage probe",
+      "reason": "Ride-along of the C3 amendment: clause (c) resolving targets from transcripts makes the transcript store a write-path dependency, and per 34.1 a clause that cannot be checked is a clause that failed.",
+      "requested_by": "priya-desai (implied by ATLASSN-131, named in the amendment package)",
+      "ratified_by": "priya-desai (design-scope decider)",
+      "at": "2026-09-12T16:40:00Z"
+    },
+    {
+      "criterion_id": "C9",
+      "change": "statement+verification",
+      "from": "edge_id as canonical repo:path:direction triple; no collision or malformed-edge probes",
+      "to": "edge_id as canonical QUAD repo:path:direction:name (declaration identity); COLLISION probe over the real sec34.6 shape (two edges, one triple -- both declared, per-declaration discharge); MALFORMED-EDGE named-error probe",
+      "reason": "ATLASSN-135 (Bob, FINDING-CANONICAL-EDGE-ID-COLLISION): the frozen reach block's own registry_gate_client_wired and registry_write_guard_wired collide on the triple -- one assertion could satisfy two of sec34.6's three self-verification claims, fail-open on exactly the surface sec34.6 says must not mislead itself. Ruling: option A (quad), because a registers edge is a document's claim and identity must follow declarations; B relies on perpetual authorship care, C makes edge_id a non-identifier. Second finding folded: KeyError on malformed edge is a crash, not a refusal. AI-5 field semantics ruled by the schema-doc owner; probes added so the collision is henceforth test-visible.",
+      "requested_by": "bob (ATLASSN-135, session 674d0a99, recommendation A offered not acted on)",
+      "ratified_by": "priya-desai (design-scope decider + AI-5 owner)",
+      "at": "2026-09-12T17:05:00Z"
+    },
+    {
+      "criterion_id": "C16/C17 (new)",
+      "change": "criteria added",
+      "from": "15 criteria (C1-C15); config.json had no named on-disk path anywhere in ARCHITECTURE.md prior to Build 8's architecture pass",
+      "to": "17 criteria (C1-C17); C16 anchors the real config.json consumption path to Build 8's registry_config reach pin, C17 adds the ablation criterion for that path's own failure modes",
+      "reason": "REQ-76 (ATLASSN-158), Build 8 design-scope. Clint Eastwood's architecture pass (633613d, falsified SURVIVES) found config.json had zero architectural home anywhere in this document before the reach pin was added -- this amendment gives it design-scope criteria to match, per this file's own established practice of amending rather than re-deriving from zero.",
+      "requested_by": "orchestrator dispatch, Build 8 design-scope",
+      "ratified_by": "priya-desai (design-scope decider)",
+      "at": "2026-09-20T00:00:00Z"
+    }
+  ],
+  "integrity": {
+    "criteria_hash_at_freeze": "sha256:05bfa1d58c6534ccbae1a4bdd0ad591d8a303082558a3f9a7c03ada6e7862f66",
+    "criteria_hash_at_completion": null,
+    "match": null
+  },
+  "scope_estimate": {
+    "components": 1,
+    "interfaces": 6,
+    "test_criteria": 17,
+    "frozen_at": "2026-09-20T00:00:00Z"
+  },
+  "$comment_freeze": "Frozen 2026-09-12T14:52:00Z after: muse pass 2 (24 findings folded, schema doc appendix), Dana's non-author falsification (FALSIFICATION-DESIGN-ATLASSN-110-20260912.md, HOLDS with G1-G5), G1-G5 dispositions, and Dana's clean delta pass (G4 judgment upheld). Hash computed with goals_freeze_gate.py's own criteria_hash function (verified from source at freeze time). Any later criteria change is an amendments[] re-freeze ceremony, never a silent edit."
+}

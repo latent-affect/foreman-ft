@@ -1,6 +1,6 @@
 """GOALS.json C2, C3. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_freshness -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.hookclient.tests.test_freshness -v
 """
 
 import datetime

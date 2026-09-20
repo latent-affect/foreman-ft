@@ -1,6 +1,6 @@
 """GOALS.json C5, C6. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.hookclient.tests.test_project_resolution -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.hookclient.tests.test_project_resolution -v
 
 Note: this test module imports atlas.resolve.matcher to CROSS-CHECK hookclient's vendored
 matching against the original -- test code only, per this component's own out_of_scope note.

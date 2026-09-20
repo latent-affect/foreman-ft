@@ -1,6 +1,6 @@
 """GOALS.json C6, C7. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_idempotency -v
 """
 
 import unittest
@@ -17,8 +17,8 @@ class IdempotencyTests(unittest.TestCase):
         self.db.close()
 
     def test_rerun_against_unchanged_registry_is_a_no_op(self):
-        register_project(self.db.conn, "TESS", "/path/to/ticket-system")
-        cwds = ["/path/to/ticket-system/a.py", "/path/to/other"]
+        register_project(self.db.conn, "TESS", "/Users/m5/dev/ticket-system")
+        cwds = ["/Users/m5/dev/ticket-system/a.py", "/Users/m5/dev/other"]
 
         run.resolve_all(self.db.conn, cwds)
         first = self.db.conn.execute(
@@ -34,14 +34,14 @@ class IdempotencyTests(unittest.TestCase):
         self.assertEqual(len(first), 2)
 
     def test_registry_change_updates_the_same_row_not_a_new_one(self):
-        cwd = "/path/to/new-project/src"
+        cwd = "/Users/m5/dev/new-project/src"
         run.resolve_all(self.db.conn, [cwd])
         before = self.db.conn.execute(
             "SELECT resolution, project_prefix FROM cwd_project WHERE cwd = ?", (cwd,)
         ).fetchone()
         self.assertEqual(before, ("unregistered", None))
 
-        register_project(self.db.conn, "NEWP", "/path/to/new-project")
+        register_project(self.db.conn, "NEWP", "/Users/m5/dev/new-project")
         run.resolve_all(self.db.conn, [cwd])
         after_rows = self.db.conn.execute(
             "SELECT resolution, project_prefix FROM cwd_project WHERE cwd = ?", (cwd,)

@@ -1,6 +1,6 @@
 """Path-component-aware longest-match project resolution. ARCHITECTURE.md section 3: naive
-string-prefix matching collides on five real registered root pairs (example-project/-ft,
-example-audio-app/-ft/-prod, example-tool/-playground) because one root is a
+string-prefix matching collides on five real registered root pairs (glasshouse/glasshouse-ft,
+valence-audio-forensics/-ft/-prod, audio-verification-layer/-playground) because one root is a
 literal string prefix of the other while never being its path-component ancestor. This module
 compares Path component lists, never str.startswith."""
 

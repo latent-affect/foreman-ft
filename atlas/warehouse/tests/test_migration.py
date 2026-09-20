@@ -1,6 +1,6 @@
 """GOALS.json C3. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.warehouse.tests.test_migration -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.warehouse.tests.test_migration -v
 """
 
 import sqlite3
@@ -33,11 +33,23 @@ class MigrationIdempotencyTests(unittest.TestCase):
 
         migration_rows_after = conn2.execute("SELECT COUNT(*) FROM schema_migration").fetchone()[0]
         dq_rows_after = conn2.execute("SELECT COUNT(*) FROM dq_check").fetchone()[0]
+        version1_rows = conn2.execute(
+            "SELECT COUNT(*) FROM schema_migration WHERE version=1").fetchone()[0]
         conn2.close()
 
         self.assertEqual(migration_rows_before, migration_rows_after)
         self.assertEqual(dq_rows_before, dq_rows_after)
-        self.assertEqual(migration_rows_before, 1)
+        # migrate.connect() applies migration 1 and the additive migrations 2 through 21, plus
+        # 23, 24, 25 and 26 (ATLASSN-188 wires the two local-file-sourced migrations into
+        # connect(); ATLASSN-189 adds a third, migration 25, the dq_check advisory-severity guard
+        # trigger; ATLASSN-197 adds a fourth, migration 26, session_credential_ack. migration
+        # 22/ATLASSN-181 stays unwired -- its ARCHITECTURE.md section still does not exist, same
+        # reason it was already skipped before this proposal). The assertion that actually
+        # matters is unchanged -- re-applying adds nothing -- and migration 1 being recorded
+        # exactly once is asserted directly rather than inferred from a total each new migration
+        # would invalidate.
+        self.assertEqual(migration_rows_before, 25)
+        self.assertEqual(version1_rows, 1)
 
     def test_is_migrated_reports_correctly(self):
         conn = sqlite3.connect(self.db_path)

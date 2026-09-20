@@ -4,7 +4,7 @@ shared by two registered projects (AREM/FORE), but the document's own words -- "
 that override where present and prefers it over the registry" -- and the real, pre-existing
 tessera_resolver.py precedent (imported by preflight_blocking_gate.py, which validates an
 override against ANY registered prefix, not just tied candidates at one root) both support a
-wider scope than "ambiguous-only" (see run.py's resolve_one). A malformed
+wider scope than "ambiguous-only" (ATLASSN-9, resolved -- see run.py's resolve_one). A malformed
 override (unreadable, empty, or naming a prefix that isn't registered anywhere) is reported, not
 silently treated as absent (F4's failure signature)."""
 

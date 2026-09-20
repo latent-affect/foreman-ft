@@ -1,4 +1,4 @@
-"""Maps a raw audit-plane JSON object (e.g. safety.jsonl) to
+"""Maps a raw audit-plane JSON object (safety.jsonl, misalignment-marker-search/audit.jsonl) to
 an audit_event row and inserts it. Mirrors verdicts.py's pattern, using the same source-agnostic
 stream.tail() machinery -- ARCHITECTURE.md section 4 names audit-plane as one of ingest's two
 append-only sources; this file is the row mapper that was missing (found during integration

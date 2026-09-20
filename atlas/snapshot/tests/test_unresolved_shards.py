@@ -4,7 +4,7 @@ actually written. Not a new frozen GOALS.json criterion -- a bug fix in already-
 behavior (build_index/publish's own documented contract), verified here permanently.
 
 Run from the repo root:
-    /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_unresolved_shards -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_unresolved_shards -v
 """
 
 import json

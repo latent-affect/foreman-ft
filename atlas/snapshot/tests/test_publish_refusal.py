@@ -1,6 +1,6 @@
 """GOALS.json C4. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_refusal -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_refusal -v
 """
 
 import tempfile
@@ -74,6 +74,97 @@ class PublishRefusalTests(unittest.TestCase):
         gen = publish(str(self.snapshot_root), wh.conn, **publish_kwargs())
         self.assertTrue(gen.is_dir())
         self.assertTrue((gen / "index.json").is_file())
+        wh.close()
+
+    def test_refuses_when_status_is_bad_but_checks_were_recorded(self):
+        # ATLASSN-139/SW1: isolates the run-status gate alone. The suite's only prior not-clean
+        # fixture (test_refuses_when_warehouse_is_not_clean, above) seeds status='failed' via
+        # TempWarehouse(clean=False), which never records any dq_check_run rows either -- so that
+        # fixture trips this gate AND the vacuous-pass gate at once, and removing either alone
+        # stays green (confirmed by mutation below).
+        #
+        # First attempt at this fixture used TempWarehouse(clean=False) + a single failed run with
+        # checks attached, and the mutation check below caught a real construction bug: with no
+        # 'ok' run EVER recorded, v_source_trust has no anchor to compute a trust state from, so
+        # v_snapshot_publishable ALSO reports blocked -- disabling the run-status gate alone still
+        # left the fixture refused, just via gate 3 instead of gate 1, silently. Fixed by seeding a
+        # genuine clean 'ok' run first (TempWarehouse(clean=True), giving v_source_trust a real
+        # anchor and leaving v_snapshot_publishable at publishable=1), then adding a SECOND, newer
+        # run marked 'failed' with its own full dq_check_run rows -- v_atlas_status reads the
+        # latest run_id, so this one gate alone is what can fail.
+        wh = TempWarehouse(clean=True)
+        run_id = migrate.new_ingest_run(wh.conn, status="failed")
+        check_names = [r[0] for r in wh.conn.execute("SELECT check_name FROM dq_check")]
+        for name in check_names:
+            wh.conn.execute(
+                "INSERT INTO dq_check_run (run_id, check_name, run_at, passed, detail) "
+                "VALUES (?, ?, '2026-01-01T00:00:00Z', 1, 'synthetic-pass')",
+                (run_id, name),
+            )
+        wh.conn.commit()
+        # Confirm the fixture actually isolates the gate before trusting the refusal below.
+        status_row = wh.conn.execute("SELECT status, checks_evaluated FROM v_atlas_status").fetchone()
+        self.assertEqual(status_row, ("failed", len(check_names)),
+                          "fixture setup error: checks_evaluated must be non-zero here")
+        publishable_row = wh.conn.execute(
+            "SELECT publishable, blocking_sources FROM v_snapshot_publishable"
+        ).fetchone()
+        self.assertEqual(publishable_row, (1, None),
+                          "fixture setup error: snapshot_source must read clean, via the earlier "
+                          "ok run, so only the status gate can be what refuses below")
+        before = _snapshot_snapshot(self.snapshot_root)
+
+        with self.assertRaises(PublishRefused) as ctx:
+            publish(str(self.snapshot_root), wh.conn, **publish_kwargs())
+        self.assertIn("not 'ok'", str(ctx.exception))
+        self.assertNotIn("vacuous", str(ctx.exception))
+
+        after = _snapshot_snapshot(self.snapshot_root)
+        self.assertEqual(before, after)
+        wh.close()
+
+    def test_refuses_when_run_ok_but_zero_checks_recorded(self):
+        # ATLASSN-139/SW1: isolates the vacuous-pass gate alone. status='ok' but this run's own
+        # dq_check_run count is genuinely zero, so only the vacuous-pass branch can fire.
+        wh = TempWarehouse(clean=False)
+        migrate.new_ingest_run(wh.conn, status="ok")
+        status_row = wh.conn.execute("SELECT status, checks_evaluated FROM v_atlas_status").fetchone()
+        self.assertEqual(status_row, ("ok", 0),
+                          "fixture setup error: status must be ok with zero checks evaluated")
+        before = _snapshot_snapshot(self.snapshot_root)
+
+        with self.assertRaises(PublishRefused) as ctx:
+            publish(str(self.snapshot_root), wh.conn, **publish_kwargs())
+        self.assertIn("vacuous pass", str(ctx.exception))
+
+        after = _snapshot_snapshot(self.snapshot_root)
+        self.assertEqual(before, after)
+        wh.close()
+
+    def test_refuses_when_a_snapshot_source_check_fails(self):
+        # ATLASSN-139/SW1: isolates the per-source publishable gate alone, in its BLOCKING
+        # direction -- the suite previously only tested the negative direction
+        # (test_does_not_refuse_when_an_unrelated_non_snapshot_source_check_fails, above), never
+        # the positive gate it guards actually refusing. verdict_domain_closed is source_table=
+        # hook_verdict, which IS in snapshot_source (ARCHITECTURE.md section 5's own cited
+        # example: "failing verdict_domain_closed gives publishable = 0 with
+        # blocking_sources = hook_verdict").
+        wh = TempWarehouse(clean=True)
+        wh.fail_check("verdict_domain_closed")
+
+        row = wh.conn.execute(
+            "SELECT publishable, blocking_sources FROM v_snapshot_publishable"
+        ).fetchone()
+        self.assertEqual(row, (0, "hook_verdict"),
+                          "fixture setup error: this check should block snapshot_source")
+        before = _snapshot_snapshot(self.snapshot_root)
+
+        with self.assertRaises(PublishRefused) as ctx:
+            publish(str(self.snapshot_root), wh.conn, **publish_kwargs())
+        self.assertIn("blocked by snapshot_source", str(ctx.exception))
+
+        after = _snapshot_snapshot(self.snapshot_root)
+        self.assertEqual(before, after)
         wh.close()
 
     def test_a_refusal_after_a_successful_publish_does_not_disturb_current(self):

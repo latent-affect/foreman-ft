@@ -1,6 +1,6 @@
 """GOALS.json C5. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.resolve.tests.test_override -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.resolve.tests.test_override -v
 """
 
 import tempfile
@@ -52,7 +52,7 @@ class TesseraPrefixOverrideTests(unittest.TestCase):
         self.assertEqual(results[str(self.root)], "ambiguous")
 
     def test_override_supersedes_an_otherwise_unique_match(self):
-        # Resolved: ARCHITECTURE.md section 3's own words are "prefers it over the
+        # ATLASSN-9, resolved: ARCHITECTURE.md section 3's own words are "prefers it over the
         # registry" -- no ambiguous-only qualifier, matching the real, pre-existing
         # tessera_resolver.py precedent. Registers a SECOND project elsewhere so the override's
         # named prefix is real (a real registered TESSERA prefix, not tied to this root at all)

@@ -1,6 +1,6 @@
 """GOALS.json C1. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_readonly -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.query.tests.test_readonly -v
 """
 
 import sqlite3

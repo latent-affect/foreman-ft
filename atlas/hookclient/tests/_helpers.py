@@ -18,7 +18,7 @@ DEFAULT_INDEX = {
     "cursors": {"verdicts_stream_id": "abc", "verdicts_byte_offset": 1, "tessera_max_event_id": 1},
     "verdict_window_days": 7,
     "rate_uninterpretable_handlers": [],
-    "severity_rubric": {"status": "absent", "version": None, "sha256": None, "blocker": "severity-rubric-pending", "consumer_contract": "status!='present' means CANNOT EVALUATE; never 'threshold not met'"},
+    "severity_rubric": {"status": "absent", "version": None, "sha256": None, "blocker": "FORE-32", "consumer_contract": "status!='present' means CANNOT EVALUATE; never 'threshold not met'"},
     "roots": {
         "/proj/tess": {"prefixes": ["TESS"], "resolution": "unique"},
         "/proj/shared": {"prefixes": ["AREM", "FORE"], "resolution": "ambiguous"},

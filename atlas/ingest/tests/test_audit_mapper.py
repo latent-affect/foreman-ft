@@ -4,7 +4,7 @@ Not a new GOALS.json criterion -- exercises the same already-frozen, already-tes
 tail() contract with a new mapper, the same relationship verdicts.py already has to it.
 
 Run from the repo root:
-    /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_audit_mapper -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.ingest.tests.test_audit_mapper -v
 """
 
 import json

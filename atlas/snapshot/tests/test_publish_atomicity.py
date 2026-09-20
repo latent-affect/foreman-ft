@@ -1,6 +1,6 @@
 """GOALS.json C1, C2. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_publish_atomicity -v
 """
 
 import json

@@ -5,7 +5,7 @@ existing C4 (checker evaluation) and C7 (dispatch completeness), which the amend
 now includes this check in; this file verifies the checker's own actual detection logic.
 
 Run from the repo root:
-    /path/to/venv/bin/python3 -m unittest atlas.warehouse.tests.test_credential_scan -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.warehouse.tests.test_credential_scan -v
 """
 
 import tempfile

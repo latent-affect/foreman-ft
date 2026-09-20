@@ -22,7 +22,7 @@ def _load_projects(conn):
 def resolve_one(cwd, projects):
     """Pure function: (cwd, projects) -> (resolution, matched_root, project_prefix, candidates).
 
-    Resolved: ARCHITECTURE.md section 3's own words are "ATLAS reads that override
+    ATLASSN-9, resolved: ARCHITECTURE.md section 3's own words are "ATLAS reads that override
     where present and PREFERS IT OVER THE REGISTRY" -- no ambiguous-only qualifier. The original
     implementation was narrower than the document's own text, only consulting the override on
     an already-ambiguous match. Widened to match both the document's plain language and the
@@ -39,7 +39,7 @@ def resolve_one(cwd, projects):
     tree), independent of whether that root appears in the TESSERA registry at all -- so a
     genuinely UNREGISTERED cwd can still be resolved via override there. This function only
     checks an override at a root the registry itself already matched (unique or ambiguous);
-    an unregistered cwd's own directory tree is not walked. See README.md
+    an unregistered cwd's own directory tree is not walked. See README.md / ATLASSN-9's ticket
     for this remaining generalization, not implemented in this pass."""
     resolution, matched_root, candidates = matcher.resolve_cwd(cwd, projects)
     if matched_root is not None and resolution in ("unique", "ambiguous"):

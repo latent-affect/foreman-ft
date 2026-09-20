@@ -1,6 +1,6 @@
 """GOALS.json C6. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.snapshot.tests.test_shard_sharing -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.snapshot.tests.test_shard_sharing -v
 """
 
 import json

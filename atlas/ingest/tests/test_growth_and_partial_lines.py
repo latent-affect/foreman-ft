@@ -1,6 +1,6 @@
 """GOALS.json C3, C4. Run from the repo root:
 
-    /path/to/venv/bin/python3 -m unittest atlas.ingest.tests.test_growth_and_partial_lines -v
+    /Users/m5/.venv/bin/python3 -m unittest atlas.ingest.tests.test_growth_and_partial_lines -v
 """
 
 import tempfile

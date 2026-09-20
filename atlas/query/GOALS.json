@@ -1,13 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "project": "atlas",
+  "project": "atlas-sonnet",
   "component": "query",
   "scope_version": 1,
   "created": "2026-08-22T00:30:00Z",
-  "criteria_frozen_at": "2026-08-22T00:35:00Z",
-
-  "done_state": "A read-only facade opens the warehouse, checks v_atlas_status before answering anything (distinguishing never-run, failed-run, and checks-evaluated=0 from a genuinely clean run -- the vacuous-pass principle applied at this layer), refuses every request when the run is not genuinely clean with a reason naming which state it is in, and otherwise serves reads only from the declared set of gated views, never a raw table, matching ARCHITECTURE.md section 8's stated guarantee that primary enforcement of the trust gate lives here.",
-
+  "criteria_frozen_at": "2026-09-20T06:15:00Z",
+  "done_state": "A read-only facade opens the warehouse, checks v_atlas_status before answering anything (distinguishing never-run, failed-run, and checks-evaluated=0 from a genuinely clean run -- the MAJOR-1 principle applied at this layer), refuses every request when the run is not genuinely clean with a reason naming which state it is in, and otherwise serves reads only from the declared set of gated views, never a raw table, matching ARCHITECTURE.md section 8's stated guarantee that primary enforcement of the trust gate lives here.",
   "criteria": [
     {
       "id": "C1",
@@ -18,8 +16,8 @@
     },
     {
       "id": "C2",
-      "statement": "status() returns a structured result distinguishing four states that must never collapse into each other: never-run (no ingest_run rows at all), a run whose own status is not 'ok', a run that IS 'ok' but recorded zero dq_check_run rows (checks_evaluated=0 -- the known vacuous-pass case), and a genuinely clean run (status='ok', checks_evaluated>0, contract_failures=0).",
-      "verification": "atlas/query/tests/test_status.py: four separate fixtures, one per state, each asserting status() returns the correct, distinct classification -- most importantly that checks_evaluated=0 is never reported the same way as a genuine contract_failures=0 clean pass.",
+      "statement": "status() returns a structured result distinguishing four states that must never collapse into each other: never-run (no ingest_run rows at all), a run whose own status is not 'ok', a run that IS 'ok' but recorded zero dq_check_run rows (checks_evaluated=0 -- the MAJOR-1 vacuous-pass case), and a genuinely clean run (status='ok', checks_evaluated>0). A real per-source contract failure no longer collapses a run out of 'clean' at this layer (ARCHITECTURE.md section 8 addendum, amendment A1) -- that dimension is scoped to fetch()'s own per-view refusal (C4/C12), not status()'s run-level classification. Corrected 2026-09-20, same pass as C4: this criterion's own prior text still required global contract_failures=0 for 'clean', directly contradicting C4's corrected per-source design -- found by Alice during ATLASSN-103 implementation, missed when C4 was first corrected.",
+      "verification": "atlas/query/tests/test_status.py: four separate fixtures, one per state, each asserting status() returns the correct, distinct classification -- most importantly that checks_evaluated=0 is never reported the same way as a genuine clean pass, and that a real per-source contract failure alone (checks_evaluated>0, status='ok') now reports clean at this layer, not FAILED_RUN (test_run_ok_with_checks_but_a_real_contract_failure_is_failed_not_clean, updated by ATLASSN-103 to assert the corrected behavior).",
       "verifiable": true,
       "added": "2026-08-22T00:30:00Z"
     },
@@ -32,8 +30,8 @@
     },
     {
       "id": "C4",
-      "statement": "When status() is not genuinely clean, fetch() refuses EVERY request (system-wide, not per-source) with a reason naming which of the three non-clean states applies -- extending section 8's per-source refusal with this component's own stronger, simpler policy, since the gated views already self-gate per-source at the SQL layer.",
-      "verification": "atlas/query/tests/test_fetch_allowlist.py: for each of the three non-clean status() states, fetch() against a real, otherwise-valid view name raises a refusal whose message names that specific state, not a generic error.",
+      "statement": "When status() is not genuinely clean at the run level (NEVER_RUN, FAILED_RUN, or CHECKS_NOT_EVALUATED), fetch() refuses EVERY request system-wide, unchanged. Within a genuinely clean run, a contract-failure refusal is scoped per-source (ARCHITECTURE.md section 8 addendum, ATLASSN-103, amendment A1): fetch() refuses a specific view only when a source that view's own declared dependency map (A2) names is unqueryable -- not a global contract_failures sum. A source with zero dq_check_run rows for the anchor run is absent from v_queryable_source, not clean, so the vacuous-pass case needs no separate handling. Supersedes this criterion's own prior text, which described the pre-fix global behavior; corrected 2026-09-20 per Owen Reyes's design-scope gap finding (Build 8 backlog authorship) -- the prior wording stated the CURRENT pre-fix behavior as the criterion itself, which is exactly backwards for design-scope criteria meant to gate the fix.",
+      "verification": "atlas/query/tests/test_fetch_allowlist.py: for each of the three non-clean run-level states, fetch() against any real view name still raises a run-level refusal, unchanged. New: a fixture with a genuinely clean run where exactly one source (e.g. tessera_event) has a real contract failure -- fetch() against a view whose dependency map (A2) does not name that source succeeds; fetch() against a view that does name it refuses, and the refusal names that specific source and its failing check count (A2).",
       "verifiable": true,
       "added": "2026-08-22T00:30:00Z"
     },
@@ -43,9 +41,69 @@
       "verification": "atlas/query/tests/test_fetch_allowlist.py: loads a fixture with a clean run and real hook_verdict data, asserts facade.fetch('v_gate_proven_live') returns the same rows as a direct 'SELECT * FROM v_gate_proven_live' on the same connection.",
       "verifiable": true,
       "added": "2026-08-22T00:30:00Z"
+    },
+    {
+      "id": "C6",
+      "statement": "fetch_live() serves the live plane's views under their OWN freshness gate, and the existing fetch() path is unchanged: with the warehouse deliberately in a non-clean batch state, fetch() still refuses all 18 of its declared views and fetch_live() still serves subagent rows. Neither method will serve a view name on the other's allowlist.",
+      "verification": "atlas/query/tests/test_readonly.py and test_fetch_allowlist.py: assert the 18-name ALLOWED_VIEWS set is byte-identical to what it was before this change, assert fetch('v_subagent_tool_call') raises QueryRefused, assert fetch_live('v_hook_verdict') raises QueryRefused, and assert fetch_live serves rows while status() reports failed-run.",
+      "verifiable": true
+    },
+    {
+      "id": "C7",
+      "statement": "fetch_live() refuses when the live plane's own gate is not open -- never-run, live-pull-failed, live-pull-stale, live-credential-hit -- and the refusal names which state, so a caller can tell 'the pull is dead' from 'a secret was found' from 'nothing has run yet'. The connection stays mode=ro; nothing in the query component ever triggers a pull.",
+      "verification": "atlas/query/tests/test_readonly.py drives each live_state and asserts the refusal message names it. A write attempt through the facade's connection raises, as it already does for fetch().",
+      "verifiable": true
+    },
+    {
+      "id": "C8",
+      "statement": "v_git_commit_detail (ARCHITECTURE.md section 39) is added to query's ALLOWED_VIEWS and served under the same fetch()/status() gating as every other view (C3/C4/C5) -- refused identically to any other gated view when status() is not clean; when clean, returns real rows via LEFT JOIN of git_commit to git_commit_file (not INNER -- the toy-modeled correction from architecture), author_hash only (never a raw author field, per D8), with NULL insertions/deletions preserved rather than coerced to 0. Traces to ATLASSN-98/REQ-77.",
+      "verification": "atlas/query/tests/test_git_commit_detail.py (new): fetch('v_git_commit_detail') against a fixture containing (a) a commit with files, (b) a commit with zero git_commit_file rows (must appear with file_path/insertions/deletions all NULL, not silently dropped), (c) a file row with NULL insertions/deletions (must stay NULL). A real range query against the live warehouse cross-checked against a direct `git log --oneline | wc -l` for one project (ATLASSN-98 acceptance criterion 2) -- any discrepancy explained in closing evidence, not ignored.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    },
+    {
+      "id": "C9",
+      "statement": "No column or join in v_git_commit_detail resolves a commit to a Claude Code session_id. An implementation adding one (even framed as 'one more column' under router pressure, per section 39's own named risk) violates this criterion, not merely exceeds scope. Traces to ATLASSN-98/REQ-77.",
+      "verification": "The view's SQL definition and its ALLOWED_VIEWS registration are checked for any session_id-bearing column or join target at implementation and at every subsequent stage close; grep for `session_id` in the view definition must return nothing.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    },
+    {
+      "id": "C10",
+      "statement": "A malformed or missing commit record (e.g. a git_commit_file row whose parent git_commit row does not exist, or vice versa) is handled by a named, tested rule -- never silently dropped or a crash. ATLASSN-98's own acceptance criterion 5, scoped as this criterion's ablation/negative-control at implementation per PDP.md section 3's design-scope clarification (real ablation fixtures at implementation discharge this, not a non-author prose pass at this stage).",
+      "verification": "A real ablation fixture at implementation: a deliberately orphaned git_commit_file row (no matching git_commit) and a deliberately malformed row (missing file_path) each produce a named, observed outcome (reject-and-log or a stated default), proven by a real corrupted-input test before being trusted.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    },
+    {
+      "id": "C11",
+      "statement": "git_commit gains a v_source_freshness row (confirmed absent today -- checked live against the real view definition during architecture falsification), so ingest staleness for this source becomes checkable the same way every other source already is (ATLASSN-98 acceptance criterion 4).",
+      "verification": "SELECT against v_source_freshness after implementation includes a row for git_commit with a real staleness_minutes value, using the same UNION-ALL pattern the view already uses for its other five sources.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    },
+    {
+      "id": "C12",
+      "statement": "A per-source contract-failure refusal names the blocking source(s) and their failing check counts, pulled from v_source_trust -- not a generic refusal message. ARCHITECTURE.md section 8 addendum, amendment A2. Diagnosability is half of what this fix exists to give a caller (the router), not a side effect.",
+      "verification": "atlas/query/tests/test_fetch_allowlist.py: fetch() against a view blocked by a single failing source raises a refusal whose message contains that source's name and its real failing-check count read from v_source_trust, not a placeholder or a generic string.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    },
+    {
+      "id": "C13",
+      "statement": "The five trust-plumbing views (v_atlas_status, v_pipeline_selfcheck, v_queryable_source, v_snapshot_publishable, v_source_trust) map to the empty source set and stay servable under a contract failure, still behind the run-level gate (C4). v_atlas_status additionally self-describes a never-run state and is servable for that state too. ARCHITECTURE.md section 8 addendum, amendment A3.",
+      "verification": "atlas/query/tests/test_fetch_allowlist.py: with a real contract failure present, fetch() against each of the five plumbing views succeeds (not refused); against a never-run (empty) warehouse, fetch('v_atlas_status') succeeds and reports the never-run state rather than raising.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
+    },
+    {
+      "id": "C14",
+      "statement": "The declared per-view dependency map (A2) carries a drift test: each ALLOWED_VIEWS member's real transitive base-table closure, recomputed from sqlite_master at test time, equals the declared map (modulo the five plumbing views and A2's source_table translation). Every ALLOWED_VIEWS entry has a map entry -- an unmapped view refuses fail-closed, and the drift test itself catches the omission rather than leaving it as undefined behavior. ARCHITECTURE.md section 8 addendum, amendment A4.",
+      "verification": "A real drift test recomputes each view's transitive base-table closure from live sqlite_master and asserts equality with the declared map (an actual comparison, not a hand-eyeballed read, per this project's own PDP R2 discipline). A deliberately unmapped ALLOWED_VIEWS entry (ablation) is confirmed to refuse rather than silently pass, and the drift test itself fails on a hand-edited map that no longer matches the schema.",
+      "verifiable": true,
+      "added": "2026-09-20T00:00:00Z"
     }
   ],
-
   "failure_criteria": [
     {
       "id": "F1",
@@ -70,41 +128,100 @@
       "signature": 2,
       "statement": "A refused query is logged to a channel nobody reads instead of being raised to the caller who can act on it.",
       "detection": "Every refusal is a raised Python exception with a message the caller/test directly asserts on -- never a bare print or a swallowed condition."
+    },
+    {
+      "id": "F5",
+      "signature": 1,
+      "statement": "v_git_commit_detail uses INNER JOIN (silently drops the 6 real zero-file-row commits) instead of LEFT JOIN, or coerces NULL insertions/deletions to 0, or exposes a raw author/session_id column.",
+      "detection": "C8's three-fixture test (with-files, zero-files, NULL-insertions) plus C9's session_id grep -- both must hold simultaneously."
     }
   ],
-
   "out_of_scope": [
     "Foreman's periodic pattern-detection consumer itself (D12 in ARCHITECTURE.md) -- unbuilt and undesigned per the architecture document; this component only provides the read facade a future consumer would use.",
     "The dashboard's specific query needs (D9) -- dashboard gets its own criteria once it is rewired against this facade.",
     "Real end-to-end queries against the live warehouse populated by real ingest/resolve runs -- this component's tests use synthetic fixtures; end-to-end correctness is foreman:integration-test's job.",
     "A general arbitrary-SQL escape hatch -- fetch() is restricted to the declared view allowlist by design (C3), not a general query() that accepts caller-supplied SQL against arbitrary tables."
   ],
-
   "constraints": [
     "Zero third-party dependencies -- Python 3 stdlib only (sqlite3), matching this environment's established convention.",
     "The warehouse connection is opened in SQLite's real read-only URI mode (file:...?mode=ro), not merely a connection the facade's own code promises not to write through.",
     "Tests use Python's stdlib unittest, matching every other component's own convention."
   ],
-
   "results": [
-    {"criterion_id": "C1", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_readonly -v\ntest_opening_a_nonexistent_db_raises_a_named_error ... ok\ntest_write_through_facade_connection_raises ... ok\nOK", "recorded": "2026-08-22T00:50:00Z"},
-    {"criterion_id": "C2", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_status -v\ntest_checks_not_evaluated_is_not_confused_with_clean ... ok\ntest_failed_run ... ok\ntest_genuinely_clean ... ok\ntest_never_run ... ok\ntest_run_ok_with_checks_but_a_real_contract_failure_is_failed_not_clean ... ok\nOK", "recorded": "2026-08-22T00:50:00Z"},
-    {"criterion_id": "C3", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_raw_table_name_is_refused atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_unknown_name_is_refused -v\nok\nok\nOK", "recorded": "2026-08-22T00:50:00Z"},
-    {"criterion_id": "C4", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchRefusalWhenNotCleanTests -v\ntest_checks_not_evaluated_refuses_a_valid_view_name ... ok\ntest_failed_run_refuses_a_valid_view_name ... ok\ntest_never_run_refuses_a_valid_view_name ... ok\nOK", "recorded": "2026-08-22T00:50:00Z"},
-    {"criterion_id": "C5", "status": "MET", "evidence": "$ /path/to/venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_fetch_result_matches_direct_sql -v\nok\nOK", "recorded": "2026-08-22T00:50:00Z"}
+    {
+      "criterion_id": "C1",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.query.tests.test_readonly -v\ntest_opening_a_nonexistent_db_raises_a_named_error ... ok\ntest_write_through_facade_connection_raises ... ok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C2",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.query.tests.test_status -v\ntest_checks_not_evaluated_is_not_confused_with_clean ... ok\ntest_failed_run ... ok\ntest_genuinely_clean ... ok\ntest_never_run ... ok\ntest_run_ok_with_checks_but_a_real_contract_failure_is_failed_not_clean ... ok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C3",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_raw_table_name_is_refused atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_unknown_name_is_refused -v\nok\nok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C4",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchRefusalWhenNotCleanTests -v\ntest_checks_not_evaluated_refuses_a_valid_view_name ... ok\ntest_failed_run_refuses_a_valid_view_name ... ok\ntest_never_run_refuses_a_valid_view_name ... ok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    },
+    {
+      "criterion_id": "C5",
+      "status": "MET",
+      "evidence": "$ /Users/m5/.venv/bin/python3 -m unittest atlas.query.tests.test_fetch_allowlist.FetchAllowlistTests.test_fetch_result_matches_direct_sql -v\nok\nOK",
+      "recorded": "2026-08-22T00:50:00Z"
+    }
   ],
-  "amendments": [],
-
+  "amendments": [
+    {
+      "from": "5 criteria (C1-C5); one gated read path over the batch pipeline's 18 views",
+      "to": "7 criteria (C1-C7); C6-C7 add a second read path with its own gate for the live plane",
+      "reason": "ATLASSN-27 / ATLASSN-29. The batch trust gate certifies 19 data-quality checks over hook_verdict, tessera_event, audit_event and git_commit. None of them examines a subagent transcript. Gating the live view on it would mean an unrelated batch failure blinds a parent to its own subagent -- which is not hypothetical: the warehouse is non-clean on fail_open_not_double_counted right now, so every gated view is currently refused. The existing gate is not weakened; a second, differently-contracted one is added beside it. The alternative -- write real dq checks for the live plane and fold it under fetch() -- is named with its cost in DECISION-ATLASSN-27.md.",
+      "requested_by": "jon (via ATLASSN-27, relayed by peer session agent-remediation-25)",
+      "ratified_by": "claude-atlas-sonnet",
+      "at": "2026-08-26T23:20:00Z"
+    },
+    {
+      "from": "7 criteria (C1-C7); no git_commit-adjacent view existed",
+      "to": "11 criteria (C1-C11); C8-C11 add v_git_commit_detail (section 39, ATLASSN-98/REQ-77)",
+      "reason": "REQ-77 (ATLASSN-98), Build 8 design-scope. Clint Eastwood's architecture pass (633613d, falsified SURVIVES) designed the view against real, independently re-verified warehouse counts (3,897 git_commit rows, 58,880 git_commit_file rows, 6 zero-file-row commits, 5,070 NULL-insertion rows) -- this amendment turns that design into checkable design-scope criteria, matching the existing C1-C7 style for this same component.",
+      "requested_by": "orchestrator dispatch, Build 8 design-scope",
+      "ratified_by": "priya-desai (design-scope decider)",
+      "at": "2026-09-20T00:00:00Z"
+    },
+    {
+      "from": "11 criteria (C1-C11); C4 stated the pre-ATLASSN-103 global-refusal behavior as itself the criterion",
+      "to": "14 criteria (C1-C14); C4 corrected to the per-source behavior ATLASSN-103's own already-reviewed design (ARCHITECTURE.md section 8 addendum, GO-on-direction + A1-A4, Clint Eastwood, TESSERA comment 2111, 2026-09-07) actually calls for; C12-C14 add A2/A3/A4 as their own checkable criteria",
+      "reason": "Real design-scope gap found live by Owen Reyes during Build 8 backlog authorship (FORE-695): this file's own C4 still stated the CURRENT pre-fix behavior verbatim, so an implementation proposal against frozen criteria would have built the old behavior correctly rather than the reviewed fix. PDP.md section 11.6 -- Priya Desai's stage is closed for the components already frozen tonight and she was not live to re-freeze this herself; the orchestrating session decided this on the same evidence a dispatch would have used (ARCHITECTURE.md section 8 addendum read in full, A1-A4 verbatim) rather than waiting for a session to open, per the operator's own direct instruction not to dispatch Priya/Clint mid-implementation. Provisional: Priya should review this amendment at her next real dispatch; overturned is not a failure of this rule, unflagged would be.",
+      "requested_by": "orchestrator dispatch, Build 8 implementation, PDP.md section 11.6",
+      "ratified_by": "orchestrator (provisional -- Priya Desai not live; see reason)",
+      "at": "2026-09-20T00:00:00Z"
+    },
+    {
+      "from": "14 criteria (C1-C14); C2 still required global contract_failures=0 for 'clean'",
+      "to": "14 criteria (C1-C14); C2 corrected to match C4's per-source design -- a contract failure alone no longer collapses a run out of 'clean'",
+      "reason": "Real gap in the orchestrator's own prior amendment (same session, same day): C4 was corrected to ATLASSN-103's per-source design but C2's own 'clean' definition was not checked for the same contradiction, leaving two criteria in the same file directly disagreeing. Found by Alice while implementing ATLASSN-103 against both -- she implemented per C4/A1 (the more recently-authored, explicitly-corrected ground truth) and updated the one existing test that asserted the old C2-shaped behavior by name, but correctly did not rewrite C2's own text herself. PDP.md section 11.6, same authority as the prior amendment -- orchestrator decides, Priya reviews at her next real dispatch.",
+      "requested_by": "Alice, flagged during ATLASSN-103 implementation",
+      "ratified_by": "orchestrator (provisional -- Priya Desai not live; see reason)",
+      "at": "2026-09-20T06:15:00Z"
+    }
+  ],
   "integrity": {
-    "criteria_hash_at_freeze": "sha256:03489c49ec1cd584ae95a846d662f600d15b02d765e9b234de762e60bd914d06",
-    "criteria_hash_at_completion": "sha256:03489c49ec1cd584ae95a846d662f600d15b02d765e9b234de762e60bd914d06",
-    "match": true
+    "criteria_hash_at_freeze": "sha256:a06bb62deb797bfafd92df26e183063477ee5c83dcbde5fd445e799caad4799b",
+    "criteria_hash_at_completion": null,
+    "match": null
   },
-
   "scope_estimate": {
     "components": 1,
     "interfaces": 2,
-    "test_criteria": 5,
-    "frozen_at": "2026-08-22T00:35:00Z"
+    "test_criteria": 7,
+    "frozen_at": "2026-08-26T23:20:00Z"
   }
 }
