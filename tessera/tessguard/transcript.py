@@ -135,7 +135,7 @@ def subagent_transcript_paths(parent_jsonl_path):
 def in_repo_edit_count_including_subagents(jsonl_path, repo_root):
     """Total in-repo edit count across the parent transcript AND its subagent transcripts.
     Subagent cwd values are NOT used for the OR-rule validation -- a subagent can run at an
-    unrelated cwd (observed: one project's subagent ran at /path/to/home/.claude) -- only the
+    unrelated cwd (observed: one project's subagent ran at /Users/m5/.claude) -- only the
     PARENT transcript's first cwd participates in that check; subagent transcripts are
     scanned for in-repo edits unconditionally, the same way a Bash-issued write would be if
     it weren't already excluded from this count entirely."""

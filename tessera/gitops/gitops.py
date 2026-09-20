@@ -1,14 +1,25 @@
-import re
 import subprocess
 from pathlib import Path
 
-from ..common.git_sha import git_show_rev_args
-from .exceptions import GitCommandError, NonFastForwardError, SyncedFolderError
-
-STAGE_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,31}$")
-PREFIX_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,15}$")
+from ..common.git_refs import validate_commit_sha
+from .exceptions import GitCommandError, InvalidRevisionError, NonFastForwardError, SyncedFolderError
 
 SYNCED_FOLDER_MARKERS = ("Mobile Documents", "Dropbox", "Google Drive", "OneDrive")
+
+
+def validate_revision_internal(commit_sha):
+    """TESS-159 defense-in-depth: independent of the store-boundary check, reject a
+    caller-influenced revision here too, at the git call site itself, before it ever
+    reaches a subprocess argv -- a bypass of one layer (e.g. a claim written before this
+    fix existed, or written by a future code path that forgets to call the store-boundary
+    check) must not defeat the other. Delegates to validate_commit_sha rather than
+    re-testing the shape inline, so the accepted commit_sha format has exactly one
+    definition (code-review finding on this ticket) -- only the exception type differs,
+    matching gitops's own exception-per-layer convention."""
+    try:
+        validate_commit_sha(commit_sha)
+    except ValueError as exc:
+        raise InvalidRevisionError(str(exc)) from exc
 
 
 def check_not_synced_internal(path):
@@ -23,7 +34,7 @@ def check_not_synced_internal(path):
 
 
 def run_git_internal(repo_path, args, check=True):
-    # Every git operation goes through this one choke point, so this is the
+    # TESS-64: every git operation goes through this one choke point, so this is the
     # single place to catch "the stage repo directory doesn't exist at all" -- e.g. no
     # stage has ever been promoted for this project -- and say that plainly instead of
     # letting `git -C <path> ...` fail with a raw, easy-to-misread `fatal: cannot change
@@ -53,7 +64,7 @@ class GitOps:
         that override, not attribute mutation, is how a caller (e.g. the HTTP server's one
         long-lived, cross-thread-shared GitOps instance) should switch projects per
         request. Mutating self.project directly per-request was a real, found bug
-        (found by direct repro): concurrent requests for different projects raced on the same shared
+        (TESS-27): concurrent requests for different projects raced on the same shared
         attribute, so one request's project could silently leak into another's git
         operations. None falls back to the store's default project, so existing single-
         project call sites need no change."""
@@ -72,19 +83,9 @@ class GitOps:
         Two projects can legitimately both have a "dev" stage -- before this fix they
         physically shared ONE git repo at stages_root/dev, so promoting or rolling back
         one project's dev stage silently moved the other project's dev stage's real git
-        HEAD too (confirmed by direct repro: a BE-scoped GitOps reconciling
+        HEAD too (TESS-28, confirmed by direct repro: a BE-scoped GitOps reconciling
         flagged AL's own ticket stale)."""
         prefix = self.resolve_project_prefix_internal(project)
-        if not PREFIX_RE.fullmatch(prefix) or ".." in prefix:
-            raise GitCommandError(
-                f"refusing stage path: project prefix {prefix!r} is not "
-                f"[A-Za-z][A-Za-z0-9_-]{{0,15}}"
-            )
-        if not STAGE_NAME_RE.fullmatch(str(stage)) or ".." in str(stage):
-            raise GitCommandError(
-                f"refusing stage path: stage {stage!r} is not "
-                f"[A-Za-z][A-Za-z0-9_-]{{0,31}}"
-            )
         return self.stages_root / prefix / stage
 
     def init_stage(self, stage, source_repo=None, project=None):
@@ -161,7 +162,7 @@ class GitOps:
         """On-read ancestry reconciliation, per ARCHITECTURE.md: fires whether the HEAD
         move went through gitops or was a direct git operation on the stage repo -- reads
         the repo's REAL current HEAD every time, never relies on stage_heads alone.
-        project is threaded through to get_commit_links_for_stage (found by
+        project is threaded through to get_commit_links_for_stage (TESS-22, found by
         direct repro: without it, this always queried the store's DEFAULT project's
         commit links regardless of which project's stage repo path/, was actually being
         reconciled -- an obvious inert no-op for the default project and a silent
@@ -177,7 +178,7 @@ class GitOps:
             # Same ambiguity promote_stage's own check already fixed (see the comment
             # there): returncode 1 is a genuine, decisive "not an ancestor" -- anything
             # else is a real git failure (missing object, corrupted repo, disk issue),
-            # not a staleness verdict. This loop used to collapse both into
+            # not a staleness verdict. TESS-68: this loop used to collapse both into
             # should_be_stale=True, silently writing a wrong flag on a real git error.
             # A failure here now leaves the ticket's CURRENT stale flag untouched (never
             # guessed) and is collected to raise after the rest of the batch is
@@ -202,36 +203,36 @@ class GitOps:
         return results
 
     def diff(self, stage, commit_sha, project=None):
-        rev_args = git_show_rev_args(commit_sha)
-        if rev_args is None:
-            raise GitCommandError(
-                f"refusing git show: commit_sha {commit_sha!r} is not a hex object name"
-            )
+        validate_revision_internal(commit_sha)
         return run_git_internal(
-            self.stage_path(stage, project=project), ["show", *rev_args]
+            self.stage_path(stage, project=project), ["show", "--end-of-options", commit_sha]
         ).stdout
 
     def files_touched(self, stage, commit_sha, project=None):
         """-m --first-parent: `git show` prints NO diff at all for a merge commit by
         default, so a merge commit's real file changes were silently reported as an empty
         list -- an honest claim then looked entirely fabricated against a real merge
-        (confirmed by direct repro against a constructed merge commit: empty
+        (TESS-29, confirmed by direct repro against a constructed merge commit: empty
         output before this fix). -m re-enables diff generation for merges; --first-parent
         picks one well-defined diff (against the branch being merged into) rather than one
         per parent.
         -z: NUL-separates output and disables git's default quoting/octal-escaping of
-        paths containing spaces or non-ASCII bytes (confirmed by direct repro: a
+        paths containing spaces or non-ASCII bytes (TESS-30, confirmed by direct repro: a
         path with a space and an accented character came back as a quoted, octal-escaped
         string like '"with space and \\303\\251.txt"', which never string-equals the same
-        path as written in a claim -- producing a false discrepancy in both directions)."""
+        path as written in a claim -- producing a false discrepancy in both directions).
+        --end-of-options, not a bare `--`: `git show -- <sha>` (measured directly while
+        fixing TESS-159) silently reinterprets <sha> as a PATHSPEC and returns an empty,
+        exit-0 result for a real commit -- a worse bug than the one being fixed, since
+        every valid claim would then read as a fabricated mismatch. `--end-of-options`
+        (git >=2.24) forces the revision to be parsed positionally, with no pathspec
+        reinterpretation, and validate_revision_internal above means it can never itself
+        start with '-' anyway -- this is the second, independent layer."""
+        validate_revision_internal(commit_sha)
         path = self.stage_path(stage, project=project)
-        rev_args = git_show_rev_args(commit_sha)
-        if rev_args is None:
-            raise GitCommandError(
-                f"refusing git show: commit_sha {commit_sha!r} is not a hex object name"
-            )
         out = run_git_internal(
             path,
-            ["show", "--name-only", "--pretty=format:", "-z", "-m", "--first-parent", *rev_args],
+            ["show", "--name-only", "--pretty=format:", "-z", "-m", "--first-parent",
+             "--end-of-options", commit_sha],
         ).stdout
         return [f for f in out.split("\0") if f]

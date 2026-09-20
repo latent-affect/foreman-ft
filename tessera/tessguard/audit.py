@@ -20,7 +20,7 @@ from tessera.common import utc_now_iso
 
 from . import config, event_activity, project_resolve, transcript
 
-AUDIT_LOG_PATH = Path("/path/to/ticket-system/.foreman/tessguard-audit-log.jsonl")
+AUDIT_LOG_PATH = Path("/Users/m5/dev/ticket-system/.foreman/tessguard-audit-log.jsonl")
 
 
 class AuditInputError(Exception):
@@ -28,8 +28,64 @@ class AuditInputError(Exception):
     this must never be silently treated as a clean, checked result."""
 
 
+def home_relative_internal(path):
+    """SP-1 (0e's security-privacy-review): strips the home-directory prefix from an
+    absolute path, using '~' the same way a shell or `ls` would, so the account name
+    itself does not appear in the value. Falls back to the resolved absolute path
+    unchanged if the path is not under home at all (this project's own real paths
+    always are, but silently mis-stating a path that isn't under home as if it were
+    would be worse than leaving it absolute) -- this is also what keeps every existing
+    test (which builds transcripts under tempfile.TemporaryDirectory(), never under
+    the real home directory) seeing the same absolute paths it always has, unchanged.
+
+    Used for `repo_root` only (see sanitize_for_log_internal) -- `transcript` uses a
+    different, stronger fix (basename only), because this one has a known gap for that
+    field specifically: Claude Code's own transcript storage convention hyphenates a
+    session's full original cwd into its OWN directory name (e.g.
+    '-Users-m5-dev-ticket-system'), a naming choice external to this project, sitting
+    AFTER the '~/' this function strips. b9's mutation-testing confirmed it live:
+    every new transcript record still carried the account name once instead of twice.
+    repo_root has no such embedded occurrence and stays fully addressed by this
+    function."""
+    resolved = Path(path).resolve()
+    home = Path.home()
+    try:
+        return "~/" + str(resolved.relative_to(home))
+    except ValueError:
+        return str(resolved)
+
+
+def sanitize_for_log_internal(entry):
+    """SP-1: strips account-identifying path content from 'transcript' and 'repo_root'
+    before an entry reaches append_log_internal's persisted, git-tracked file.
+    Operates on a copy: the caller's own returned/printed result dict (audit_session()'s
+    return value, run_periodic_audit's stdout) is untouched, so local, non-persisted
+    consumption keeps the full, immediately-useful absolute path -- only what crosses
+    into the committed file is sanitized.
+
+    `transcript` is reduced to its basename (the session UUID + .jsonl) rather than
+    home_relative_internal's '~'-prefix strip -- b9's own finding, after measuring
+    that the prefix strip alone still left the account name embedded in Claude Code's
+    own hyphenated transcript-directory naming for every NEW record. The basename
+    alone already uniquely identifies the session (that's this field's actual job;
+    nothing downstream reopens the path -- neither dashboard tool that reads a
+    tessguard-audit-log.jsonl parses `transcript` as a path, both only substring-match
+    the whole serialized entry against a project name, which the basename change does
+    not affect), so it removes the embedded name entirely instead of trying to strip a
+    convention this project doesn't control.
+    `repo_root` keeps the '~'-relative form -- it has no embedded-hyphenation
+    problem, and a repo name (unlike a session UUID) is useful information to keep."""
+    sanitized = dict(entry)
+    if sanitized.get("transcript"):
+        sanitized["transcript"] = Path(sanitized["transcript"]).name
+    if sanitized.get("repo_root"):
+        sanitized["repo_root"] = home_relative_internal(sanitized["repo_root"])
+    return sanitized
+
+
 def append_log_internal(entry, log_path=None):
     log_path = Path(log_path) if log_path else AUDIT_LOG_PATH
+    entry = sanitize_for_log_internal(entry)
     entry = dict(entry, logged_at=utc_now_iso())
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with open(log_path, "a", encoding="utf-8") as fh:
@@ -148,7 +204,7 @@ def audit_session(transcript_path, repo_root, db_path=None, log_path=None):
     return result
 
 
-def self_check_hard_gate(repo_root="/path/to/ticket-system", expected_shas=None, log_path=None):
+def self_check_hard_gate(repo_root="/Users/m5/dev/ticket-system", expected_shas=None, log_path=None):
     """Asserts core.hooksPath is set to .githooks and both shims' live sha256 match
     config.EXPECTED_SHIM_SHAS (or an injected mapping, for testing against a fixture repo
     rather than the real one). Detection-friction, NOT enforcement -- goals_freeze_gate.py
@@ -193,7 +249,7 @@ def run_periodic_audit(transcript_path, repo_root=None, log_path=None):
     both self_check_hard_gate() and audit_session() -- neither has its own way to be
     pointed at a fixture log otherwise, which previously meant any caller (including this
     module's own tests) unconditionally wrote to the real AUDIT_LOG_PATH."""
-    repo_root = repo_root or "/path/to/ticket-system"
+    repo_root = repo_root or "/Users/m5/dev/ticket-system"
     self_check_hard_gate(repo_root=repo_root, log_path=log_path)
     result = audit_session(transcript_path, repo_root, log_path=log_path)
     print(json.dumps(result, indent=2))

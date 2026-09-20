@@ -3,7 +3,7 @@ import sqlite3
 import threading
 
 # Text-level filter is a USABILITY convenience (a friendly 400 for an obvious mistake),
-# NOT the security boundary -- Clint Eastwood's review found the
+# NOT the security boundary -- Clint Eastwood's review (TESS-38/TESS-35) found the
 # original design leaned on it as a backstop and that this was wrong: Python's sqlite3
 # already rejects multi-statement text on its own ("You can only execute one statement
 # at a time"), and the real boundary is the connection-level lockdown in run_readonly_
@@ -35,7 +35,7 @@ def _deny_attach_authorizer(action, arg1, arg2, dbname, source):
 
 
 def _regexp_internal(pattern, value):
-    """Backs the SQLite REGEXP operator: SQLite has no built-in REGEXP --
+    """Backs the SQLite REGEXP operator (TESS-51): SQLite has no built-in REGEXP --
     the operator exists in its grammar but is a no-op that raises 'no such function:
     regexp' unless a function literally named REGEXP is registered on the connection.
     SQLite calls it as regexp(pattern, value) for the expression 'value REGEXP
@@ -56,7 +56,7 @@ class QueryTimedOut(Exception):
     """The query ran past QUERY_TIMEOUT_S and was interrupted."""
 
 
-# Deterministic (no ML) fixups, each tried ONLY after the original query has
+# TESS-48: deterministic (no ML) fixups, each tried ONLY after the original query has
 # already failed to execute -- never a preemptive rewrite of something that might be
 # intentional (a real leading SQL comment already passes validate_query_text and runs
 # fine as-is; these two patterns can only ever fire on a query that's already broken).
@@ -191,7 +191,7 @@ def run_readonly_query(db_path, query):
                 raise QueryRejected(str(exc)) from exc
             except sqlite3.ProgrammingError as exc:
                 # Python 3.12+ raises ProgrammingError instead of the Warning above for
-                # the same multi-statement text -- confirmed live on 3.14.6:
+                # the same multi-statement text (TESS-99) -- confirmed live on 3.14.6:
                 # "You can only execute one statement at a time." ProgrammingError is
                 # also raised for other, unrelated caller mistakes, so only the
                 # multi-statement message is folded into QueryRejected; anything else
@@ -241,7 +241,7 @@ def run_readonly_query(db_path, query):
     return {"columns": columns, "rows": rows, "row_count": len(rows), "truncated": truncated}
 
 
-# BigQuery-style display names for the schema panel, NOT a change to the
+# BigQuery-style display names for the schema panel (TESS-44), NOT a change to the
 # actual SQLite declared type or storage -- SQLite's on-disk representation is
 # unaffected by any of this (verified directly: typeof() stays 'text' for an ISO8601
 # string regardless of whether the column is declared TEXT or DATETIME, since SQLite's
@@ -253,7 +253,7 @@ def run_readonly_query(db_path, query):
 # these columns -- comparison, sorting, and every SQLite date function already work
 # correctly against the real stored ISO8601 strings today. Migrating 10+ tables
 # (including the hash-chained events table) for a purely cosmetic label was judged not
-# worth the risk. See the design notes for the full investigation.
+# worth the risk. See TESS-44's ticket comments for the full investigation.
 _SQLITE_TYPE_DISPLAY_NAMES = {"TEXT": "STRING", "INTEGER": "INTEGER", "REAL": "FLOAT", "BLOB": "BYTES"}
 
 
@@ -271,7 +271,7 @@ def display_type_internal(column_name, declared_type):
 def get_schema(db_path):
     """table name -> [{"name": col_name, "type": display_type}, ...] for every real,
     user-facing table AND view (sqlite_master, type in ('table','view'), excluding
-    SQLite's own internal sqlite_% tables) -- backs the SQL tab's schema/type browser. This is
+    SQLite's own internal sqlite_% tables) -- backs the SQL tab's schema/type browser (TESS-43/TESS-44). This is
     server-controlled metadata, not the ad hoc user-query surface run_readonly_query()
     guards -- table names come from sqlite_master itself, never from request input, so
     the f-string PRAGMA table_info({table}) below is safe the same way schema.py's own
@@ -280,7 +280,7 @@ def get_schema(db_path):
     read-only, same hygiene as the rest of this module."""
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
-        # Views too, not just tables. The analytics layer is entirely views, and
+        # TESS-100: views too, not just tables. The analytics layer is entirely views, and
         # filtering to type='table' left them queryable but invisible -- a schema browser
         # that hides half of what you can select from is worse than no browser, because it
         # reads as "this does not exist" rather than "this is not listed". PRAGMA

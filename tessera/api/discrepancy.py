@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-from ..common.git_sha import git_show_rev_args
+from ..common.git_refs import validate_commit_sha
 
 
 def compute_discrepancy(claim_files_touched, real_files_touched):
@@ -21,7 +21,7 @@ def discrepancy_for_ticket(store, gitops, ticket_id, stage):
     if not claim:
         return None
     # Resolve the TICKET's own project, not gitops's default -- same bug class as
-    # found earlier (found by extension while fixing those: a ticket outside gitops's
+    # TESS-22/TESS-28 (found by extension while fixing those: a ticket outside gitops's
     # default project would otherwise silently read the wrong project's stage repo here).
     ticket = store.get_ticket(ticket_id, with_context=False)
     real_files = gitops.files_touched(stage, claim["commit_sha"], project=ticket["project_prefix"])
@@ -52,7 +52,12 @@ def check_and_record_closure(store, ticket_id, actor):
     try:
         claim = store.get_latest_claim(ticket_id)
         if not claim:
-            store.record_closed_with_no_claim(ticket_id, actor)
+            # TESS-192: transition_status's no-claim guard already emitted the
+            # ClosedWithNoClaim event, with a reason, inside the transaction that allowed
+            # the close -- a close with no claim and no reason no longer reaches this line
+            # at all, it is refused. Recording again here would double-count every
+            # no-claim close, and the rate limiter counts these events, so the duplicate
+            # would not merely inflate a metric, it would halve the effective limit.
             return {"checked": "no_claim"}
         if not claim.get("commit_sha"):
             return {"checked": "skipped", "reason": "claim has no commit_sha"}
@@ -69,18 +74,30 @@ def check_and_record_closure(store, ticket_id, actor):
 
 def files_touched_singlerepo(repo_root, commit_sha):
     """Same real diff computation as gitops.files_touched (identical git invocation, same
-    -m --first-parent merge-commit fix, same -z NUL-separation fix, both applied earlier),
+    -m --first-parent merge-commit fix from TESS-29, same -z NUL-separation fix from TESS-30),
     against a PLAIN repo root instead of a staged dev/integration/FT/prod path. Returns None,
     not an empty list, on any git failure (unknown sha, not a repo, etc.) -- an empty list
     would read as "a real diff with zero files," which is a different claim than "couldn't
-    compute this," and the caller (discrepancy_for_ticket_singlerepo) must not conflate them."""
-    rev_args = git_show_rev_args(commit_sha)
-    if rev_args is None:
+    compute this," and the caller (discrepancy_for_ticket_singlerepo) must not conflate them.
+
+    TESS-159 defense-in-depth: a commit_sha rejected by validate_commit_sha is rejected
+    here too, independent of the store-boundary check, before it ever reaches this
+    subprocess's argv -- treated the same as "couldn't compute this" (None), matching
+    every other unresolvable-commit case this function already handles, rather than
+    raising a new exception type callers here don't expect. Delegates to the shared
+    validator rather than re-testing the shape inline, so the accepted commit_sha format
+    has exactly one definition (code-review finding on this ticket).
+    --end-of-options, not a bare `--`: measured directly while fixing this ticket, `git
+    show -- <sha>` silently reinterprets <sha> as a pathspec and returns an empty, exit-0
+    result for a real commit -- which is a worse bug than the one being fixed here."""
+    try:
+        validate_commit_sha(commit_sha)
+    except ValueError:
         return None
     try:
         out = subprocess.run(
             ["git", "-C", str(repo_root), "show", "--name-only", "--pretty=format:",
-             "-z", "-m", "--first-parent", *rev_args],
+             "-z", "-m", "--first-parent", "--end-of-options", commit_sha],
             capture_output=True, text=True, timeout=10,
         )
     except (subprocess.SubprocessError, OSError):
@@ -91,10 +108,10 @@ def files_touched_singlerepo(repo_root, commit_sha):
 
 
 def discrepancy_for_ticket_singlerepo(store, ticket_id):
-    """The harness-postmortem fix: discrepancy_for_ticket() above only ever worked
+    """The FORE-77/harness-postmortem fix: discrepancy_for_ticket() above only ever worked
     for TESSERA's own staged dev/integration/FT/prod deployment model (gitops.files_touched
     resolves a STAGE path, not a project's real repo root) -- every Foreman pilot project
-    (this project's own single-repo activity, plus several sibling projects)
+    (hyphy, bay-area, atlas-sonnet, ticket-system's own single-repo activity, agent-remediation)
     is a plain single repo with no staging concept at all, so the mechanism this project's own
     marketing calls its "signature feature" had structurally never been callable for any of
     them. compute_discrepancy() itself was already fully generic; only the real-diff resolution

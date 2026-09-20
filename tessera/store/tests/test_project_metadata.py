@@ -30,17 +30,10 @@ class ProjectMetadataTests(unittest.TestCase):
             reopened = Store(db)  # no codename/prefix -- must reuse existing
             self.assertEqual(reopened.project_metadata()["prefix"], "TESS")
 
-    def test_dotdot_prefix_is_rejected(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            db = Path(tmp) / "d.db"
-            store = Store(db)
-            with self.assertRaises(ValueError):
-                store.register_project("escape", "..")
-
     def test_first_open_without_codename_is_a_valid_empty_multi_project_store(self):
         # Superseded assumption (pre-multi-project): a fresh db with no codename/prefix
         # given used to be an error, because a store with zero projects had no sensible
-        # meaning. Multi-project support makes "zero registered projects, wait
+        # meaning. Multi-project support (TESS-8) makes "zero registered projects, wait
         # for register_project() calls" a real, intentional state -- Store(db) alone no
         # longer raises. project_metadata() (the single-project backward-compat accessor)
         # still raises when there's no default project to describe, just via

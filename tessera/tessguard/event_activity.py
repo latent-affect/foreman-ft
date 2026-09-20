@@ -19,7 +19,7 @@ REAL_TESSERA_WRITE_EVENT_TYPES = frozenset({
 
 
 def project_prefix_of_ticket(ticket_id):
-    """'PREFIX-N' -> 'PREFIX'. Pure string op -- ticket IDs are always f'{prefix}-{counter}'
+    """'TESS-73' -> 'TESS'. Pure string op -- ticket IDs are always f'{prefix}-{counter}'
     (store.create_ticket), so this needs no store round trip. Guarded: get_events_since()
     can return NULL ticket_id rows (ColumnDescriptionSet, DatasetCreated, etc. -- none of
     them in REAL_TESSERA_WRITE_EVENT_TYPES today, but this guard doesn't rely on that

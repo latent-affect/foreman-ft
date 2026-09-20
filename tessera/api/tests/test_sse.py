@@ -34,7 +34,7 @@ class SseTests(unittest.TestCase):
         # poll_interval/max_iterations: test-only tuning for speed, not the real 500ms
         # production interval (which is CITED elsewhere in sse.py).
         for chunk in sse.sse_stream(self.store, poll_interval=0.01, max_iterations=3, start_rowid=0):
-            # chunks are now "id: {n}\ndata: {...}\n\n" (an earlier fix added the id: line so a
+            # chunks are now "id: {n}\ndata: {...}\n\n" (TESS-31 added the id: line so a
             # reconnecting client's Last-Event-ID can be honored) -- pull out the data:
             # line specifically rather than assuming it's the whole chunk.
             data_line = next(line for line in chunk.splitlines() if line.startswith("data: "))

@@ -57,7 +57,7 @@ class ProjectionTests(unittest.TestCase):
         # direct repro against the real, multi-project data/tessera.db: AREM had zero
         # tickets, and rebuild_projection()'s first version only created a counters entry
         # when it saw a TicketCreated event for that project, so AREM's live row had no
-        # rebuilt counterpart at all (a regression not caught by any existing
+        # rebuilt counterpart at all (TESS-32's regression, not caught by any existing
         # test since every prior test used exactly one project with real tickets in it).
         self.store.register_project("EMPTY", "EMP")
         live = self.store.live_projection()

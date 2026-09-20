@@ -19,7 +19,7 @@ def sse_stream(store, poll_interval=0.5, max_iterations=None, start_rowid=None):
 
     start_rowid=None (the default) resolves to store.latest_event_id() -- "start from
     now" -- NOT 0. A hardcoded start_rowid=0 default previously replayed the entire event
-    history to every newly-connecting AND reconnecting client (found by Clint
+    history to every newly-connecting AND reconnecting client (TESS-31, found by Clint
     Eastwood's adversarial review, measured: 81 events replayed on every connect against
     the real db, each firing a full /tickets refetch client-side). Pass an explicit
     start_rowid (typically parsed from the client's Last-Event-ID header on reconnect, see

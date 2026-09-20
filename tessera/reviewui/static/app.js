@@ -8,7 +8,7 @@ function esc(value) {
   return div.innerHTML;
 }
 
-// severity/priority are stored as a real, sortable 0-4 int (0=Highest,
+// TESS-44: severity/priority are stored as a real, sortable 0-4 int (0=Highest,
 // 4=Lowest) -- displayed as S0-S4 / P0-P4, Jira-style. prefix is "S" or "P".
 function formatLevel(prefix, value) {
   return value === null || value === undefined ? "" : prefix + value;
@@ -53,7 +53,7 @@ navButtons.sql.addEventListener("click", () => showView("sql"));
 // Aesthetic-redesign addition: tickets are fetched once per refresh and cached here,
 // then re-rendered client-side on every filter/group toggle -- no extra network round
 // trip just to change how the same data is displayed. ticket_id itself always carries
-// its project prefix (e.g. "PROJ-52", "OTHER-1"), so grouping/filtering reads that instead of
+// its project prefix ("TESS-52", "AREM-1"), so grouping/filtering reads that instead of
 // depending on a project_prefix field being present on the list response.
 let allTickets = [];
 let groupByProject = true;
@@ -177,7 +177,7 @@ function populateNewTicketProjectSelect() {
   if (Array.from(selectEl.options).some((o) => o.value === previous)) selectEl.value = previous;
 }
 
-// Assignee is now a real, editable field (was locked at create-time) -- the operator's direct call:
+// Assignee is now a real, editable field (was locked at create-time) -- Jon's direct call:
 // a ticket's real working ownership can move between teams (originates in FORE, handed to
 // TESS to actually execute), tracked as a project prefix rather than a person's name so the
 // CLI's own comment-provenance check (assignee_provenance_error, tessera/api/cli.py) can
@@ -296,7 +296,7 @@ let currentDetailTicketId = null;
 async function loadTicketDetail(ticketId, resetStatus = true) {
   const panel = document.getElementById("ticket-detail");
   const statusEl = document.getElementById("ticket-detail-status");
-  // Previously any non-ok status (404, 400, 500 -- a real ticket that doesn't
+  // TESS-65: previously any non-ok status (404, 400, 500 -- a real ticket that doesn't
   // exist, a genuine backend error, anything) just hid the panel with zero message,
   // indistinguishable from "no ticket selected." Now the real server error is shown.
   const resp = await fetch("/tickets/" + encodeURIComponent(ticketId));
@@ -329,7 +329,7 @@ async function loadTicketDetail(ticketId, resetStatus = true) {
   const fieldsEl = document.getElementById("detail-fields");
   fieldsEl.innerHTML = "";
 
-  // The store's own FIRST_CLASS_TICKET_FIELDS (store.py) is the real, authoritative source
+  // TESS-98's own FIRST_CLASS_TICKET_FIELDS (store.py) is the real, authoritative source
   // of which fields are editable post-creation and which are locked -- mirrored here, not
   // re-derived, so this UI never offers an edit control the backend will just reject.
   // Locked fields render with a title tooltip carrying the exact reason from store.py
@@ -446,7 +446,7 @@ async function loadTicketDetail(ticketId, resetStatus = true) {
   // own labeled blocks rather than crammed into the compact dt/dd field grid above,
   // same reasoning as watchers/criteria already getting their own divs. Previously not
   // rendered at all despite existing in the data (found via user report, not by
-  // inspection -- real ticket data already had these populated).
+  // inspection -- real ticket data already had these populated, TESS-33 in particular).
   const reproEl = document.getElementById("detail-repro-steps");
   reproEl.innerHTML = ticket.repro_steps
     ? "<strong>Repro steps:</strong><p>" + esc(ticket.repro_steps) + "</p>"
@@ -471,7 +471,7 @@ async function loadTicketDetail(ticketId, resetStatus = true) {
       (criteria.hash_matches ? ", hash OK" : ", HASH MISMATCH") + "):</strong><ul>" +
       criteria.criteria.map((c) => "<li>" + esc(c.statement) + "</li>").join("") + "</ul>";
   } else if (criteriaResp.status === 404) {
-    // The ONLY status get_criteria uses for the genuine "not frozen yet"
+    // TESS-66: the ONLY status get_criteria uses for the genuine "not frozen yet"
     // business state (http_api.py's get_criteria route) -- any other status is a real
     // error, not this, and must not be silently relabeled as it.
     criteriaEl.innerHTML = "<strong>Criteria:</strong> not frozen";
@@ -533,12 +533,12 @@ actorInput.addEventListener("input", () => {
 });
 
 // Shared POST helper for every inline field edit below. Same error-surfacing discipline
-// as loadTicketDetail's own fetch calls above -- a non-ok response's real server
+// as loadTicketDetail's own fetch calls (TESS-65) -- a non-ok response's real server
 // error is logged, not swallowed, so a rejected edit (e.g. an illegal status transition)
 // is debuggable from the console rather than just silently "save failed".
-// Returns {ok, error} rather than a bare boolean -- found by a real user report (the
-// operator tried to close a ticket, saw only "save failed (see console)", had to come
-// ask what went wrong instead of the page just telling them). Every caller below now shows
+// Returns {ok, error} rather than a bare boolean -- found by a real user report (Jon
+// tried to close a ticket, saw only "save failed (see console)", had to come ask what
+// went wrong instead of the page just telling him). Every caller below now shows
 // result.error directly in its own status span; console.error stays too, for anyone who
 // does have devtools open, but it's no longer the ONLY place the real reason is visible.
 async function patchTicketField(ticketId, path, payload) {
@@ -744,7 +744,7 @@ document.getElementById("doc-load").addEventListener("click", async () => {
     return;
   }
   loadStatus.textContent = "loading...";
-  // Previously no try/catch, and a failed load silently cleared #doc-content
+  // TESS-63: previously no try/catch, and a failed load silently cleared #doc-content
   // to "" with zero indication anything went wrong -- indistinguishable from "this doc
   // is genuinely empty." Now the real server error (or a network/parse failure) is
   // shown, and the content box and lastLoadedDocPath are only updated on a real,
@@ -780,7 +780,7 @@ document.getElementById("doc-save").addEventListener("click", async () => {
 // Deliberately no 'input'/'blur'/interval listener on #doc-content that calls fetch --
 // the only network write happens inside the #doc-save click handler above.
 
-// ---- SQL query tab (read-only) -----------------------------------
+// ---- SQL query tab (TESS-38, read-only) -----------------------------------
 // Per Clint Eastwood's review: tickets/comments/etc. are a DERIVED PROJECTION, not the
 // ledger -- the highest-value thing this tab can do is make that visible, not just be
 // an escape hatch. The first example walks the events hash chain directly.
@@ -821,7 +821,7 @@ const sqlQueryEl = document.getElementById("sql-query");
 // Insert at the CURRENT CURSOR POSITION, not appended at the end -- selectionStart/
 // selectionEnd track the caret (or the current selection, which this replaces, matching
 // how a normal text insert behaves when something is selected). cursorOffsetFromEnd
-// This lets a function insert like "COUNT()" land the cursor BETWEEN the parens
+// (TESS-46) lets a function insert like "COUNT()" land the cursor BETWEEN the parens
 // (offset 1) instead of after the closing paren (offset 0, the default) -- so clicking
 // COUNT() then immediately typing "*" produces COUNT(*) without any manual cursor
 // repositioning, keeping "click through a query" actually fluent.
@@ -835,7 +835,7 @@ function insertAtCursor(textarea, text, cursorOffsetFromEnd = 0) {
   textarea.focus();
 }
 
-// Comma-between-clicks, by default: clicking a second (or later) field/
+// Comma-between-clicks, by default (TESS-48): clicking a second (or later) field/
 // expression in a row should read the way a human would type a SELECT list --
 // "col1, col2", not "col1col2". Deterministic rule, not a state flag tracking "was the
 // last click also a field": look at the character immediately before the cursor. If it
@@ -851,7 +851,7 @@ function insertExpressionAtCursor(textarea, text, cursorOffsetFromEnd = 0) {
   insertAtCursor(textarea, finalText, cursorOffsetFromEnd);
 }
 
-// A schema-field click landing just inside an aggregate's empty parens
+// TESS-58: a schema-field click landing just inside an aggregate's empty parens
 // (COUNT(|), SUM(|), ...) should exit the parens afterward by default -- COUNT(a, b) is
 // invalid SQL (aggregates take exactly one argument or *), and the operator's own usage
 // is "count specific values, not combinations." If the character right after the new
@@ -884,7 +884,7 @@ function insertClauseAtCursor(textarea, text, cursorOffsetFromEnd = 0) {
   insertAtCursor(textarea, finalText, cursorOffsetFromEnd);
 }
 
-// Ephemeral field-preview popup: shows REAL distinct sample values for the
+// Ephemeral field-preview popup (TESS-45): shows REAL distinct sample values for the
 // clicked column, not a hand-written description -- "dates show dates, project_id shows
 // its format" per the operator's own framing means letting the actual data answer the
 // question, rather than a static per-type blurb that could go stale. Reuses the existing
@@ -892,7 +892,7 @@ function insertClauseAtCursor(textarea, text, cursorOffsetFromEnd = 0) {
 // dedicated preview endpoint.
 let fieldPreviewTimer = null;
 
-// The currently-selected dataset's member project ids, or null for "no
+// TESS-47: the currently-selected dataset's member project ids, or null for "no
 // filtering" (the default dataset entries cover exactly one project each, but a custom
 // dataset can span several). Only applied to tables with a direct project_id column --
 // most tables reach their project only by joining through tickets.ticket_id, which a
@@ -906,7 +906,7 @@ function tableHasProjectIdColumn(table) {
   return cols.some((c) => c.name === "project_id");
 }
 
-// Same popup shape as Discovery mode's showTablePreview (value type /
+// TESS-55: same popup shape as Discovery mode's showTablePreview (value type /
 // description / sample values), so the two modes look consistent -- Write mode's own
 // difference is that clicking ALSO inserts at the cursor (handled by the caller), and
 // this stays scoped to the single clicked field rather than the whole table.
@@ -952,7 +952,7 @@ async function showFieldPreview(table, column, colType, anchorEl) {
 
   try {
     const values = await fetchSampleValues(table, column, datasetFilter);
-    // fetchSampleValues already computes an ok flag; previously neither caller
+    // TESS-67: fetchSampleValues already computes an ok flag; previously neither caller
     // checked it, so a failed query's error string rendered in the exact table cell real
     // sample values would occupy, no visual distinction from real data.
     const sampleCell = values.ok
@@ -973,10 +973,10 @@ async function showFieldPreview(table, column, colType, anchorEl) {
 }
 
 // Populated by loadSqlSchema(), read by showFieldPreview() to decide whether a table can
-// be dataset-filtered -- only tables with a direct project_id column can.
+// be dataset-filtered (TESS-47) -- only tables with a direct project_id column can.
 let loadedSqlSchema = null;
 
-// Dataset selector: "right now is probably just projects, but wired so custom
+// Dataset selector (TESS-47): "right now is probably just projects, but wired so custom
 // datasets can be selected too" -- list_datasets() already returns exactly that (one
 // implicit entry per project, plus any real custom ones), this just renders it.
 async function loadDatasets() {
@@ -1011,13 +1011,13 @@ async function loadDatasets() {
   }
 }
 
-// Discovery mode (browse/explore, click shows value+type+description, never
+// TESS-50: Discovery mode (browse/explore, click shows value+type+description, never
 // touches the query) vs Write mode (click inserts at cursor, list narrows to tables
 // already referenced in the query being typed -- the "grouped by whatever is present
 // in the table [you're querying]" framing from the operator's own request). Write is
 // the default since it matches every prior release's click-to-insert behavior --
 // switching the default would silently change what clicking a field does for anyone
-// used to the earlier click-to-insert behavior.
+// used to TESS-43 through TESS-48.
 let sqlSchemaMode = "write";
 
 function referencedTablesInQuery(query) {
@@ -1053,7 +1053,7 @@ function setSqlSchemaMode(mode) {
   applyWriteModeNarrowing();
 }
 
-// Discovery mode shows the WHOLE table when any one field is clicked -- every
+// TESS-57: Discovery mode shows the WHOLE table when any one field is clicked -- every
 // column's type, description, and sample values in one popup, not just the clicked
 // field -- "so you could go through the schema and explore it" with one click giving a
 // full working picture. Runs each column's sample-values query in parallel (a table has
@@ -1071,7 +1071,7 @@ async function showTablePreview(table, anchorEl) {
     );
     let rows = "<tr><th>Column</th><th>Type</th><th>Description</th><th>Sample values</th></tr>";
     columns.forEach((col, i) => {
-      // Same fix as showFieldPreview -- results[i].ok distinguishes a real
+      // TESS-67: same fix as showFieldPreview -- results[i].ok distinguishes a real
       // failed lookup from real sample data instead of rendering both identically.
       const sampleCell = results[i].ok
         ? esc(results[i].text)
@@ -1088,7 +1088,7 @@ async function showTablePreview(table, anchorEl) {
   fieldPreviewTimer = setTimeout(() => popup.remove(), 15000);
 }
 
-// BigQuery-style schema/type browser: table names + column types, click a
+// BigQuery-style schema/type browser (TESS-43): table names + column types, click a
 // field to insert "table.column" at the cursor. table.column, not just column, because
 // this store has 15 tables and a query joining several of them needs the qualifier to
 // stay unambiguous -- clicking should never insert something that could collide.
@@ -1109,7 +1109,7 @@ async function loadSqlSchema() {
       tableHeader.textContent = table;
       tableHeader.addEventListener("click", () => {
         colsEl.classList.toggle("collapsed");
-        // "the dataset field doesn't map to the FROM function" -- clicking a
+        // TESS-54: "the dataset field doesn't map to the FROM function" -- clicking a
         // table name in Write mode inserts "FROM tablename", pre-scoped with the
         // selected dataset's project_id filter when the table has a direct project_id
         // column. Tables that only reach their project via a join (most of them) get
@@ -1161,7 +1161,7 @@ async function loadSqlSchema() {
   }
 }
 
-// SQL keyword/function click-through palette: "as long as they understand
+// SQL keyword/function click-through palette (TESS-46): "as long as they understand
 // SQL", click a token instead of typing it. insert lands via insertAtCursor; cursorOffset
 // (see insertAtCursor's own docstring) places the caret INSIDE a function's parens for
 // the simple zero-arg-so-far cases (COUNT(), date(), etc.) so the next keystroke goes
@@ -1218,7 +1218,7 @@ const SQL_PALETTE = [
     ],
   },
   {
-    // REGEXP/LIKE/GLOB are infix operators, not function calls -- each item
+    // TESS-51: REGEXP/LIKE/GLOB are infix operators, not function calls -- each item
     // sets clauseStyle so the click handler inserts with a leading SPACE (like a
     // clause keyword) instead of a leading comma (like an expression/function).
     // CONTAINS has no SQLite equivalent; the item stands in the standard
@@ -1272,7 +1272,7 @@ function loadSqlFunctionPalette() {
         // expression-like groups (Aggregates/Date-time/String/JSON) do -- but they DO
         // still need a leading SPACE if the preceding token doesn't already end in
         // whitespace (see insertClauseAtCursor's own comment for the bug this fixes).
-        // Infix operators (REGEXP, LIKE, GLOB) read like clause keywords --
+        // TESS-51: infix operators (REGEXP, LIKE, GLOB) read like clause keywords --
         // "col REGEXP 'x'" wants a SPACE before them, not a comma, even though they
         // live outside the Clauses group. item.clauseStyle marks those explicitly
         // rather than growing the group-name check into an ever-longer list.
@@ -1306,8 +1306,8 @@ sqlExamplesEl.addEventListener("change", () => {
   sqlQueryEl.value = SQL_EXAMPLES[Number(idx)].query;
 });
 
-// Deterministic (no ML, no real SQL parser -- same philosophy as the self-healing
-// logic above) pretty-printer. Normalizes whitespace, then inserts a newline before
+// TESS-59: deterministic (no ML, no real SQL parser -- same philosophy as TESS-48's
+// self-healing) pretty-printer. Normalizes whitespace, then inserts a newline before
 // each major clause keyword (2-space indent for AND/OR so they read as nested under
 // WHERE), longest keyword first in the alternation so "LEFT JOIN" matches before the
 // bare "JOIN" inside it would.
@@ -1338,7 +1338,7 @@ document.getElementById("sql-format").addEventListener("click", () => {
   sqlQueryEl.value = formatSqlQuery(sqlQueryEl.value);
 });
 
-// Chart view for the current result set -- the last-run query's data, kept
+// TESS-60: chart view for the current result set -- the last-run query's data, kept
 // around so switching Table/Chart or the X/Y column pickers redraws without re-running
 // the query. Reset to null on every new run/error so a stale chart never survives a
 // query that returned nothing (or failed).
@@ -1472,7 +1472,7 @@ document.getElementById("sql-run").addEventListener("click", async () => {
       return;
     }
     statusSpan.textContent = data.row_count + " row(s)" + (data.truncated ? " (truncated)" : "");
-    // Always disclose self-healing, never a silent rewrite -- show the
+    // TESS-48: always disclose self-healing, never a silent rewrite -- show the
     // original error AND exactly what was mechanically changed, right above the
     // results, so it's seen even by someone who'd have preferred it not happen.
     if (data.self_healed) {
@@ -1500,7 +1500,7 @@ document.getElementById("sql-run").addEventListener("click", async () => {
 function renderSqlResult(container, data) {
   if (!data.columns.length) {
     // appendChild, not innerHTML= -- this container may already hold the self-healing
-    // banner above, which innerHTML= would silently wipe out.
+    // banner (TESS-48), which innerHTML= would silently wipe out.
     const p = document.createElement("p");
     p.textContent = "(no columns returned)";
     container.appendChild(p);

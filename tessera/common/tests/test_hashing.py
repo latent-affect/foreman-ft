@@ -32,8 +32,8 @@ class HashingTests(unittest.TestCase):
         )
 
     def test_event_hash_stable_across_key_order(self):
-        payload_a = {"type": "TicketCreated", "id": "DEMO-1", "fields": {"status": "open", "priority": "high"}}
-        payload_b = {"fields": {"priority": "high", "status": "open"}, "id": "DEMO-1", "type": "TicketCreated"}
+        payload_a = {"type": "TicketCreated", "id": "TESS-1", "fields": {"status": "open", "priority": "high"}}
+        payload_b = {"fields": {"priority": "high", "status": "open"}, "id": "TESS-1", "type": "TicketCreated"}
         self.assertEqual(event_hash(payload_a), event_hash(payload_b))
 
 

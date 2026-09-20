@@ -4,7 +4,7 @@
   "scope_version": 1,
   "created": "2026-08-15T00:00:00Z",
   "criteria_frozen_at": "2026-08-19T10:49:19.926Z",
-  "done_state": "tessera/api/ provides a CLI and a localhost-only HTTP API (thin wrappers over store/gitops) with an SSE live-update stream that sees writes from other processes, docs/ file read/write as the sole write path with real cross-process locking, and discrepancy computation for the diff-vs-claim view, demonstrated end to end with a deliberately-mismatched claim. comment (CLI) and POST /tickets/:tid/comments (HTTP) also accept an optional code_snippet field (C12-C13), passed straight through to store.add_comment().",
+  "done_state": "tessera/api/ provides a CLI and a localhost-only HTTP API (thin wrappers over store/gitops) with an SSE live-update stream that sees writes from other processes, docs/ file read/write as the sole write path with real cross-process locking, and discrepancy computation for the diff-vs-claim view, demonstrated end to end with a deliberately-mismatched claim. comment (CLI) and POST /tickets/:tid/comments (HTTP) also accept an optional code_snippet field (C12-C13, TESS-82), passed straight through to store.add_comment().",
   "criteria": [
     {
       "id": "C1",
@@ -224,7 +224,7 @@
   "amendments": [
     {
       "amended_at": "2026-08-19T10:49:19.926Z",
-      "reason": "comment CLI/HTTP gain an optional code_snippet field (using the storage layer's existing support). New criteria C12-C13 added; nothing in C1-C11 changed or was removed. reviewui display of code_snippet is explicitly out of scope for this amendment -- not silently dropped, a disclosed follow-up.",
+      "reason": "TESS-82/TESS-80: comment CLI/HTTP gain an optional code_snippet field (TESS-81's storage layer). New criteria C12-C13 added; nothing in C1-C11 changed or was removed. reviewui display of code_snippet is explicitly out of scope for this amendment -- not silently dropped, a disclosed follow-up.",
       "criteria_added": [
         "C12",
         "C13"

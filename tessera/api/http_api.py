@@ -1,6 +1,5 @@
 import json
 import mimetypes
-import os
 import re
 import sqlite3
 import time
@@ -13,14 +12,13 @@ from ..store.exceptions import StoreError
 from .discrepancy import check_and_record_closure
 from . import docs_store
 from .cli import compact
-from .discrepancy import discrepancy_for_ticket_singlerepo
+from .discrepancy import discrepancy_for_ticket
 from .sql_query import (
     QueryRejected, QueryTimedOut, get_schema, run_readonly_query_with_self_healing,
 )
 
 STATIC_ROOT = Path(__file__).resolve().parent.parent / "reviewui" / "static"
 CSP_HEADER = "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'"
-MAX_BODY_BYTES = 1_000_000
 
 ROUTES = []
 
@@ -77,7 +75,7 @@ def get_ticket(ctx, m, body):
     ticket = ctx.store.get_ticket(m.group("tid"))
     if ticket is None:
         return 404, {"error": f"no such ticket {m.group('tid')!r}"}
-    # ?compact=1 omits null/empty fields -- for context-injection or bulk-reading
+    # TESS-119: ?compact=1 omits null/empty fields -- for context-injection or bulk-reading
     # use, not for anything that checks a field's ABSENCE as a finding.
     if body.get("compact"):
         ticket = compact(ticket)
@@ -86,7 +84,7 @@ def get_ticket(ctx, m, body):
 
 @route("GET", r"^/tickets$")
 def list_tickets(ctx, m, body):
-    # priority_max/severity_max are thresholds (0=highest), e.g. severity_max=1
+    # TESS-120: priority_max/severity_max are thresholds (0=highest), e.g. severity_max=1
     # for "S0 or S1" -- the real cross-team ask was a set, not a single exact level.
     priority_max = body.get("priority_max")
     severity_max = body.get("severity_max")
@@ -119,7 +117,14 @@ def transition(ctx, m, body):
     tid = m.group("tid")
     if ctx.store.get_ticket(tid) is None:
         return 404, {"error": f"no such ticket {tid!r}"}
-    ctx.store.transition_status(tid, body["actor"], body["status"])
+    # TESS-192: the guard lives in the store, so this endpoint and the reviewui that calls
+    # it are covered by the same mechanism as the CLI rather than by a second copy of the
+    # rule. Passing the field through is all this layer has to do; an absent or malformed
+    # reason is rejected below the API boundary, not validated twice.
+    ctx.store.transition_status(
+        tid, body["actor"], body["status"],
+        no_claim_reason=body.get("no_claim_reason"),
+    )
     if body["status"] == "closed":
         check_and_record_closure(ctx.store, tid, body["actor"])
     return 200, {"ok": True}
@@ -155,7 +160,7 @@ def set_field(ctx, m, body):
     return 200, {"ok": True}
 
 
-# Both first-class columns share one handler because they share one store method
+# TESS-98. Both first-class columns share one handler because they share one store method
 # and one validation rule; splitting them would only duplicate the 404. A body with
 # "value": null clears the field, which is why the key is required but its value is not
 # rejected for being None -- an absent key and an explicit null mean different things.
@@ -226,9 +231,10 @@ def record_claim(ctx, m, body):
 @route("GET", r"^/tickets/(?P<tid>[^/]+)/discrepancy$")
 def get_discrepancy(ctx, m, body):
     tid = m.group("tid")
+    stage = (body or {}).get("stage", "dev")
     if ctx.store.get_ticket(tid) is None:
         return 404, {"error": f"no such ticket {tid!r}"}
-    result = discrepancy_for_ticket_singlerepo(ctx.store, tid)
+    result = discrepancy_for_ticket(ctx.store, ctx.gitops, tid, stage)
     if result is None:
         return 404, {"error": f"no claim recorded for {tid!r}"}
     return 200, result
@@ -241,7 +247,7 @@ def promote(ctx, m, body):
     # -- ctx.gitops is one long-lived instance shared across every request on a
     # ThreadingHTTPServer, so writing to its .project attribute per-request raced between
     # concurrent threads and could leak one request's project into another's git
-    # operations (found by Clint Eastwood's adversarial review).
+    # operations (TESS-27, found by Clint Eastwood's adversarial review).
     new_head = ctx.gitops.promote_stage(
         m.group("stage"), body["commit_sha"], body["actor"], project=body.get("project"),
     )
@@ -331,7 +337,33 @@ def register_project(ctx, m, body):
 
 @route("GET", r"^/projects$")
 def list_projects(ctx, m, body):
-    return 200, {"projects": ctx.store.list_projects()}
+    return 200, {"projects": ctx.store.list_projects(status=body.get("status"))}
+
+
+# TESS-174. register-project used to be a project row's only write verb: a dead
+# registration could not be marked stale, and a project whose directory moved had no way
+# to follow it. Both verbs answer 404 for an unregistered prefix rather than letting the
+# store's UnknownProjectError fall through to a 400 -- addressing a project that does not
+# exist is a wrong URL, not a bad body, and every other prefix-addressed route here
+# already draws that line the same way.
+@route("POST", r"^/projects/(?P<prefix>[^/]+)/status$")
+def set_project_status(ctx, m, body):
+    require_internal(body, "actor", "status")
+    prefix = m.group("prefix")
+    if ctx.store.get_project(prefix) is None:
+        return 404, {"error": f"no such project {prefix!r}"}
+    return 200, ctx.store.set_project_status(
+        prefix, body["actor"], body["status"], note=body.get("note"))
+
+
+@route("POST", r"^/projects/(?P<prefix>[^/]+)/source-root$")
+def set_project_source_root(ctx, m, body):
+    require_internal(body, "actor", "source_root")
+    prefix = m.group("prefix")
+    if ctx.store.get_project(prefix) is None:
+        return 404, {"error": f"no such project {prefix!r}"}
+    return 200, ctx.store.set_project_source_root(
+        prefix, body["actor"], body["source_root"], note=body.get("note"))
 
 
 @route("POST", r"^/hotlists$")
@@ -391,20 +423,16 @@ def list_datasets(ctx, m, body):
 
 @route("POST", r"^/sql$")
 def run_sql(ctx, m, body):
-    """Read-only ad hoc SQL, per Clint Eastwood's review. Errors are caught and
+    """Read-only ad hoc SQL, per TESS-38/Clint Eastwood's review. Errors are caught and
     classified HERE, not left to escape into dispatch()'s generic sqlite3.OperationalError
     handler -- that handler substring-matches "locked"/"busy" to decide 503-vs-500, and
     every SQL typo a human types in this box IS an OperationalError, so a query against a
     table literally named "locked" would otherwise be misreported as store contention
     (Clint's finding, confirmed: 'SELECT * FROM locked' -> false 503 through the generic
     path). A query timeout is a client-correctable condition (408), not a server error."""
-    if os.environ.get("TESSERA_ENABLE_SQL") != "1":
-        return 403, {
-            "error": "POST /sql is disabled (set TESSERA_ENABLE_SQL=1 to enable this admin surface)"
-        }
     require_internal(body, "query")
     try:
-        # Self-healing wrapper, not the bare run_readonly_query -- tries the
+        # TESS-48: self-healing wrapper, not the bare run_readonly_query -- tries the
         # query as given first, only applies deterministic fixups (trailing comma,
         # a fat-fingered ' -- ' for ' = ') on a genuine failure, and only keeps a fix
         # that actually runs successfully. The exception types raised on total failure
@@ -421,10 +449,10 @@ def run_sql(ctx, m, body):
 
 @route("GET", r"^/sql/schema$")
 def sql_schema(ctx, m, body):
-    """Server-controlled schema metadata for the SQL tab's schema/type browser
+    """Server-controlled schema metadata for the SQL tab's schema/type browser (TESS-43)
     -- table names and column types, not user query input, so none of run_sql's
     query-safety machinery (timeout/byte-cap/authorizer) applies here. descriptions
-    -- descriptions are table_name -> {column_name: description}, merged in here rather than
+    (TESS-49) is table_name -> {column_name: description}, merged in here rather than
     a second round-trip since Discovery mode needs both together on every load."""
     return 200, {
         "tables": get_schema(ctx.store.db_path),
@@ -476,7 +504,7 @@ def dispatch(ctx, method, path, body):
                 # ticket_id that doesn't exist) is not a StoreError subclass and
                 # previously escaped uncaught -- BaseHTTPRequestHandler's default error
                 # path on an uncaught exception is a broken connection with no JSON body
-                # at all (found by Clint Eastwood's adversarial review; an earlier pass
+                # at all (TESS-26, found by Clint Eastwood's adversarial review; TESS-18
                 # gave the CLI the equivalent fix but missed this exception type and this
                 # surface). Always a bad-input problem, never transient -- 400, not 503.
                 return 400, {"error": str(exc)}
@@ -511,15 +539,11 @@ def make_handler(ctx):
             length = int(self.headers.get("Content-Length", 0))
             if length == 0:
                 return {}
-            if length > MAX_BODY_BYTES:
-                raise ValueError(
-                    f"request body {length} bytes exceeds cap of {MAX_BODY_BYTES}"
-                )
             raw = self.rfile.read(length)
             return json.loads(raw) if raw else {}
 
         def cross_origin_internal(self):
-            """This server has no legitimate cross-origin caller -- app.js is
+            """TESS-62: this server has no legitimate cross-origin caller -- app.js is
             always served from, and fetches, the same origin. A cross-origin POST/PUT
             using a CORS-safelisted method + content-type (e.g. Content-Type: text/plain)
             never triggers a preflight, so a malicious webpage the operator's browser has
@@ -534,7 +558,7 @@ def make_handler(ctx):
             return origin not in (f"http://{host}", f"https://{host}")
 
         def non_json_content_type_internal(self):
-            """Reject anything other than application/json on a write -- closes
+            """TESS-62: reject anything other than application/json on a write -- closes
             the specific CORS-safelisted-content-type gap (text/plain) the exploit used,
             as defense in depth alongside the Origin check above."""
             ctype = self.headers.get("Content-Type", "")
@@ -579,8 +603,6 @@ def make_handler(ctx):
                 body = self.read_body_internal()
             except json.JSONDecodeError:
                 return self.respond_internal(400, {"error": "invalid JSON body"})
-            except ValueError as exc:
-                return self.respond_internal(413, {"error": str(exc)})
             status, obj = dispatch(ctx, "POST", self.path.split("?")[0], body)
             self.respond_internal(status, obj)
 
@@ -593,8 +615,6 @@ def make_handler(ctx):
                 body = self.read_body_internal()
             except json.JSONDecodeError:
                 return self.respond_internal(400, {"error": "invalid JSON body"})
-            except ValueError as exc:
-                return self.respond_internal(413, {"error": str(exc)})
             status, obj = dispatch(ctx, "PUT", self.path.split("?")[0], body)
             self.respond_internal(status, obj)
 
@@ -604,7 +624,7 @@ def make_handler(ctx):
             # A reconnecting EventSource automatically sends back the last "id:" value
             # this handler emitted, via Last-Event-ID -- honor it so a reconnect resumes
             # exactly where it left off instead of either missing events (if we always
-            # started from "now") or replaying full history again (the bug this
+            # started from "now") or replaying full history again (the TESS-31 bug this
             # replaces). A brand-new connection has no such header and gets sse_stream's
             # own "now" default.
             last_event_id_header = self.headers.get("Last-Event-ID")
@@ -633,7 +653,7 @@ def make_handler(ctx):
             if not target.is_file():
                 return self.respond_internal(404, {"error": "not found"})
             # No Content-Type at all previously -- survived only because this directory
-            # has one app.js/styles.css and browsers sniff (per Clint's review). Set
+            # has one app.js/styles.css and browsers sniff (TESS-38/Clint's review). Set
             # it explicitly now that more static files are being added, plus
             # X-Content-Type-Options so a browser can't be talked into re-sniffing anyway.
             content_type, _ = mimetypes.guess_type(str(target))

@@ -4,7 +4,7 @@
   "scope_version": 1,
   "created": "2026-08-15T00:00:00Z",
   "criteria_frozen_at": "2026-08-19T10:39:07.714Z",
-  "done_state": "tessera/store/ provides the SQLite event-sourced storage engine specified in ARCHITECTURE.md: schema + hash chain + transaction discipline + workflow/hierarchy/cycle enforcement + rebuild/verify + backup, proven collision-free under real multi-process concurrency at SCOPE.md's 20x50 bar with realistic in-transaction work. Comments also carry an optional code_snippet field (C25-C30): backward-compatible event payload extension plus a genuine-event backfill path for historical comments, never a projection-only mutation.",
+  "done_state": "tessera/store/ provides the SQLite event-sourced storage engine specified in ARCHITECTURE.md: schema + hash chain + transaction discipline + workflow/hierarchy/cycle enforcement + rebuild/verify + backup, proven collision-free under real multi-process concurrency at SCOPE.md's 20x50 bar with realistic in-transaction work. Comments also carry an optional code_snippet field (C25-C30, TESS-81): backward-compatible event payload extension plus a genuine-event backfill path for historical comments, never a projection-only mutation.",
   "criteria": [
     {
       "id": "C1",
@@ -204,7 +204,7 @@
     },
     {
       "id": "C29",
-      "statement": "A new store method, set_comment_code_snippet(ticket_id, comment_id, actor, code_snippet), backfills a historical comment's code_snippet by appending a genuine new CommentCodeSnippetSet event -- never by mutating the existing CommentAdded event or writing the projection directly, per the existing summary/description backfill precedent.",
+      "statement": "A new store method, set_comment_code_snippet(ticket_id, comment_id, actor, code_snippet), backfills a historical comment's code_snippet by appending a genuine new CommentCodeSnippetSet event -- never by mutating the existing CommentAdded event or writing the projection directly, per the TESS-42 summary/description precedent.",
       "verification": "python3 -m unittest tessera.store.tests.test_comments.CommentSnippetTests.test_backfill_appends_real_event_not_projection_mutation exits 0.",
       "verifiable": true,
       "added": "2026-08-19T10:39:07.714Z"
@@ -447,7 +447,7 @@
   "amendments": [
     {
       "amended_at": "2026-08-19T10:39:07.714Z",
-      "reason": "Add a code_snippet field to comments, event-sourced. New criteria C25-C30 added; nothing in C1-C24 changed or was removed.",
+      "reason": "TESS-81/TESS-80: add a code_snippet field to comments, event-sourced. New criteria C25-C30 added; nothing in C1-C24 changed or was removed.",
       "criteria_added": [
         "C25",
         "C26",

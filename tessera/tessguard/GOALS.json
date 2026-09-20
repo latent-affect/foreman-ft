@@ -51,7 +51,7 @@
     {
       "id": "C7",
       "statement": "run_periodic_audit never exits non-zero for a flagged result, and tessguard is never referenced anywhere in .claude/settings.json's hook registration -- non-blocking by construction, not by convention.",
-      "verification": "python3 -m unittest tessera.tessguard.tests.test_audit.AuditTests.test_flagged_result_exits_zero exits 0; grep -c tessguard /path/to/ticket-system/.claude/settings.json returns 0.",
+      "verification": "python3 -m unittest tessera.tessguard.tests.test_audit.AuditTests.test_flagged_result_exits_zero exits 0; grep -c tessguard /Users/m5/dev/ticket-system/.claude/settings.json returns 0.",
       "verifiable": true,
       "added": "2026-08-19T00:00:00Z"
     },
@@ -86,7 +86,7 @@
     {
       "id": "C12",
       "statement": ".githooks/pre-commit and .githooks/pre-push are two-line exec shims only (exec python3 -m tessera.tessguard.gitgate); all real logic lives in gitgate.py, which is gated by goals_freeze_gate.py -- the shims themselves are not, since .githooks/ is excluded by component_coupling.py's dotdir predicate.",
-      "verification": "wc -l /path/to/ticket-system/.githooks/pre-commit /path/to/ticket-system/.githooks/pre-push shows <=2 non-comment lines each; grep confirms both exec into tessera.tessguard.gitgate.",
+      "verification": "wc -l /Users/m5/dev/ticket-system/.githooks/pre-commit /Users/m5/dev/ticket-system/.githooks/pre-push shows <=2 non-comment lines each; grep confirms both exec into tessera.tessguard.gitgate.",
       "verifiable": true,
       "added": "2026-08-19T00:00:00Z"
     },
@@ -151,7 +151,7 @@
     "Python 3.9+ stdlib only, plus tessera.store and tessera.common -- no new dependency.",
     "No changes to tessera/store, tessera/api, tessera/gitops, tessera/reviewui, tessera/common.",
     "gitgate.main() must be safely invocable with cwd=repo_root and no environment assumptions beyond TESSGUARD_DB_PATH.",
-    "Dogfood scope only: built, tested, and validated against /path/to/ticket-system. Not installed or exercised against any other registered project in this pass."
+    "Dogfood scope only: built, tested, and validated against /Users/m5/dev/ticket-system. Not installed or exercised against any other registered project in this pass."
   ],
   "results": [],
   "amendments": [],

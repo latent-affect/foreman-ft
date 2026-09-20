@@ -1,15 +1,16 @@
 # tessguard
 
-TESSERA-logging enforcement, two layers. Design is in `/path/to/ticket-system/ARCHITECTURE.md`
-(the `tessguard` section) and `ARCHITECTURE-REVIEW.md`. This file is a map, not a spec.
+TESSERA-logging enforcement, two layers. Full design rationale and six real Clint Eastwood
+architecture review passes are in `/Users/m5/dev/ticket-system/ARCHITECTURE.md` (the `tessguard`
+section) and `ARCHITECTURE-REVIEW.md` — read those first; this file is a map, not a spec.
 
 - **`audit.py`** (layer 1, non-blocking): binary coverage predicate over an explicitly-named,
   presumed-complete session transcript. No wall-clock/cron auto-trigger — invoke by hand:
   `python3 -m tessera.tessguard.audit <transcript_path> [repo_root]`. Appends every run
   (including its own hard-gate install self-check) to `.foreman/tessguard-audit-log.jsonl`.
 - **`gitgate.py`** (layer 2, blocking): the actual enforcement point. Runs as `git`'s own
-  pre-commit/pre-push/commit-msg subprocess via `.githooks/` + `core.hooksPath`. Exit code is
-  the whole mechanism. commit-msg is T-7 (the commit message must name the ticket).
+  pre-commit/pre-push subprocess via `.githooks/` + `core.hooksPath`. Exit code is the whole
+  mechanism.
 - **`project_resolve.py`**, **`event_activity.py`**, **`transcript.py`**, **`gitutil.py`**,
   **`config.py`**: shared building blocks both layers call into. See each module's own docstring.
 
@@ -25,4 +26,4 @@ Uninstall: `git config --unset core.hooksPath` (reverts to git's own default `.g
 which stays empty/`.sample`-only unless something else populates it).
 
 Backtest/review evidence (why these two specific mechanisms, not the four that were tried and
-rejected first): `/path/to/ticket-system/docs/tessguard-backtest-evidence/`.
+rejected first): `/Users/m5/dev/ticket-system/docs/tessguard-backtest-evidence/`.

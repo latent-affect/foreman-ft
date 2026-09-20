@@ -12,7 +12,7 @@ from ...store.store import Store
 
 
 class SqlQueryTests(unittest.TestCase):
-    # Per Clint Eastwood's adversarial review of the original design:
+    # TESS-38, per Clint Eastwood's adversarial review of the original design (TESS-35):
     # mode=ro alone does NOT make a connection read-only -- it can still ATTACH DATABASE
     # a second file read-write and write into it. These tests exercise the actual
     # boundary (the authorizer + PRAGMA query_only), not just the text-level filter,
@@ -33,7 +33,7 @@ class SqlQueryTests(unittest.TestCase):
         self.assertFalse(result["truncated"])
 
     def test_regexp_operator_registered_and_filters_correctly(self):
-        # SQLite has no built-in REGEXP -- the operator exists in the grammar
+        # TESS-51: SQLite has no built-in REGEXP -- the operator exists in the grammar
         # but raises "no such function: regexp" unless one is registered per-connection.
         self.store.create_ticket(ticket_type="Bug", reporter="me", actor="agent")
         result = run_readonly_query(
@@ -156,7 +156,7 @@ class SqlQueryTests(unittest.TestCase):
             run_readonly_query(self.db_path, "SELECT * FROM this_table_does_not_exist")
 
     def test_get_schema_lists_views_alongside_tables(self):
-        # The analytics layer is entirely views. Filtering the catalog to
+        # TESS-100: the analytics layer is entirely views. Filtering the catalog to
         # type='table' left them queryable but invisible in the schema browser, which
         # reads as "this does not exist" rather than "this is not listed".
         conn = sqlite3.connect(self.db_path)
@@ -175,7 +175,7 @@ class SqlQueryTests(unittest.TestCase):
         self.assertEqual(result["rows"], [["TP-1"]])
 
     def test_get_schema_lists_real_tables_and_declared_types(self):
-        # BigQuery-style display names -- TEXT shows as STRING, a *_at column
+        # TESS-44: BigQuery-style display names -- TEXT shows as STRING, a *_at column
         # shows as DATETIME (display-only; see display_type_internal's docstring for why
         # this isn't an actual DDL change).
         schema = get_schema(self.db_path)
@@ -190,7 +190,7 @@ class SqlQueryTests(unittest.TestCase):
         # No SQLite internal tables leaked into the schema browser.
         self.assertFalse(any(t.startswith("sqlite_") for t in schema))
 
-    # ---- Deterministic self-healing --------------------------------
+    # ---- TESS-48: deterministic self-healing --------------------------------
 
     def test_fixup_trailing_comma_before_keyword_and_end_and_paren(self):
         self.assertEqual(

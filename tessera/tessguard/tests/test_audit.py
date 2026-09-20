@@ -225,6 +225,100 @@ class AuditTests(unittest.TestCase):
             self.assertFalse(result["healthy"])
             self.assertTrue(result["shims"]["pre-commit"].startswith("MISMATCH"))
 
+    def test_home_relative_internal_strips_home_prefix(self):
+        # SP-1 (0e's security-privacy-review, ported from tessera-v2 -- TESS-171): a
+        # resolved absolute path under the real home directory must not carry the
+        # account name into a persisted, git-tracked audit record. Path.resolve() works
+        # on a path that doesn't exist on disk, so this needs no real file.
+        under_home = str(Path.home() / "some" / "path.jsonl")
+        self.assertEqual(audit.home_relative_internal(under_home), "~/some/path.jsonl")
+
+    def test_home_relative_internal_falls_back_outside_home(self):
+        # A path genuinely outside home (this project's own real paths never are, but
+        # silently mis-stating one as home-relative would be worse than leaving it
+        # absolute) must be returned unchanged, not silently mangled.
+        outside = "/var/definitely-not-under-home/whatever.jsonl"
+        self.assertEqual(audit.home_relative_internal(outside), str(Path(outside).resolve()))
+
+    def test_sanitize_for_log_internal_only_touches_the_two_named_keys(self):
+        # b9's own fixup to SP-1: transcript is reduced to its basename (a bare '~/'
+        # strip still left Claude Code's own embedded hyphenated-cwd directory name,
+        # e.g. '-Users-m5-dev-x', spelling out the account name in every new record)
+        # -- repo_root keeps the '~'-relative form, which has no such embedded
+        # occurrence and where a repo name is still useful information to keep.
+        entry = {
+            "kind": "audit",
+            "transcript": str(Path.home() / "-Users-m5-dev-x" / "t.jsonl"),
+            "repo_root": str(Path.home() / "r"),
+            "registered_projects": ["X"],
+            "flagged": False,
+        }
+        sanitized = audit.sanitize_for_log_internal(entry)
+        self.assertEqual(sanitized["transcript"], "t.jsonl")
+        self.assertEqual(sanitized["repo_root"], "~/r")
+        self.assertEqual(sanitized["registered_projects"], ["X"])
+        self.assertEqual(sanitized["flagged"], False)
+        self.assertEqual(
+            entry["transcript"], str(Path.home() / "-Users-m5-dev-x" / "t.jsonl"),
+            "must not mutate the input dict",
+        )
+
+    def test_sanitize_removes_account_name_from_a_real_shaped_hyphenated_transcript_path(self):
+        # b9's actual measured finding, reproduced directly: a real Claude Code
+        # transcript path hyphenates the session's full original cwd into its own
+        # directory name, sitting AFTER any home-prefix strip. Confirms the account
+        # name is gone entirely now, not just moved past the '~/' this fix used to add.
+        account = Path.home().name
+        realistic_transcript = str(
+            Path.home() / ".claude" / "projects" / f"-Users-{account}-dev-ticket-system"
+            / "3faed77f-a0b9-415b-9b68-f7cd969759fb.jsonl"
+        )
+        entry = {
+            "kind": "audit", "transcript": realistic_transcript,
+            "repo_root": str(Path.home() / "dev" / "ticket-system"),
+        }
+        sanitized = audit.sanitize_for_log_internal(entry)
+        self.assertEqual(sanitized["transcript"], "3faed77f-a0b9-415b-9b68-f7cd969759fb.jsonl")
+        self.assertNotIn(account, sanitized["transcript"])
+        self.assertNotIn(account, sanitized["repo_root"])
+
+    def test_real_home_directory_audit_run_persists_relative_but_returns_absolute(self):
+        # SP-1's actual fix, exercised end to end with real paths under the real home
+        # directory (not a tempfile.TemporaryDirectory(), which every OTHER test in this
+        # file uses and which is never under home -- those tests are correctly
+        # unaffected by this fix, verified separately; this is the one that must
+        # actually exercise it). A scratch directory under home stands in for a real
+        # repo/transcript; removed in a finally block regardless of outcome.
+        scratch = Path.home() / f".ticket-system-sp1-test-scratch-{id(self)}"
+        try:
+            repo = scratch / "repo"
+            repo.mkdir(parents=True)
+            transcript_path = scratch / "session.jsonl"
+            write_transcript(transcript_path, [
+                edit_record(str(repo), "2026-08-19T00:00:00.000Z", str(repo / "a.py")),
+            ])
+            store, db_path = make_store(str(scratch), prefix="SP1X", source_root=str(repo))
+            log_path = scratch / "audit-log.jsonl"
+
+            result = audit.audit_session(
+                str(transcript_path), str(repo), db_path=str(db_path), log_path=str(log_path),
+            )
+            # Returned/printable result: full absolute paths, unchanged -- local,
+            # non-persisted consumption keeps the immediately-useful value.
+            self.assertEqual(result["transcript"], str(transcript_path))
+            self.assertEqual(result["repo_root"], str(repo))
+
+            # Persisted log entry: repo_root home-relative, transcript reduced to its
+            # basename. Neither carries the account name.
+            entry = json.loads(log_path.read_text().strip().splitlines()[0])
+            self.assertTrue(entry["repo_root"].startswith("~/"), entry["repo_root"])
+            self.assertEqual(entry["transcript"], transcript_path.name)
+            self.assertNotIn(str(Path.home()), entry["repo_root"])
+            self.assertNotIn(str(Path.home()), entry["transcript"])
+        finally:
+            import shutil
+            shutil.rmtree(scratch, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

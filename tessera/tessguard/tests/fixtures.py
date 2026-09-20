@@ -1,6 +1,6 @@
 """Shared test fixtures: a throwaway TESSERA store and synthetic transcript files, real
 enough to exercise tessguard's real code paths without touching the real
-/path/to/ticket-system/data/tessera.db.
+/Users/m5/dev/ticket-system/data/tessera.db.
 """
 
 import json

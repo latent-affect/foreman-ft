@@ -1,3 +1,4 @@
+import json
 import subprocess
 import tempfile
 import unittest
@@ -59,7 +60,7 @@ class DiscrepancyTests(unittest.TestCase):
 
 
 class SingleRepoDiscrepancyTests(unittest.TestCase):
-    """Fix: discrepancy_for_ticket() only ever worked against
+    """FORE-77/harness-postmortem fix: discrepancy_for_ticket() only ever worked against
     TESSERA's own staged dev/integration/FT/prod deployment model. Every real Foreman pilot
     project is a plain single repo with no staging concept -- these tests exercise the real
     single-repo path directly, with no GitOps/staging involved at all."""
@@ -98,11 +99,6 @@ class SingleRepoDiscrepancyTests(unittest.TestCase):
         files = discrepancy.files_touched_singlerepo(self.repo, "0" * 40)
         self.assertIsNone(files)
 
-    def test_files_touched_singlerepo_option_sha_returns_none(self):
-        files = discrepancy.files_touched_singlerepo(self.repo, "--output=/tmp/pwned")
-        self.assertIsNone(files)
-        self.assertFalse(Path("/tmp/pwned").exists())
-
     def test_files_touched_singlerepo_not_a_repo_returns_none(self):
         files = discrepancy.files_touched_singlerepo(self.root, self.commit_sha)
         self.assertIsNone(files)
@@ -133,22 +129,38 @@ class SingleRepoDiscrepancyTests(unittest.TestCase):
         result = discrepancy.discrepancy_for_ticket_singlerepo(self.store, tid2)
         self.assertIsNone(result)
 
-    def test_check_and_record_closure_no_claim_records_event(self):
+    def test_check_and_record_closure_no_claim_reports_but_no_longer_records(self):
+        """TESS-192 moved the ClosedWithNoClaim emission into transition_status's guard,
+        where it is written in the same transaction that decides whether the close may
+        proceed at all. This function still REPORTS the no-claim state to its caller, and
+        must no longer write a second event for it.
+
+        Before TESS-192 this test asserted the opposite, correctly: emission lived here.
+        The assertion is inverted rather than deleted because the double-write it now
+        guards against is not hypothetical -- the rate limiter counts these events, so two
+        events per close would silently halve the enforced limit.
+        """
         result = discrepancy.check_and_record_closure(self.store, self.tid, "agent")
         self.assertEqual(result["checked"], "no_claim")
         conn = self.store.conn_internal()
         rows = conn.execute(
             "SELECT event_type FROM events WHERE ticket_id=? ORDER BY id", (self.tid,)
         ).fetchall()
-        self.assertIn(("ClosedWithNoClaim",), rows)
+        self.assertNotIn(("ClosedWithNoClaim",), rows)
 
-    def test_rebuild_projection_after_diff_check_does_not_raise(self):
-        self.store.record_claim(
-            self.tid, "agent", "touched both", ["a.py", "b.py"], self.commit_sha,
-        )
-        discrepancy.check_and_record_closure(self.store, self.tid, "agent")
-        rebuilt = self.store.rebuild_projection()
-        self.assertIn("tickets", rebuilt)
+    def test_store_guard_records_the_event_with_its_reason(self):
+        """The other half of the move: the emission that left this function is really
+        happening at the store boundary, and carries the reason. Without this, the test
+        above would pass just as well if the event had stopped being written anywhere."""
+        self.store.transition_status(self.tid, "agent", "closed",
+                                     no_claim_reason="disposition-pass")
+        conn = self.store.conn_internal()
+        rows = conn.execute(
+            "SELECT event_type, payload FROM events WHERE ticket_id=? AND"
+            " event_type='ClosedWithNoClaim'", (self.tid,)
+        ).fetchall()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(json.loads(rows[0][1]), {"reason": "disposition-pass"})
 
     def test_check_and_record_closure_matching_claim_records_event(self):
         self.store.record_claim(
@@ -186,6 +198,43 @@ class SingleRepoDiscrepancyTests(unittest.TestCase):
         self.store.record_claim(self.tid, "agent", "claims a fake commit", ["a.py"], "f" * 40)
         result = discrepancy.check_and_record_closure(self.store, self.tid, "agent")
         self.assertEqual(result["checked"], "skipped")
+
+    def test_files_touched_singlerepo_rejects_argument_injection_shaped_sha(self):
+        # TESS-159: a leading '-' would otherwise be parsed by git as an option
+        # (--output=<path>) rather than a revision. Must degrade to None, the same
+        # contract as any other unresolvable-commit case, not raise a new exception type.
+        files = discrepancy.files_touched_singlerepo(self.repo, "--output=/tmp/tess159-pwned")
+        self.assertIsNone(files)
+
+    def test_files_touched_singlerepo_arbitrary_write_payload_no_longer_writes_a_file(self):
+        # Live-reproduced TESS-159 payload: before the fix, this exact commit_sha shape
+        # caused `git show --output=<path> ...` to write a real file at an
+        # attacker-chosen path. Reproduces it here and asserts no file is created.
+        target = self.root / "tess159-pwned.txt"
+        self.assertFalse(target.exists())
+        files = discrepancy.files_touched_singlerepo(self.repo, f"--output={target}")
+        self.assertIsNone(files)
+        self.assertFalse(target.exists())
+
+    def test_files_touched_singlerepo_rejects_multi_sha_field(self):
+        # The live SEED-17 case on record: two SHAs in one field.
+        files = discrepancy.files_touched_singlerepo(self.repo, "e805454, 8989b4b")
+        self.assertIsNone(files)
+
+    def test_discrepancy_singlerepo_malicious_commit_sha_degrades_to_no_check(self):
+        # A claim can only ever contain a well-formed commit_sha now (record_claim
+        # rejects the rest at the store boundary) -- this covers a claim written before
+        # the fix existed, or written by a path that bypasses the store boundary. Must
+        # degrade to "couldn't check" (None), never raise and never fabricate a verdict.
+        self.store.conn_internal().execute(
+            "INSERT INTO claims (ticket_id, actor, summary, files_touched, commit_sha,"
+            " event_hash, created_at) VALUES (?,?,?,?,?,?,?)",
+            (self.tid, "agent", "pre-fix malicious claim", "[]",
+             "--output=/tmp/tess159-pwned", "fakehash", "2026-01-01T00:00:00Z"),
+        )
+        self.store.conn_internal().commit()
+        result = discrepancy.discrepancy_for_ticket_singlerepo(self.store, self.tid)
+        self.assertIsNone(result)
 
     def test_e2e_real_cli_transition_records_diff_check(self):
         """No mocks: a real subprocess invocation of the actual CLI's transition command,

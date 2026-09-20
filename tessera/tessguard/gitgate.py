@@ -19,11 +19,11 @@ never a commit's author-date -- pre-commit runs before the commit object exists,
 commit timestamp to anchor to. This is Tier E0 (QUALITY-BAR.md's evidence-tier vocabulary):
 existence of *some* real TESSERA activity for the project, no binding to what this specific commit
 actually does. Kept exactly as tested -- a fast, cheap, early warning, per the same
-keep-the-fast-check-add-the-real-enforcement-elsewhere pattern QUALITY-BAR.md's Design
-principles section (§5) already established for the ship-readiness/v1.0 gate split.
+keep-the-fast-check-add-the-real-enforcement-elsewhere pattern QUALITY-BAR.md's §9.4 already
+established for the ship-readiness/v1.0 gate split.
 
-check_commit_message() / commit-msg: the real T-7 binding (QUALITY-BAR.md §8), and the
-reason it lives at commit-msg specifically -- pre-commit fires before the
+check_commit_message() / commit-msg: the real T-7 binding (QUALITY-BAR.md §11, FORE-77,
+TESS-117), and the reason it lives at commit-msg specifically -- pre-commit fires before the
 commit message is collected, so it structurally cannot see message content; commit-msg is the
 first point in git's own hook sequence where the actual message text exists to check. Denies
 unless the message names a real, existing ticket for one of this repo's registered projects --
@@ -57,6 +57,38 @@ class GateResult:
         self.events_found = events_found
 
 
+def unregistered_reason_internal(repo_root, store):
+    """The reason string for "this repo resolves to no project", shared by check_gate and
+    the commit-message gate so the two can never drift apart.
+
+    TESS-174: an ARCHIVED registration stops resolving, which is the point of archiving --
+    but it made both gates say "no TESSERA project registered for this repo" about a repo
+    that IS registered, and advise `tessera register-project`, which is idempotent by
+    prefix and therefore a no-op on an existing archived row (returns the existing id,
+    status stays archived). The operator was told to run a command that provably changes
+    nothing, then blocked again. Found by ticket-system-ed's review and confirmed by direct
+    repro. Blocking is correct; the dead-end advice was not."""
+    archived = [
+        p["prefix"] for p in
+        project_resolve.resolve_projects_for_repo(repo_root, store, include_archived=True)
+    ]
+    if archived:
+        names = ", ".join(sorted(archived))
+        return (
+            f"this repo ({repo_root}) is registered to {names}, which is ARCHIVED, so it no "
+            f"longer resolves -- bring it back with `tessera unarchive-project {sorted(archived)[0]} "
+            f"--actor <you>` if this project is still live, or bypass with --no-verify if "
+            f"you are intentionally committing to a retired project. Note that "
+            f"`register-project` will NOT help here: it is idempotent by prefix and a no-op "
+            f"on a registration that already exists."
+        )
+    return (
+        f"no TESSERA project registered for this repo ({repo_root}) -- register it "
+        f"(tessera register-project) before committing, or bypass with --no-verify "
+        f"if this is intentionally unregistered work."
+    )
+
+
 def check_gate(repo_root, store, window_hours=None):
     window_hours = window_hours if window_hours is not None else config.HARD_GATE_WINDOW_HOURS
 
@@ -64,11 +96,7 @@ def check_gate(repo_root, store, window_hours=None):
     if not projects:
         return GateResult(
             passed=False,
-            reason=(
-                f"no TESSERA project registered for this repo ({repo_root}) -- register it "
-                f"(tessera register-project) before committing, or bypass with --no-verify "
-                f"if this is intentionally unregistered work."
-            ),
+            reason=unregistered_reason_internal(repo_root, store),
             projects_checked=[],
             events_found=0,
         )
@@ -87,7 +115,7 @@ def check_gate(repo_root, store, window_hours=None):
             reason=(
                 f"no real TESSERA activity ({'/'.join(prefixes)}) in the trailing "
                 f"{window_hours}h. Log this work first: `python3 -m tessera.api.cli --db "
-                f"{store.db_path} comment <TICKET> --actor <you> --body ...` "
+                f"{config.resolve_db_path()} comment <TICKET> --actor <you> --body ...` "
                 f"(or create/transition/freeze-criteria/claim), then commit again."
             ),
             projects_checked=prefixes,
@@ -119,11 +147,7 @@ def check_commit_message(repo_root, store, message):
     if not projects:
         return CommitMessageResult(
             passed=False,
-            reason=(
-                f"no TESSERA project registered for this repo ({repo_root}) -- register it "
-                f"(tessera register-project) before committing, or bypass with --no-verify "
-                f"if this is intentionally unregistered work."
-            ),
+            reason=unregistered_reason_internal(repo_root, store),
             projects_checked=[],
             matched_ticket=None,
         )
@@ -148,7 +172,7 @@ def check_commit_message(repo_root, store, message):
             f"closes or advances directly in the message, e.g. '{sorted(prefixes)[0]}-123: "
             f"<what this commit does>' -- general recent TESSERA activity elsewhere in the "
             f"project is not evidence this commit is tied to real, checkable work "
-            f"(QUALITY-BAR.md T-7)."
+            f"(QUALITY-BAR.md T-7, FORE-77)."
         ),
         projects_checked=sorted(prefixes),
         matched_ticket=None,

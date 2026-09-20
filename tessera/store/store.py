@@ -1,22 +1,64 @@
 import contextlib
 import json
 import os
-import re
 import sqlite3
 import threading
 import time
 from pathlib import Path
 
+from ..common.git_refs import validate_commit_sha
 from ..common.hashing import canonical_json, event_hash as compute_event_hash, sha256_hex
-from ..common.timestamps import utc_now_iso
+from ..common.timestamps import iso_minus_seconds, utc_now_iso
 from . import schema
 from .exceptions import (
-    BlockedError, CriteriaNotFrozenError, CycleError, HierarchyError, SameProjectError,
-    UnknownProjectError, UnsupportedSQLiteVersion, WorkflowError,
+    BlockedError, ClaimRequiredError, CriteriaNotFrozenError, CycleError, HierarchyError,
+    NoClaimRateLimitError, SameProjectError, UnknownProjectError, UnsupportedSQLiteVersion,
+    WorkflowError,
 )
 
 RETRY_ATTEMPTS = 15
 BUSY_TIMEOUT_MS = 5000
+
+
+def render_current_state_text(hotlist, budget_chars):
+    """REQ-25 (Foreman v2.0 PRD) Phase 1: renders a hotlist dict (the real shape
+    `Store.get_hotlist()` returns) as compact context text, one line per item, truncated to
+    `budget_chars` at ITEM granularity only -- never mid-line. A real bug found and fixed
+    during this design's own adversarial self-attack (per FORE-38's design pass): truncating
+    at an arbitrary character offset can cut a line in half, producing a malformed, confusing
+    fragment in injected context -- worse than omitting the item entirely. This function
+    instead renders each item's full line, and stops BEFORE adding a line that would push the
+    total past budget_chars, so every included item is always a complete, real line.
+
+    Pure function, no DB dependency -- independently testable against a synthetic hotlist
+    dict, not only against a live store.
+
+    Returns a string with a header line, one line per included item
+    (`<ticket_id> [<status>] <summary>`), and -- if any items were omitted for budget --
+    a trailing line naming how many were dropped, so a reader can tell "nothing else
+    mattered" apart from "more existed and was cut for space"."""
+    header = f"# current-state: {hotlist['name']} ({len(hotlist['items'])} items)\n"
+    lines = []
+    for item in hotlist["items"]:
+        summary = (item.get("summary") or "").strip()
+        lines.append(f"{item['ticket_id']} [{item.get('status', '?')}] {summary}")
+
+    included = []
+    used = len(header)
+    omitted_count = 0
+    for line in lines:
+        candidate_len = used + len(line) + 1  # +1 for the newline that will join it
+        if candidate_len > budget_chars and included:
+            omitted_count = len(lines) - len(included)
+            break
+        included.append(line)
+        used = candidate_len
+    else:
+        omitted_count = 0
+
+    body = "\n".join(included)
+    footer = f"\n... {omitted_count} more item(s) omitted for budget\n" if omitted_count else ""
+    return header + body + footer
 
 
 class Store:
@@ -169,11 +211,6 @@ class Store:
 
         if not codename or not prefix:
             raise ValueError("register_project requires both a codename and a prefix")
-        if ".." in prefix or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,15}", prefix):
-            raise ValueError(
-                f"register_project prefix {prefix!r} must match "
-                f"[A-Za-z][A-Za-z0-9_-]{{0,15}} and must not contain '..'"
-            )
 
         def attempt():
             with self.write_txn_internal() as conn:
@@ -203,22 +240,176 @@ class Store:
 
     def get_project(self, prefix):
         row = self.conn_internal().execute(
-            "SELECT id, codename, prefix, source_root, created_at FROM projects WHERE prefix=?",
+            "SELECT id, codename, prefix, source_root, status, created_at"
+            " FROM projects WHERE prefix=?",
             (prefix,),
         ).fetchone()
         if not row:
             return None
         return {"id": row[0], "codename": row[1], "prefix": row[2],
-                "source_root": row[3], "created_at": row[4]}
+                "source_root": row[3], "status": row[4], "created_at": row[5]}
 
-    def list_projects(self):
-        rows = self.conn_internal().execute(
-            "SELECT id, codename, prefix, source_root, created_at FROM projects ORDER BY id"
-        ).fetchall()
+    def list_projects(self, status=None):
+        """TESS-174: every row still comes back by default, archived ones included -- what
+        changed is that they now carry `status`, so a dead registration is DISTINGUISHABLE
+        instead of silently identical to a live one. Filtering is opt-in (`status="active"`)
+        rather than the default, because several existing callers (rebuild_projection's own
+        seeding, the dashboards, tessguard's audit paths) legitimately need the full
+        registry, and silently shrinking what this returns would break them in ways no test
+        would name."""
+        if status is not None and status not in schema.PROJECT_STATUSES:
+            raise ValueError(
+                f"unknown project status {status!r}; must be one of {schema.PROJECT_STATUSES}"
+            )
+        sql = "SELECT id, codename, prefix, source_root, status, created_at FROM projects"
+        params = ()
+        if status is not None:
+            sql += " WHERE status=?"
+            params = (status,)
+        rows = self.conn_internal().execute(sql + " ORDER BY id", params).fetchall()
         return [
-            {"id": r[0], "codename": r[1], "prefix": r[2], "source_root": r[3], "created_at": r[4]}
+            {"id": r[0], "codename": r[1], "prefix": r[2], "source_root": r[3],
+             "status": r[4], "created_at": r[5]}
             for r in rows
         ]
+
+    # ---- project lifecycle (TESS-174) ------------------------------------
+    #
+    # register_project() was the ONLY write verb a project row had: no way to mark a dead
+    # registration stale, and no way to follow a directory that genuinely moved. Both gaps
+    # are real and recurring -- four dead registrations (WIDG/MIDB/F9FR/TCHK, all naming
+    # scratchpad directories deleted 2026-08-16) sat indistinguishable from live ones, and
+    # relocating a live project's checkout had no path at all short of archive-and-
+    # re-register, which throws away the project's identity and every ticket_id minted
+    # under it.
+    #
+    # Both verbs emit a real hash-chained event rather than a bare UPDATE, so a change to a
+    # project's own state is as attributed and as replayable as any change to a ticket --
+    # and rebuild_projection() replays them against the row's registration-time baseline,
+    # which means a direct UPDATE that bypassed these verbs shows up as a projection
+    # mismatch instead of passing unnoticed.
+
+    def normalize_source_root_internal(self, source_root):
+        """None stays None (a real, meaningful value -- MACNET and FOREV2 are registered
+        with no source root today). Otherwise the path must be ABSOLUTE: project_resolve.py
+        does Path(source_root).resolve(), which silently resolves a relative path against
+        whatever the calling PROCESS's cwd happens to be, so a relative source_root would
+        make project resolution answer differently per caller. Normalized through Path() to
+        drop a trailing slash and collapse redundant separators, but deliberately NOT
+        .resolve()d -- resolve() touches the filesystem and rewrites symlinks, and a
+        directory being registered before it exists (or on another machine) is legitimate."""
+        if source_root is None:
+            return None
+        text = str(source_root).strip()
+        if not text:
+            return None
+        path = Path(text)
+        if not path.is_absolute():
+            raise ValueError(
+                f"source_root must be an absolute path, got {text!r} -- a relative path "
+                "resolves against the calling process's cwd, so project resolution would "
+                "answer differently depending on who asked"
+            )
+        return str(path)
+
+    def set_project_status(self, prefix, actor, status, note=None):
+        """Returns the project row as it stands after the call, plus `changed`.
+
+        Setting the status a project already has is a no-op that emits NO event. The
+        justification is the event's own name: ProjectStatusChanged asserts that a status
+        CHANGED, so emitting one when nothing changed would make the audit log state
+        something false. (An earlier version of this docstring reached for
+        register_project()'s idempotent-by-prefix behaviour as the precedent. That analogy
+        does not hold and was removed on review: register_project is an INSERT made
+        idempotent by a UNIQUE key and emits no event in any case, so it says nothing about
+        whether an UPDATE should emit one. A ...Set-shaped event would be a defensible
+        design here; a ...Changed-shaped one would not.)"""
+        if status not in schema.PROJECT_STATUSES:
+            raise ValueError(
+                f"unknown project status {status!r}; must be one of {schema.PROJECT_STATUSES}"
+            )
+
+        def attempt():
+            with self.write_txn_internal() as conn:
+                row = conn.execute(
+                    "SELECT id, status FROM projects WHERE prefix=?", (prefix,)
+                ).fetchone()
+                if row is None:
+                    raise UnknownProjectError(f"no project registered with prefix {prefix!r}")
+                project_id, old_status = row
+                if old_status == status:
+                    return False
+                self.append_event_internal(
+                    conn, "ProjectStatusChanged", actor,
+                    {"project": prefix, "old_status": old_status, "new_status": status,
+                     "note": note},
+                    project_id=project_id,
+                )
+                conn.execute("UPDATE projects SET status=? WHERE id=?", (status, project_id))
+                return True
+
+        changed = self.retry_internal(attempt)
+        result = self.get_project(prefix)
+        result["changed"] = changed
+        return result
+
+    def archive_project(self, prefix, actor, note=None):
+        """Marks a registration stale. Does NOT delete it and does not touch its tickets --
+        an archived project's history stays queryable and its tickets stay addressable by
+        their existing ids.
+
+        It DOES have real consequences for work done in that project's directory, and this
+        docstring previously claimed the opposite ("does not lock the project against
+        further writes"), which was flatly wrong -- caught by ticket-system-ed's review and
+        confirmed by direct repro, not by re-reading this code. Because project_resolve.py
+        skips archived rows, an archived registration stops claiming its filesystem root,
+        and everything downstream of resolution changes with it: gitgate's commit gates
+        refuse commits in that repo, and cli.assignee_provenance_error refuses a comment on
+        a ticket assigned to that prefix even when run from the project's own root. That is
+        deliberate fail-closed behaviour and archiving would be fairly toothless without it.
+        Archive a project you still intend to commit in and you will be blocked; the way
+        back is unarchive_project(), which is what those gates' messages now say."""
+        return self.set_project_status(prefix, actor, schema.PROJECT_STATUS_ARCHIVED, note=note)
+
+    def unarchive_project(self, prefix, actor, note=None):
+        return self.set_project_status(prefix, actor, schema.PROJECT_STATUS_ACTIVE, note=note)
+
+    def set_project_source_root(self, prefix, actor, source_root, note=None):
+        """Point an existing registration at a directory that moved, KEEPING the project's
+        id, prefix, codename, ticket_id counter and every ticket already minted under it.
+        The alternative available before this existed -- archive the old row and register a
+        new one -- loses all of that: a new project id, a restarted counter, and a ticket
+        history split across two prefixes for what is one project that changed address.
+
+        Returns the row after the call plus `changed`; setting the source_root a project
+        already has emits no event, same reasoning as set_project_status."""
+        normalized = self.normalize_source_root_internal(source_root)
+
+        def attempt():
+            with self.write_txn_internal() as conn:
+                row = conn.execute(
+                    "SELECT id, source_root FROM projects WHERE prefix=?", (prefix,)
+                ).fetchone()
+                if row is None:
+                    raise UnknownProjectError(f"no project registered with prefix {prefix!r}")
+                project_id, old_source_root = row
+                if old_source_root == normalized:
+                    return False
+                self.append_event_internal(
+                    conn, "ProjectSourceRootChanged", actor,
+                    {"project": prefix, "old_source_root": old_source_root,
+                     "new_source_root": normalized, "note": note},
+                    project_id=project_id,
+                )
+                conn.execute(
+                    "UPDATE projects SET source_root=? WHERE id=?", (normalized, project_id)
+                )
+                return True
+
+        changed = self.retry_internal(attempt)
+        result = self.get_project(prefix)
+        result["changed"] = changed
+        return result
 
     def resolve_project_id_internal(self, project):
         """`project` is a prefix string, or None to use the store's default. Raises
@@ -255,13 +446,13 @@ class Store:
             raise ValueError(f"unknown ticket type {ticket_type!r}")
         if tier is not None and tier not in schema.TIERS:
             raise ValueError(f"unknown tier {tier!r}; must be one of {schema.TIERS}")
-        # severity/priority are a real, ordered 0-4 int scale now (previously
+        # TESS-44: severity/priority are a real, ordered 0-4 int scale now (previously
         # entirely unconstrained free text) -- validated the same way tier already is.
         if severity is not None and severity not in schema.LEVELS:
             raise ValueError(f"unknown severity {severity!r}; must be one of {schema.LEVELS}")
         if priority is not None and priority not in schema.LEVELS:
             raise ValueError(f"unknown priority {priority!r}; must be one of {schema.LEVELS}")
-        # create_ticket writes custom_fields straight into ticket_fields, so
+        # TESS-98. create_ticket writes custom_fields straight into ticket_fields, so
         # custom_fields={"priority": 1} at create is the same shadow-write as set-field is
         # after it: the dedicated `priority=` argument sits right there and would have been
         # ignored in favour of a value no triage view reads.
@@ -312,12 +503,12 @@ class Store:
                     )
                     for name, value in (custom_fields or {}).items():
                         # canonical_json, not json.dumps -- same reasoning and same fix
-                        # shape as ticket_criteria's already-fixed sibling bug:
+                        # shape as ticket_criteria's already-fixed sibling bug (TESS-17):
                         # a dict-valued custom field's replay path reconstitutes it from
                         # this event's own canonical_json payload (sorted keys), so a
                         # plain json.dumps here on the live path preserves the caller's
                         # original insertion order instead -- same data, different JSON
-                        # text, false rebuild/live divergence (found by Clint
+                        # text, false rebuild/live divergence (TESS-20, found by Clint
                         # Eastwood's adversarial review, confirmed by direct repro).
                         conn.execute(
                             "INSERT INTO ticket_fields (ticket_id, field_name, field_value)"
@@ -328,7 +519,7 @@ class Store:
             except sqlite3.IntegrityError as exc:
                 msg = str(exc)
                 if idempotency_key and "idempotency_key" in msg:
-                    # project_id scoped -- matches idx_events_idempotency's
+                    # project_id scoped (TESS-23) -- matches idx_events_idempotency's
                     # (project_id, idempotency_key) constraint, so a duplicate-key hit in
                     # ANOTHER project doesn't get mistaken for this project's own replay.
                     existing = self.conn_internal().execute(
@@ -355,7 +546,7 @@ class Store:
                 )
 
     def reassign_project(self, ticket_id, actor, new_project):
-        """Moves a ticket to a different registered project. ticket_ids are
+        """Moves a ticket to a different registered project (TESS-70). ticket_ids are
         minted from a per-project counter and their prefix names their project (see
         create_ticket) -- there is no sensible way to keep the SAME ticket_id under a
         different project's prefix, so this mints a new ticket_id in the target project
@@ -374,7 +565,7 @@ class Store:
         needs no new branch to stay correct for this method.
 
         Does not copy ticket_criteria, watchers, claims, attachments, ticket_commit_links,
-        or hotlist membership -- out of this method's stated scope (history/comments/
+        or hotlist membership -- out of TESS-70's stated scope (history/comments/
         reference_docs/events); a caller that needs those preserved too should file a
         follow-up rather than assume this covers them."""
 
@@ -533,7 +724,7 @@ class Store:
     def set_comment_code_snippet(self, ticket_id, comment_id, actor, code_snippet):
         """Backfills a historical comment's code_snippet by appending a genuine new
         event, never by mutating the CommentAdded event or writing the projection
-        directly -- same precedent as summary/description backfill via
+        directly -- same precedent as TESS-42's summary/description backfill via
         set_summary()/set_description(), not a payload-replay fallback. The original
         CommentAdded event and its body are untouched; this is an additive fact about
         that comment, layered on top."""
@@ -557,7 +748,78 @@ class Store:
 
         self.retry_internal(attempt)
 
-    def transition_status(self, ticket_id, actor, new_status):
+    def no_claim_guard_internal(self, conn, ticket_id, actor, no_claim_reason):
+        """TESS-192. Decides whether a close with no claim behind it may proceed, and
+        records why when it may. Runs inside the caller's write transaction so the check
+        and the record it counts against cannot be separated by a concurrent close.
+
+        Returns the reason actually recorded, or None when the ticket has a real claim and
+        this guard has nothing to say. Raises rather than returning a verdict nobody
+        reads -- the whole defect this closes was a correct finding with no consumer.
+
+        KNOWN GAP, disclosed rather than fixed (TESS-194). This is NOT the only path by
+        which a ticket reaches 'closed'. reassign_project() closes the source ticket by
+        appending StatusChanged and updating the row directly, never calling
+        transition_status(), so it does not pass through here: no claim requirement, no
+        reason, no rate limit, and no ClosedWithNoClaim event, which also makes those
+        closes invisible to v_no_claim_close_bursts. Found in review, measured at 6 of 6
+        unclaimed tickets closed in one loop. It is pre-existing and arguably legitimate
+        bookkeeping, since a reassign moves the work to a linked new ticket rather than
+        abandoning it. Stated here because the honest claim is "the chokepoint for
+        transition-driven closes", not "the chokepoint for all closes", and a later reader
+        who assumes the stronger one will be wrong about their coverage.
+        """
+        claim = conn.execute(
+            "SELECT 1 FROM claims WHERE ticket_id=? LIMIT 1", (ticket_id,)
+        ).fetchone()
+        if claim:
+            if no_claim_reason is not None:
+                raise ClaimRequiredError(
+                    f"{ticket_id} has a recorded claim, so --no-claim-reason does not apply "
+                    f"(got {no_claim_reason!r}). Close it without one."
+                )
+            return None
+
+        if no_claim_reason is None:
+            raise ClaimRequiredError(
+                f"{ticket_id} cannot close: no claim has ever been recorded against it. "
+                f"Either record one (tessera claim {ticket_id} --file/--commit ...), or "
+                f"close it with an explicit no-claim reason from "
+                f"{list(schema.NO_CLAIM_REASONS)}."
+            )
+        if no_claim_reason not in schema.NO_CLAIM_REASONS:
+            raise ClaimRequiredError(
+                f"{ticket_id} cannot close: {no_claim_reason!r} is not a recognised "
+                f"no-claim reason. Legal values are {list(schema.NO_CLAIM_REASONS)} -- this "
+                f"vocabulary is closed on purpose so the reasons stay countable."
+            )
+
+        if no_claim_reason == "disposition-pass":
+            now = utc_now_iso()
+            window_start = iso_minus_seconds(now, 60)
+            recent = conn.execute(
+                "SELECT COUNT(*) FROM events"
+                " WHERE event_type='ClosedWithNoClaim' AND actor=?"
+                " AND created_at > ?"
+                " AND json_extract(payload, '$.reason') = 'disposition-pass'",
+                (actor, window_start),
+            ).fetchone()[0]
+            if recent >= schema.DISPOSITION_PASS_PER_MINUTE:
+                raise NoClaimRateLimitError(
+                    f"{ticket_id} cannot close: {actor} has already recorded {recent} "
+                    f"disposition-pass close(s) in the last 60 seconds and the limit is "
+                    f"{schema.DISPOSITION_PASS_PER_MINUTE}. This is the guard working, not a "
+                    f"bug: a disposition pass ships no evidence, so its only cost is the "
+                    f"attention of whoever runs it. Record a claim on this ticket, or wait."
+                )
+
+        self.append_event_internal(
+            conn, "ClosedWithNoClaim", actor, {"reason": no_claim_reason},
+            ticket_id=ticket_id,
+        )
+        return no_claim_reason
+
+    def transition_status(self, ticket_id, actor, new_status, no_claim_reason=None):
         def attempt():
             with self.write_txn_internal() as conn:
                 row = conn.execute(
@@ -580,6 +842,15 @@ class Store:
                             f"{', '.join(b['ticket_id'] for b in open_blockers)} "
                             f"(not yet closed: {open_blockers})"
                         )
+                    # TESS-192. Runs before StatusChanged is appended, so a refusal leaves
+                    # the ticket in its prior state rather than closing it and complaining
+                    # afterwards -- which is precisely what the old advisory check did.
+                    self.no_claim_guard_internal(conn, ticket_id, actor, no_claim_reason)
+                elif no_claim_reason is not None:
+                    raise ClaimRequiredError(
+                        f"no_claim_reason is only meaningful when closing; got "
+                        f"{no_claim_reason!r} for a transition to {new_status!r}."
+                    )
                 if new_status == "in_progress":
                     criteria_row = conn.execute(
                         "SELECT criteria_frozen_at FROM ticket_criteria WHERE ticket_id=?",
@@ -615,15 +886,25 @@ class Store:
 
         self.retry_internal(attempt)
 
-    def record_closed_with_no_claim(self, ticket_id, actor):
+    def record_closed_with_no_claim(self, ticket_id, actor, reason=None):
         """A ticket closed with zero ClaimRecorded event ever -- the discrepancy check has
         nothing to compare against, and that absence is itself the finding worth a real,
         queryable record (T-2/QUALITY-BAR.md's own closed-without-claim floor), not a silent
-        no-op the way discrepancy_for_ticket's `if not claim: return None` treats it."""
+        no-op the way discrepancy_for_ticket's `if not claim: return None` treats it.
+
+        TESS-192: as of the no-claim guard, a close that reaches this state through
+        transition_status has ALREADY emitted this event, with a reason, inside the same
+        transaction that let the close proceed. This method survives for the paths that
+        write the event directly (replay, migrations, and any caller that transitions
+        through some other route), and now carries the same `reason` field so those events
+        are shaped identically to guarded ones. `reason=None` records the pre-TESS-192
+        shape and is what a historical event replays as."""
+        payload = {} if reason is None else {"reason": reason}
+
         def attempt():
             with self.write_txn_internal() as conn:
                 self.append_event_internal(
-                    conn, "ClosedWithNoClaim", actor, {}, ticket_id=ticket_id,
+                    conn, "ClosedWithNoClaim", actor, payload, ticket_id=ticket_id,
                 )
 
         self.retry_internal(attempt)
@@ -650,7 +931,7 @@ class Store:
             # would-be edge's target, so a single self-referencing edge (A blocks A) is
             # never reachable from itself in zero steps and the existing cycle check
             # can't see it -- the ticket becomes permanently blocked by itself with no
-            # unlink path to recover (found by Clint Eastwood's adversarial
+            # unlink path to recover (TESS-25, found by Clint Eastwood's adversarial
             # review, confirmed by direct repro: add_link(A, A, "blocks", ...) succeeded).
             # relates-to has no reciprocal and isn't part of the block graph, so it's not
             # restricted here.
@@ -712,7 +993,7 @@ class Store:
 
     # ---- fields / reference_docs / archival ------------------------------
 
-    # Every column on `tickets`. A name in here is NOT a custom field, so
+    # TESS-98. Every column on `tickets`. A name in here is NOT a custom field, so
     # set_custom_field refuses it instead of quietly writing a shadow row into
     # ticket_fields that no triage view, filter or report will ever read. The value is the
     # guidance shown in the error: the right way to set it, or an honest statement that
@@ -763,15 +1044,15 @@ class Store:
                 conn.execute(
                     "INSERT INTO ticket_fields (ticket_id, field_name, field_value) VALUES (?,?,?)"
                     " ON CONFLICT(ticket_id, field_name) DO UPDATE SET field_value=excluded.field_value",
-                    (ticket_id, field_name, canonical_json(field_value)),
+                    (ticket_id, field_name, canonical_json(field_value)),  # TESS-20
                 )
 
         self.retry_internal(attempt)
 
-    # priority and severity are first-class columns that had no setter at all,
+    # TESS-98. priority and severity are first-class columns that had no setter at all,
     # so the ONLY way to set them was create --priority/--severity. set-field appeared to
     # work -- it returned ok and wrote custom_fields={'priority': '1'} -- while
-    # tickets.priority stayed NULL. An earlier review lost a day to exactly that: its thread records
+    # tickets.priority stayed NULL. FORE-23 lost a day to exactly that: its thread records
     # "Marked P1" and every triage view still read None. Same treatment the other
     # first-class fields already get: own event type, own column update, own replay handler.
     PRIORITY_LIKE_FIELDS = {"priority": "PrioritySet", "severity": "SeveritySet"}
@@ -804,7 +1085,7 @@ class Store:
 
     def set_summary(self, ticket_id, actor, summary):
         """Distinct SummarySet event, same reasoning as set_reference_docs -- a real,
-        first-class field, not folded into generic FieldSet."""
+        first-class field (TESS-42), not folded into generic FieldSet."""
 
         def attempt():
             with self.write_txn_internal() as conn:
@@ -840,7 +1121,7 @@ class Store:
     def set_assignee(self, ticket_id, actor, assignee):
         """Distinct AssigneeSet event, same reasoning as set_summary/set_description.
 
-        Was 'set at create time; not updatable' until the operator's direct call: assignee moves a
+        Was 'set at create time; not updatable' until Jon's direct call: assignee moves a
         ticket's real working ownership between teams (a ticket can originate in FORE and
         get handed to TESS to actually execute), so it needs a real update path the same
         way status/priority/severity do. Store-level, this is just a value -- callers that
@@ -903,6 +1184,11 @@ class Store:
     # ---- claims -----------------------------------------------------------
 
     def record_claim(self, ticket_id, actor, summary, files_touched, commit_sha):
+        # TESS-159: store boundary is the primary gate -- a commit_sha this rejects can
+        # never reach the git call sites in discrepancy.py/gitops.py at all, regardless
+        # of which of the two currently reads claims.
+        validate_commit_sha(commit_sha)
+
         def attempt():
             with self.write_txn_internal() as conn:
                 payload = {
@@ -1036,7 +1322,7 @@ class Store:
         ).fetchall()
         return [self.get_ticket(r[0], with_context=False) for r in rows]
 
-    # ---- hotlists ------------------------------------------------
+    # ---- hotlists (TESS-36) ------------------------------------------------
     # A named, cross-project, ad hoc worklist -- standups, an ACR-style review batch, a
     # build-phase bugfix batch. Unlike project registration (deliberately NOT
     # event-sourced, see rebuild_projection()'s docstring), a hotlist entry IS a real
@@ -1129,6 +1415,21 @@ class Store:
             ],
         }
 
+    def render_current_state(self, name, budget_chars):
+        """REQ-25 (Foreman v2.0 PRD) Phase 1: renders a hotlist as compact context text,
+        item-granularity truncation only, never mid-line. Status/summary are read fresh from
+        `get_hotlist()` (which itself calls `get_ticket()` per item) at call time -- this is
+        the "render-at-read-time" half of REQ-25's design (FORE-38's real architecture pass):
+        membership in the hotlist is curated, sticky, judgment; each item's live status/
+        summary cannot go stale, because it is read fresh on every call, never cached.
+
+        Returns None if the hotlist doesn't exist -- same "not found" signal `get_hotlist`
+        already uses, not a raised exception a caller has to guess the type of."""
+        hotlist = self.get_hotlist(name)
+        if hotlist is None:
+            return None
+        return render_current_state_text(hotlist, budget_chars)
+
     def list_hotlists(self):
         rows = self.conn_internal().execute(
             "SELECT h.name, h.created_at, h.created_by, COUNT(hi.ticket_id)"
@@ -1140,7 +1441,7 @@ class Store:
             for name, created_at, created_by, count in rows
         ]
 
-    # ---- datasets -------------------------------------------------
+    # ---- datasets (TESS-47) -------------------------------------------------
     # BigQuery-style dataset selector for the SQL tab. A dataset is a named GROUP OF
     # PROJECTS, event-sourced like hotlists -- distinct from `projects` itself.
     # list_datasets() merges these real rows with an implicit one-per-project entry
@@ -1221,7 +1522,7 @@ class Store:
         return result
 
     def set_column_description(self, table_name, column_name, description, actor):
-        """Per-column documentation metadata, stored separately from the
+        """TESS-49: per-column documentation metadata, stored separately from the
         actual data tables (its own row per table.column) so it's editable
         independently of any data row and survives even if the described table is
         later dropped/renamed. One current description per column -- re-setting
@@ -1247,7 +1548,7 @@ class Store:
     def list_column_descriptions(self):
         """table_name -> {column_name: description}, for every column that has ever
         had one set. Grouped by table since that's how the schema panel already
-        organizes columns -- Discovery mode looks up
+        organizes columns (TESS-43) -- Discovery mode (TESS-50) looks up
         result.get(table, {}).get(column) rather than a flat table.column key."""
         rows = self.conn_internal().execute(
             "SELECT table_name, column_name, description FROM column_descriptions"
@@ -1464,7 +1765,7 @@ class Store:
     def list_tickets(self, status=None, assignee=None, ticket_type=None,
                       include_archived=False, project=None,
                       priority_max=None, severity_max=None):
-        """Requested by Foreman/ATLAS: priority_max/severity_max are threshold filters,
+        """TESS-120 (asked by Foreman/ATLAS): priority_max/severity_max are threshold filters,
         not exact-match, because the real need named was "all open S0/S1", a set, not a single
         level -- 0 is the highest priority/severity, so *_max=1 means "P0 or P1"/"S0 or S1". A
         ticket with a NULL priority/severity never matches a threshold filter (deliberate, same
@@ -1507,7 +1808,7 @@ class Store:
     def latest_event_id(self):
         """Current max events.id, or 0 if the store has no events yet. Used by the SSE
         stream to resolve "start from now" without replaying the entire history to every
-        newly-connecting client."""
+        newly-connecting client (TESS-31)."""
         row = self.conn_internal().execute("SELECT MAX(id) FROM events").fetchone()
         return row[0] or 0
 
@@ -1564,7 +1865,7 @@ class Store:
     # produces 0), or (b) require inventing a StaleFlagChanged event whose replay would
     # just be re-deriving a stale git-ancestry snapshot from a point in time, which is not
     # what event sourcing is for here and would misrepresent stale as historically
-    # meaningful when it's actually a live snapshot (found by Clint Eastwood's
+    # meaningful when it's actually a live snapshot (TESS-21, found by Clint Eastwood's
     # adversarial review). Excluded by name, not by dropping the whole table -- every
     # OTHER column of ticket_commit_links (ticket_id/stage/commit_sha/branch) IS written
     # via TicketCommitLinked and stays fully verified.
@@ -1604,21 +1905,45 @@ class Store:
         shadow = sqlite3.connect(":memory:")
         shadow.execute("PRAGMA foreign_keys=OFF")
         schema.init_schema(shadow)
-        # projects is replayed from its own rows directly (registration isn't an event in
-        # the hash chain -- it predates any ticket work and there's nothing to compare a
-        # claim against), same as it was read directly before multi-project support.
-        for row in self.list_projects():
-            shadow.execute(
-                "INSERT INTO projects (id, codename, prefix, source_root, created_at)"
-                " VALUES (?,?,?,?,?)",
-                (row["id"], row["codename"], row["prefix"], row["source_root"], row["created_at"]),
-            )
         events = self.conn_internal().execute(
             "SELECT event_type, ticket_id, actor, payload, created_at, event_hash"
             " FROM events ORDER BY id"
         ).fetchall()
+        # projects is seeded from its own live rows: registration isn't an event in the
+        # hash chain -- it predates any ticket work and there's nothing to compare a claim
+        # against -- so a project's identity columns (id, codename, prefix, created_at) are
+        # taken as given here, exactly as they were before multi-project support.
+        #
+        # Its MUTABLE columns (source_root, status, TESS-174) are seeded the same way but
+        # are NOT taken as given, because the ProjectStatusChanged / ProjectSourceRootChanged
+        # replay below overwrites whatever was seeded: a project with at least one lifecycle
+        # event ends this rebuild holding that event chain's final value, so a direct
+        # `UPDATE projects SET ...` that bypassed the verbs diverges from the live row and
+        # is caught. (An earlier version of this seeded those two columns from the first
+        # event's recorded OLD value instead, on the theory that seeding from live made the
+        # check vacuous. It doesn't: replay-forward lands on the same final value either
+        # way, so that elaboration bought no detection at all. Deleted rather than kept as
+        # decoration -- confirmed by sabotaging the seed and watching the negative control
+        # in test_project_lifecycle.py still pass, then sabotaging the replay handlers and
+        # watching it fail.)
+        #
+        # The honest limit, and it is PER-COLUMN, not per-project (ticket-system-ed's review
+        # caught the original wording understating this; confirmed by direct repro): a
+        # column is only verified if THAT column has an event to replay. A project with a
+        # ProjectSourceRootChanged event but no ProjectStatusChanged event has a verified
+        # source_root and an unverified status -- its status can be hand-flipped between
+        # active and archived and this rebuild still reconciles clean. That is the
+        # resolution-gating column, so it is the half with teeth. Pinned by
+        # test_the_blind_spot_is_per_column_not_per_project.
+        for row in self.list_projects():
+            shadow.execute(
+                "INSERT INTO projects (id, codename, prefix, source_root, status, created_at)"
+                " VALUES (?,?,?,?,?,?)",
+                (row["id"], row["codename"], row["prefix"], row["source_root"],
+                 row["status"], row["created_at"]),
+            )
         # counters was previously entirely uncovered by rebuild-vs-live verification
-        # (found by Clint Eastwood's adversarial review) -- it's deterministic
+        # (TESS-32, found by Clint Eastwood's adversarial review) -- it's deterministic
         # from replayed events, though: tickets are never deleted, and each TicketCreated
         # event corresponds to exactly one atomic counter increment in the SAME write
         # transaction (create_ticket), so a per-project count of TicketCreated events
@@ -1692,7 +2017,7 @@ class Store:
 
 
 def normalize_legacy_level_internal(value):
-    """severity/priority became a real 0-4 int scale, replacing entirely
+    """TESS-44: severity/priority became a real 0-4 int scale, replacing entirely
     unconstrained free text. Events written before this migration carry the old text
     ("high"/"medium"/"low") in their immutable, hash-chained payload -- that text cannot
     be rewritten, so replay must translate it the same way the live migration did, or
@@ -1725,10 +2050,10 @@ def replay_event_internal(shadow, event_type, ticket_id, actor, payload, created
             # the single project that existed then, which the migration registers as the
             # first (id=1) project. New events (post-migration) always carry a real
             # project_id, so this fallback only ever applies to that one historical batch.
-            # summary/description: events written before this feature existed
+            # summary/description (TESS-42): events written before this feature existed
             # carry neither key at all -- payload.get() naturally returns None for them,
             # same precedent as tier's own historical handling (no active backfill
-            # needed here; the real historical summary text for early tickets is instead
+            # needed here; the real historical summary text for TESS-2..TESS-8 is instead
             # promoted via genuine set_summary() calls, which DO append new, real
             # SummarySet events -- see the migration script, not a payload fallback).
             (ticket_id, payload.get("project_id", 1), payload["type"], "open",
@@ -1742,7 +2067,7 @@ def replay_event_internal(shadow, event_type, ticket_id, actor, payload, created
         for name, value in (payload.get("custom_fields") or {}).items():
             shadow.execute(
                 "INSERT INTO ticket_fields (ticket_id, field_name, field_value) VALUES (?,?,?)",
-                (ticket_id, name, canonical_json(value)),
+                (ticket_id, name, canonical_json(value)),  # TESS-20
             )
     elif event_type == "CommentAdded":
         shadow.execute(
@@ -1776,7 +2101,7 @@ def replay_event_internal(shadow, event_type, ticket_id, actor, payload, created
         shadow.execute(
             "INSERT INTO ticket_fields (ticket_id, field_name, field_value) VALUES (?,?,?)"
             " ON CONFLICT(ticket_id, field_name) DO UPDATE SET field_value=excluded.field_value",
-            (ticket_id, payload["field_name"], canonical_json(payload["field_value"])),
+            (ticket_id, payload["field_name"], canonical_json(payload["field_value"])),  # TESS-20
         )
     elif event_type == "ReferenceDocsSet":
         shadow.execute(
@@ -1798,7 +2123,7 @@ def replay_event_internal(shadow, event_type, ticket_id, actor, payload, created
             "UPDATE tickets SET assignee=?, updated_at=? WHERE ticket_id=?",
             (payload["assignee"], created_at, ticket_id),
         )
-    # Column name comes from the event type, never from the payload key, so a
+    # TESS-98. Column name comes from the event type, never from the payload key, so a
     # malformed payload cannot steer this into an arbitrary column.
     elif event_type in ("PrioritySet", "SeveritySet"):
         column = "priority" if event_type == "PrioritySet" else "severity"
@@ -1906,6 +2231,16 @@ def replay_event_internal(shadow, event_type, ticket_id, actor, payload, created
             " VALUES (?,?,?,?)",
             (dataset_id, project_id, created_at, actor),
         )
+    elif event_type == "ProjectStatusChanged":
+        shadow.execute(
+            "UPDATE projects SET status=? WHERE prefix=?",
+            (payload["new_status"], payload["project"]),
+        )
+    elif event_type == "ProjectSourceRootChanged":
+        shadow.execute(
+            "UPDATE projects SET source_root=? WHERE prefix=?",
+            (payload["new_source_root"], payload["project"]),
+        )
     elif event_type == "ColumnDescriptionSet":
         shadow.execute(
             "INSERT INTO column_descriptions"
@@ -1916,7 +2251,13 @@ def replay_event_internal(shadow, event_type, ticket_id, actor, payload, created
             " updated_by=excluded.updated_by",
             (payload["table"], payload["column"], payload["description"], created_at, actor),
         )
-    elif event_type in ("ClaimDiscrepancyChecked", "ClosedWithNoClaim"):
-        return
+    elif event_type in schema.PROJECTION_NEUTRAL_EVENTS:
+        # TESS-178: a pure audit event, deliberately projecting nothing. Named explicitly
+        # rather than falling through to a bare `pass`, so this branch cannot be mistaken
+        # for a type someone forgot -- which is the exact confusion that let two of these
+        # sit unhandled until rebuild_projection() turned out to be unrunnable against the
+        # live database. schema.PROJECTION_NEUTRAL_EVENTS documents the reasoning; the
+        # neutrality claim itself is enforced by test_projection_neutral_events.py.
+        pass
     else:
         raise ValueError(f"rebuild_projection: unknown event_type {event_type!r}")

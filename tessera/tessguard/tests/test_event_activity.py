@@ -21,8 +21,8 @@ class EventActivityTests(unittest.TestCase):
         self.assertIsNone(event_activity.project_prefix_of_ticket(""))
 
     def test_prefix_derivation(self):
-        self.assertEqual(event_activity.project_prefix_of_ticket("DEMO-73"), "DEMO")
-        self.assertEqual(event_activity.project_prefix_of_ticket("SAMPLEFT-12"), "SAMPLEFT")
+        self.assertEqual(event_activity.project_prefix_of_ticket("TESS-73"), "TESS")
+        self.assertEqual(event_activity.project_prefix_of_ticket("MOONFT-12"), "MOONFT")
 
     def test_real_events_found_for_registered_project(self):
         with tempfile.TemporaryDirectory() as tmp:

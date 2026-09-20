@@ -63,10 +63,10 @@ class TranscriptTests(unittest.TestCase):
                 transcript.transcript_summary(str(path), tmp)
 
     def test_hyphenated_project_dir_every_nonalnum(self):
-        result = transcript.hyphenated_project_dir("/path/to/ticket-system")
-        self.assertTrue(str(result).endswith("-path-to-ticket-system"))
-        result2 = transcript.hyphenated_project_dir("/path/to/home/a_b.c+d")
-        self.assertTrue(str(result2).endswith("-path-to-home-a-b-c-d"))
+        result = transcript.hyphenated_project_dir("/Users/m5/dev/ticket-system")
+        self.assertTrue(str(result).endswith("-Users-m5-dev-ticket-system"))
+        result2 = transcript.hyphenated_project_dir("/Users/m5/a_b.c+d")
+        self.assertTrue(str(result2).endswith("-Users-m5-a-b-c-d"))
 
 
 if __name__ == "__main__":

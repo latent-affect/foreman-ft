@@ -129,7 +129,7 @@
       "change": "verification",
       "from": "pytest ... :: test_name exits 0",
       "to": "python3 -m unittest tessera.common.tests.<module>.<TestCase>.<test_name> exits 0",
-      "reason": "pytest is not installed on this host or in the project venv (confirmed: 'No module named pytest' on both /usr/bin/python3 and /path/to/venv/bin/python3), and ARCHITECTURE.md commits this project to stdlib-only with no third-party dependencies. unittest is stdlib and achieves the same verification.",
+      "reason": "pytest is not installed on this host or in the project venv (confirmed: 'No module named pytest' on both /usr/bin/python3 and /Users/m5/.venv/bin/python3), and ARCHITECTURE.md commits this project to stdlib-only with no third-party dependencies. unittest is stdlib and achieves the same verification.",
       "requested_by": "agent",
       "ratified_by": "agent",
       "at": "2026-08-15T12:05:00Z"

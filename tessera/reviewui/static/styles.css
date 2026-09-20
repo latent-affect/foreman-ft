@@ -4,7 +4,7 @@
    ticket-summary, discrepancy-block/match, banner-warning,
    hint-text, mode-btn/active, schema-table*, schema-column*,
    field-preview-popup, discovery-*, hidden, sql-error,
-   sql-self-healed-banner, sql-result-table, the SQL view's own flex rules)
+   sql-self-healed-banner, sql-result-table, TESS-52's flex rules)
    is preserved. Nothing here changes what any button does.
    ============================================================ */
 
@@ -523,7 +523,7 @@ pre.diff-output {
   font-weight: 600;
 }
 
-/* ---------- SQL view -- keep the existing flex ratios, restyle chrome only ---------- */
+/* ---------- SQL view -- keep TESS-52's flex ratios, restyle chrome only ---------- */
 
 #sql-layout { display: flex; gap: 1.25rem; align-items: flex-start; margin-top: 1rem; }
 #sql-schema-panel,
@@ -623,7 +623,7 @@ pre.diff-output {
 }
 .discovery-preview-table th { color: var(--muted); font-weight: 700; white-space: nowrap; }
 
-/* A failed sample-values fetch must never render identically to real data --
+/* TESS-67: a failed sample-values fetch must never render identically to real data --
    same --danger color already used for .status-disconnected. */
 .preview-error { color: var(--danger); font-style: italic; }
 

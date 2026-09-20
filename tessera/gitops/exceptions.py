@@ -14,3 +14,10 @@ class NonFastForwardError(GitOpsError):
 
 class GitCommandError(GitOpsError):
     """A git subprocess exited non-zero. Carries the real stderr, never swallowed."""
+
+
+class InvalidRevisionError(GitOpsError):
+    """A caller-influenced revision (commit_sha) does not match the plain lowercase-hex
+    object-id shape -- rejected before it ever reaches a git subprocess argv (TESS-159).
+    Independent of the store-boundary check in tessera.common.git_refs.validate_commit_sha:
+    a bypass of one layer must not defeat the other."""

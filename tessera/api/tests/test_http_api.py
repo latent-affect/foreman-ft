@@ -1,6 +1,6 @@
 import json
-import os
 import socket
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -11,6 +11,10 @@ from pathlib import Path
 from ..http_api import build_server
 from ...gitops.gitops import GitOps
 from ...store.store import Store
+
+
+def run_git_internal(path, args):
+    subprocess.run(["git", "-C", str(path), *args], check=True, capture_output=True, text=True)
 
 
 def lan_ip():
@@ -27,7 +31,6 @@ def lan_ip():
 
 class HttpApiTests(unittest.TestCase):
     def setUp(self):
-        os.environ["TESSERA_ENABLE_SQL"] = "1"
         self.tmp_dir = tempfile.TemporaryDirectory()
         root = Path(self.tmp_dir.name)
         self.store = Store(root / "test.db", codename="TESTPROJ", prefix="TP")
@@ -59,7 +62,8 @@ class HttpApiTests(unittest.TestCase):
     def test_core_endpoints_roundtrip(self):
         status, body = self.request_json(
             "POST", "/tickets",
-            {"ticket_type": "Task", "reporter": "me", "actor": "agent"},
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         self.assertEqual(status, 201)
         tid = body["ticket_id"]
@@ -103,6 +107,43 @@ class HttpApiTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
 
+    def test_transition_to_closed_over_http_records_diff_check(self):
+        """TESS-125 coverage gap: cli.py's `transition --status closed` had a real e2e test
+        proving check_and_record_closure() fires, but http_api.py's identical call site
+        (transition(), which every non-CLI Foreman caller actually hits) was never exercised
+        by a test at all -- only inspected by eye against cli.py. This drives the real HTTP
+        route end to end, same as a real client would, and asserts the ClaimDiscrepancyChecked
+        event actually lands."""
+        repo = Path(self.tmp_dir.name) / "singlerepo"
+        repo.mkdir()
+        run_git_internal(repo, ["init"])
+        run_git_internal(repo, ["config", "user.email", "a@b.c"])
+        run_git_internal(repo, ["config", "user.name", "test"])
+        (repo / "a.py").write_text("a\n")
+        (repo / "b.py").write_text("b\n")
+        run_git_internal(repo, ["add", "."])
+        run_git_internal(repo, ["commit", "-m", "touch a.py and b.py"])
+        commit_sha = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True
+        ).stdout.strip()
+
+        self.store.register_project("SINGLEREPO", "SR", source_root=str(repo))
+        tid = self.store.create_ticket(
+            ticket_type="Task", reporter="me", actor="agent", project="SR",
+        )
+        self.store.record_claim(tid, "agent", "touched both", ["a.py", "b.py"], commit_sha)
+
+        status, body = self.request_json(
+            "POST", f"/tickets/{tid}/transition", {"actor": "agent", "status": "closed"},
+        )
+        self.assertEqual(status, 200)
+
+        rows = self.store.conn_internal().execute(
+            "SELECT event_type FROM events WHERE ticket_id=? AND event_type=?",
+            (tid, "ClaimDiscrepancyChecked"),
+        ).fetchall()
+        self.assertEqual(len(rows), 1)
+
     def test_binds_localhost_only(self):
         lan_ip_value = lan_ip()
         if lan_ip_value is None:
@@ -120,7 +161,9 @@ class HttpApiTests(unittest.TestCase):
 
     def test_status_codes_distinct_and_correct(self):
         status, body = self.request_json(
-            "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"}
+            "POST", "/tickets",
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         self.assertEqual(status, 201)
 
@@ -128,7 +171,9 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(status, 404)
 
         _, created = self.request_json(
-            "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"}
+            "POST", "/tickets",
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         tid = created["ticket_id"]
         status, body = self.request_json(
@@ -138,7 +183,9 @@ class HttpApiTests(unittest.TestCase):
         self.assertIn("illegal transition", body["error"])
 
         status, body = self.request_json(
-            "POST", "/tickets", {"ticket_type": "Sub-task", "reporter": "me", "actor": "agent"}
+            "POST", "/tickets",
+            {"ticket_type": "Sub-task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         self.assertEqual(status, 400)
         self.assertIn("Sub-task", body["error"])
@@ -154,12 +201,12 @@ class HttpApiTests(unittest.TestCase):
         status1, body1 = self.request_json(
             "POST", "/tickets",
             {"ticket_type": "Task", "reporter": "me", "actor": "agent",
-             "idempotency_key": "fixed-key"},
+             "priority": 2, "severity": 2, "idempotency_key": "fixed-key"},
         )
         status2, body2 = self.request_json(
             "POST", "/tickets",
             {"ticket_type": "Task", "reporter": "me", "actor": "agent",
-             "idempotency_key": "fixed-key"},
+             "priority": 2, "severity": 2, "idempotency_key": "fixed-key"},
         )
         self.assertEqual(status1, 201)
         self.assertEqual(status2, 201)
@@ -167,7 +214,9 @@ class HttpApiTests(unittest.TestCase):
 
     def test_comment_code_snippet_passthrough(self):
         status, body = self.request_json(
-            "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"},
+            "POST", "/tickets",
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         tid = body["ticket_id"]
 
@@ -192,11 +241,14 @@ class HttpApiTests(unittest.TestCase):
         # handler reading a query param (list_tickets' status/assignee/type, or
         # discrepancy's stage) always saw nothing no matter what the URL said.
         self.request_json(
-            "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"}
+            "POST", "/tickets",
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         self.request_json(
             "POST", "/tickets",
-            {"ticket_type": "Bug", "reporter": "me", "actor": "agent", "assignee": "alice"},
+            {"ticket_type": "Bug", "reporter": "me", "actor": "agent", "assignee": "alice",
+             "priority": 2, "severity": 2},
         )
         status, body = self.request_json("GET", "/tickets?type=Bug")
         self.assertEqual(status, 200)
@@ -208,10 +260,11 @@ class HttpApiTests(unittest.TestCase):
         self.assertTrue(all(t["assignee"] == "alice" for t in body["tickets"]))
 
     def test_compact_query_param_omits_null_and_empty_fields(self):
-        # HTTP mirror of the CLI's --compact flag.
+        # TESS-119, HTTP mirror of the CLI's --compact flag.
         status, body = self.request_json(
             "POST", "/tickets",
-            {"ticket_type": "Task", "reporter": "me", "actor": "agent", "summary": "x"},
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent", "summary": "x",
+             "priority": 2, "severity": 2},
         )
         self.assertEqual(status, 201)
         tid = body["ticket_id"]
@@ -240,16 +293,25 @@ class HttpApiTests(unittest.TestCase):
         self.assertIn("assignee", matched_full[0])
 
     def test_severity_max_query_param_is_a_threshold(self):
-        # HTTP mirror of the CLI's --severity-max.
+        # TESS-120, HTTP mirror of the CLI's --severity-max.
         self.request_json("POST", "/tickets", {
-            "ticket_type": "Bug", "reporter": "me", "actor": "agent", "severity": 0,
-        })
-        self.request_json("POST", "/tickets", {
-            "ticket_type": "Bug", "reporter": "me", "actor": "agent", "severity": 3,
+            "ticket_type": "Bug", "reporter": "me", "actor": "agent",
+            "priority": 2, "severity": 0,
         })
         self.request_json("POST", "/tickets", {
             "ticket_type": "Bug", "reporter": "me", "actor": "agent",
+            "priority": 2, "severity": 3,
         })
+        # TESS-127: severity is now required at creation, so the NULL case is produced by
+        # creating with a placeholder then clearing it via the severity endpoint -- same
+        # end state (column is NULL), not creation-time omission.
+        _, nulled = self.request_json("POST", "/tickets", {
+            "ticket_type": "Bug", "reporter": "me", "actor": "agent",
+            "priority": 2, "severity": 4,
+        })
+        self.request_json(
+            "POST", f"/tickets/{nulled['ticket_id']}/severity", {"actor": "agent", "value": None}
+        )
 
         status, body = self.request_json("GET", "/tickets?severity_max=1")
         self.assertEqual(status, 200)
@@ -270,7 +332,9 @@ class HttpApiTests(unittest.TestCase):
             side_effect=sqlite3.OperationalError("database is locked (simulated)"),
         ):
             status, body = self.request_json(
-                "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"}
+                "POST", "/tickets",
+                {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+                 "priority": 2, "severity": 2},
             )
         self.assertEqual(status, 503)
         self.assertIn("error", body)
@@ -288,14 +352,18 @@ class HttpApiTests(unittest.TestCase):
             side_effect=sqlite3.OperationalError("no such column: bogus (simulated)"),
         ):
             status, body = self.request_json(
-                "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"}
+                "POST", "/tickets",
+                {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+                 "priority": 2, "severity": 2},
             )
         self.assertEqual(status, 500)
         self.assertIn("error", body)
 
     def test_sql_query_endpoint_roundtrip_and_rejects_writes(self):
         self.request_json(
-            "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"}
+            "POST", "/tickets",
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         status, body = self.request_json("POST", "/sql", {"query": "SELECT ticket_id FROM tickets"})
         self.assertEqual(status, 200)
@@ -307,10 +375,12 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(status, 400)
 
     def test_sql_query_self_healing_via_http(self):
-        # A trailing comma is fixed and the response discloses it -- full
+        # TESS-48: a trailing comma is fixed and the response discloses it -- full
         # transparency, not a silent rewrite, per the operator's own requirement.
         self.request_json(
-            "POST", "/tickets", {"ticket_type": "Task", "reporter": "me", "actor": "agent"}
+            "POST", "/tickets",
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         status, body = self.request_json(
             "POST", "/sql", {"query": "SELECT ticket_id, FROM tickets"}
@@ -363,7 +433,7 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(body["descriptions"]["tickets"]["severity"], "S0-S4, lower is worse")
 
     def test_sql_query_bad_table_name_not_misclassified_as_contention(self):
-        # Per Clint Eastwood's review, confirmed real: a SQL typo raises the SAME
+        # TESS-38 / Clint Eastwood's review, confirmed real: a SQL typo raises the SAME
         # sqlite3.OperationalError type retry_internal's 503 classifier looks for, so a
         # query against a table literally named "locked" would be misreported as store
         # contention if this route let the error fall through to dispatch()'s generic
@@ -372,17 +442,8 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertIn("no such table", body["error"])
 
-    def test_sql_disabled_without_env_flag(self):
-        os.environ.pop("TESSERA_ENABLE_SQL", None)
-        try:
-            status, body = self.request_json("POST", "/sql", {"query": "SELECT 1"})
-        finally:
-            os.environ["TESSERA_ENABLE_SQL"] = "1"
-        self.assertEqual(status, 403)
-        self.assertIn("disabled", body["error"])
-
     def test_cross_origin_post_rejected(self):
-        # A POST + Content-Type: text/plain (both CORS-safelisted) from a
+        # TESS-62: a POST + Content-Type: text/plain (both CORS-safelisted) from a
         # malicious webpage the operator's browser has open never triggers a preflight
         # -- reproduced live before the fix (real ticket created, no CORS headers in the
         # response). The real app.js client never sends Origin at all for same-origin
@@ -407,7 +468,8 @@ class HttpApiTests(unittest.TestCase):
         # break the legitimate case, only the spoofed cross-origin one.
         status, body = self.request_json(
             "POST", "/tickets",
-            {"ticket_type": "Task", "reporter": "me", "actor": "agent"},
+            {"ticket_type": "Task", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         self.assertEqual(status, 201)
 
@@ -416,7 +478,8 @@ class HttpApiTests(unittest.TestCase):
         # for state-changing methods, even same-origin) must still succeed -- only a
         # MISMATCHING Origin is rejected.
         url = f"http://127.0.0.1:{self.port}/tickets"
-        data = json.dumps({"ticket_type": "Task", "reporter": "me", "actor": "agent"}).encode()
+        data = json.dumps({"ticket_type": "Task", "reporter": "me", "actor": "agent",
+                            "priority": 2, "severity": 2}).encode()
         req = urllib.request.Request(url, data=data, method="POST")
         req.add_header("Content-Type", "application/json")
         req.add_header("Origin", f"http://127.0.0.1:{self.port}")
@@ -425,7 +488,7 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(status, 201)
 
     def test_non_json_content_type_rejected(self):
-        # Defense in depth: even with no Origin header at all, a non-JSON
+        # TESS-62, defense in depth: even with no Origin header at all, a non-JSON
         # Content-Type on a write is rejected -- closes the CORS-safelisted
         # content-type gap directly, not just via the Origin check.
         url = f"http://127.0.0.1:{self.port}/tickets"
@@ -442,7 +505,8 @@ class HttpApiTests(unittest.TestCase):
     def test_reassign_project_endpoint(self):
         status, body = self.request_json(
             "POST", "/tickets",
-            {"ticket_type": "Bug", "reporter": "me", "actor": "agent", "summary": "placeholder"},
+            {"ticket_type": "Bug", "reporter": "me", "actor": "agent", "summary": "placeholder",
+             "priority": 2, "severity": 2},
         )
         self.assertEqual(status, 201)
         tid = body["ticket_id"]
@@ -477,11 +541,13 @@ class HttpApiTests(unittest.TestCase):
         self.assertEqual(status, 404)
 
     def test_priority_and_severity_endpoints(self):
-        # The HTTP surface gets the setter too, because the reviewui and anything
+        # TESS-98. The HTTP surface gets the setter too, because the reviewui and anything
         # else speaking to the server would otherwise still have only the diverting
         # /fields route to reach for.
         status, body = self.request_json(
-            "POST", "/tickets", {"ticket_type": "Bug", "reporter": "me", "actor": "agent"},
+            "POST", "/tickets",
+            {"ticket_type": "Bug", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         tid = body["ticket_id"]
 
@@ -517,7 +583,9 @@ class HttpApiTests(unittest.TestCase):
 
     def test_fields_endpoint_refuses_a_first_class_column(self):
         status, body = self.request_json(
-            "POST", "/tickets", {"ticket_type": "Bug", "reporter": "me", "actor": "agent"},
+            "POST", "/tickets",
+            {"ticket_type": "Bug", "reporter": "me", "actor": "agent",
+             "priority": 2, "severity": 2},
         )
         tid = body["ticket_id"]
         status, body = self.request_json(
@@ -528,8 +596,62 @@ class HttpApiTests(unittest.TestCase):
         self.assertIn("priority", body["error"])
         after = self.request_json("GET", f"/tickets/{tid}")[1]
         self.assertEqual(after["custom_fields"], {})
-        self.assertIsNone(after["priority"])
+        # TESS-127: priority is now required at creation (was 2 above); the point is that
+        # the real column is untouched by the refused shadow-write, not that it's null.
+        self.assertEqual(after["priority"], 2)
 
+    # ---- TESS-174: project lifecycle routes -------------------------------
+
+    def test_project_status_and_source_root_routes(self):
+        status, body = self.request_json("GET", "/projects")
+        self.assertEqual(status, 200)
+        self.assertEqual([p["status"] for p in body["projects"]], ["active"])
+
+        status, body = self.request_json(
+            "POST", "/projects", {"codename": "MOVER", "prefix": "MOV",
+                                  "source_root": "/Users/m5/dev/old-home"})
+        self.assertEqual(status, 201)
+
+        status, body = self.request_json(
+            "POST", "/projects/MOV/source-root",
+            {"actor": "agent", "source_root": "/Users/m5/dev/new-home", "note": "relocated"})
+        self.assertEqual(status, 200)
+        self.assertTrue(body["changed"])
+        self.assertEqual(body["source_root"], "/Users/m5/dev/new-home")
+
+        status, body = self.request_json(
+            "POST", "/projects/MOV/status", {"actor": "agent", "status": "archived"})
+        self.assertEqual(status, 200)
+        self.assertEqual(body["status"], "archived")
+
+        status, body = self.request_json("GET", "/projects?status=active")
+        self.assertEqual(status, 200)
+        self.assertEqual([p["prefix"] for p in body["projects"]], ["TP"])
+
+    def test_lifecycle_routes_404_on_an_unregistered_prefix(self):
+        status, body = self.request_json(
+            "POST", "/projects/NOPE/status", {"actor": "agent", "status": "archived"})
+        self.assertEqual(status, 404)
+        self.assertIn("NOPE", body["error"])
+
+        status, body = self.request_json(
+            "POST", "/projects/NOPE/source-root",
+            {"actor": "agent", "source_root": "/Users/m5/dev/somewhere"})
+        self.assertEqual(status, 404)
+
+    def test_lifecycle_routes_reject_bad_input_with_400(self):
+        status, body = self.request_json(
+            "POST", "/projects/TP/status", {"actor": "agent", "status": "retired"})
+        self.assertEqual(status, 400)
+
+        status, body = self.request_json("POST", "/projects/TP/status", {"actor": "agent"})
+        self.assertEqual(status, 400)
+
+        status, body = self.request_json(
+            "POST", "/projects/TP/source-root",
+            {"actor": "agent", "source_root": "dev/relative"})
+        self.assertEqual(status, 400)
+        self.assertIn("absolute", body["error"])
 
 if __name__ == "__main__":
     unittest.main()

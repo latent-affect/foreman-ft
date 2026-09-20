@@ -15,7 +15,7 @@ from pathlib import Path
 
 HARD_GATE_WINDOW_HOURS = int(os.environ.get("TESSGUARD_HARD_GATE_HOURS", "24"))
 
-DEFAULT_DB_PATH_INTERNAL = "/path/to/ticket-system/data/tessera.db"
+DEFAULT_DB_PATH_INTERNAL = "/Users/m5/dev/ticket-system/data/tessera.db"
 
 
 class DbPathError(Exception):
@@ -39,10 +39,11 @@ def resolve_db_path():
     return path
 
 
-# pre-commit and pre-push share a body today (activity-window gate). commit-msg is the
-# T-7 binding and has its own hash. Entries stay independent so a one-file edit is caught.
+# Both shims are currently identical (same 2-line exec body), so they share one hash today --
+# stored as two independent entries rather than collapsed to one, since the whole point of this
+# mapping is per-file tamper detection: if only one shim were ever edited, distinct entries would
+# catch that; a single shared value would not necessarily.
 EXPECTED_SHIM_SHAS = {
-    "pre-commit": "195b2db4abe9a93608eaa865f20d7e58d3a5e8d65dbc26d08329454bce7b3c10",
-    "pre-push": "195b2db4abe9a93608eaa865f20d7e58d3a5e8d65dbc26d08329454bce7b3c10",
-    "commit-msg": "9cf9baeb74d86fa4bfedbbab7e8a413fc19ecb7cb85dc932dfeadd098c3fcf5b",
+    "pre-commit": "6285fe0d8ce869189041c1d05338da1363983bd4b573eb6d641fff5914020e42",
+    "pre-push": "6285fe0d8ce869189041c1d05338da1363983bd4b573eb6d641fff5914020e42",
 }

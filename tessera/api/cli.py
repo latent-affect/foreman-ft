@@ -6,18 +6,16 @@ import sys
 
 from ..gitops.exceptions import GitOpsError
 from ..gitops.gitops import GitOps
+from ..store import schema
 from ..store.exceptions import StoreError
 from ..store.store import Store
 from ..tessguard import project_resolve
 from . import docs_store
-from .discrepancy import (
-    check_and_record_closure,
-    discrepancy_for_ticket_singlerepo,
-)
+from .discrepancy import check_and_record_closure, discrepancy_for_ticket
 
 
 def assignee_provenance_error(store, ticket_id, cwd=None):
-    """The operator's direct call: a ticket's assignee can now move between teams (a ticket can
+    """Jon's direct call: a ticket's assignee can now move between teams (a ticket can
     originate in FORE and get handed to TESS to actually execute -- set-assignee). Once it
     has, a comment claiming to speak for that ticket should come from an agent actually
     working in the assigned team's own project, not from whichever project happens to be
@@ -49,6 +47,30 @@ def assignee_provenance_error(store, ticket_id, cwd=None):
     if assignee in resolved_prefixes:
         return None
 
+    # TESS-174. resolve_projects_for_cwd skips ARCHIVED registrations, while known_prefixes
+    # above is built from the whole registry -- so for a ticket assigned to an archived
+    # project, the two sets can never agree and this check can never pass. The generic
+    # message below then tells the operator to "run this from <assignee>'s own project
+    # root" while they are standing in exactly that root, and says the cwd "resolves to no
+    # registered project" when the project is in fact registered, just archived. Found by
+    # ticket-system-ed's review of TESS-174 and confirmed by direct repro. Refusing is
+    # still right -- an archived project should not be accruing new attributed comments --
+    # but the refusal has to name the real reason and a remedy that actually works.
+    archived_here = [
+        p["prefix"] for p in
+        project_resolve.resolve_projects_for_cwd(real_cwd, store, include_archived=True)
+        if p["prefix"] not in resolved_prefixes
+    ]
+    if assignee in archived_here:
+        return (
+            f"{ticket_id} is assigned to {assignee!r}, and {real_cwd!r} IS that project's "
+            f"registered root -- but {assignee} is archived, so it no longer resolves. "
+            f"Either bring it back: tessera --db <db> unarchive-project {assignee} "
+            f"--actor <you>, or if the project is genuinely dead and this ticket is not, "
+            f"reassign it: tessera --db <db> set-assignee {ticket_id} --actor <you> "
+            f"--assignee <the project this work really belongs to>."
+        )
+
     return (
         f"{ticket_id} is assigned to {assignee!r}, but this comment is being written from "
         f"{real_cwd!r}, which resolves to {sorted(resolved_prefixes) or 'no registered project'}. "
@@ -59,7 +81,7 @@ def assignee_provenance_error(store, ticket_id, cwd=None):
 
 
 def compact(obj):
-    """Recursively drop null-valued fields and empty list/dict fields, for read
+    """TESS-119: recursively drop null-valued fields and empty list/dict fields, for read
     paths meant for context injection (a session's own compaction-recovery hooks, a bulk
     listing) rather than full-fidelity inspection. An absent field here means "empty/unset",
     NOT "field doesn't exist on this ticket" -- callers that check a field's absence as a
@@ -111,7 +133,7 @@ def build_parser():
     get = sub.add_parser("get")
     get.add_argument("ticket_id")
     get.add_argument("--compact", action="store_true",
-                      help="Omit null/empty fields -- for context-injection or "
+                      help="TESS-119: omit null/empty fields -- for context-injection or "
                            "bulk-reading use, not for anything that checks a field's ABSENCE "
                            "as a finding (audits, exports, the reviewui)")
 
@@ -121,9 +143,9 @@ def build_parser():
     ls.add_argument("--project")
     ls.add_argument("--compact", action="store_true", help="same as 'get --compact', per ticket")
     ls.add_argument("--priority-max", type=int, choices=[0, 1, 2, 3, 4], dest="priority_max",
-                     help="priority<=N, e.g. --priority-max 1 for P0 or P1")
+                     help="TESS-120: priority<=N, e.g. --priority-max 1 for P0 or P1")
     ls.add_argument("--severity-max", type=int, choices=[0, 1, 2, 3, 4], dest="severity_max",
-                     help="severity<=N, e.g. --severity-max 1 for S0 or S1")
+                     help="TESS-120: severity<=N, e.g. --severity-max 1 for S0 or S1")
 
     comment = sub.add_parser("comment")
     comment.add_argument("ticket_id")
@@ -135,6 +157,12 @@ def build_parser():
     transition.add_argument("ticket_id")
     transition.add_argument("--actor", required=True)
     transition.add_argument("--status", required=True)
+    transition.add_argument(
+        "--no-claim-reason", choices=schema.NO_CLAIM_REASONS, default=None,
+        help="TESS-192: required to close a ticket that has no recorded claim. "
+             "'disposition-pass' is rate limited per actor per minute "
+             "(schema.DISPOSITION_PASS_PER_MINUTE); the other three are not.",
+    )
 
     reassign = sub.add_parser("reassign-project")
     reassign.add_argument("ticket_id")
@@ -154,7 +182,7 @@ def build_parser():
     field.add_argument("--name", required=True)
     field.add_argument("--value", required=True)
 
-    # priority and severity had no update path at all, so `set-field --name
+    # TESS-98. priority and severity had no update path at all, so `set-field --name
     # priority` was the natural thing to reach for and it silently wrote a shadow custom
     # field. --clear is explicit because argparse cannot tell "" from "unset", and clearing
     # a priority is a real triage action, not an error.
@@ -258,7 +286,39 @@ def build_parser():
     register_project.add_argument("--new-prefix", required=True, dest="new_prefix")
     register_project.add_argument("--source-root")
 
-    sub.add_parser("list-projects")
+    list_projects = sub.add_parser("list-projects")
+    list_projects.add_argument("--status", choices=list(schema.PROJECT_STATUSES),
+                                help="only projects with this lifecycle status; "
+                                     "omit for the whole registry, archived rows included")
+
+    # TESS-174. Positional `project_prefix`, NOT --prefix: the top-level parser already
+    # defines --prefix and --codename, and a subparser argument sharing a dest silently
+    # overwrites them in the single shared Namespace -- the same collision documented on
+    # register-project above, which really did make register-project a silent no-op.
+    # `dataset-add-project` already uses a positional project_prefix for this reason.
+    archive_project = sub.add_parser(
+        "archive-project",
+        help="mark a registration stale: it stops resolving to a filesystem root, but the "
+             "row, its tickets and its history are all kept")
+    archive_project.add_argument("project_prefix")
+    archive_project.add_argument("--actor", required=True)
+    archive_project.add_argument("--note", help="why this registration is being archived")
+
+    unarchive_project = sub.add_parser("unarchive-project",
+                                        help="return an archived registration to active")
+    unarchive_project.add_argument("project_prefix")
+    unarchive_project.add_argument("--actor", required=True)
+    unarchive_project.add_argument("--note")
+
+    set_project_source_root = sub.add_parser(
+        "set-project-source-root",
+        help="point an existing registration at a directory that moved, keeping the "
+             "project's id, prefix, counter and every ticket already minted under it")
+    set_project_source_root.add_argument("project_prefix")
+    set_project_source_root.add_argument("source_root",
+                                          help="absolute path; a relative path is refused")
+    set_project_source_root.add_argument("--actor", required=True)
+    set_project_source_root.add_argument("--note")
 
     hotlist_create = sub.add_parser("hotlist-create")
     hotlist_create.add_argument("name")
@@ -279,6 +339,10 @@ def build_parser():
     hotlist_show.add_argument("name")
 
     sub.add_parser("hotlist-list")
+
+    current_state = sub.add_parser("current-state")
+    current_state.add_argument("name")
+    current_state.add_argument("--budget-chars", required=True, type=int, dest="budget_chars")
 
     dataset_create = sub.add_parser("dataset-create")
     dataset_create.add_argument("name")
@@ -318,18 +382,18 @@ def main(argv=None):
         print(json.dumps({"error": str(exc)}), file=sys.stderr)
         return 1
     except ValueError as exc:
-        # The store rejects a first-class column name passed to set-field, and
+        # TESS-98. The store rejects a first-class column name passed to set-field, and
         # rejects an out-of-range priority, by raising ValueError. http_api.py's dispatch
         # has caught ValueError into a 400 for a while; without the same catch here the
         # CLI answered a correctly-refused write with a traceback, which reads like the
-        # tool broke rather than like the input was wrong. Same reasoning as the earlier fix,
+        # tool broke rather than like the input was wrong. Same reasoning as TESS-18/26,
         # one exception type later.
         print(json.dumps({"error": str(exc)}), file=sys.stderr)
         return 1
     except sqlite3.IntegrityError as exc:
         # A FK/PK violation from the projection tables (e.g. `link --to <nonexistent>`)
         # is not a StoreError subclass and still escaped as a raw traceback even after
-        # the fix above -- the earlier fix was incomplete (found by Clint
+        # the fix above -- TESS-18's fix was incomplete (TESS-26, found by Clint
         # Eastwood's adversarial review, confirmed by direct repro).
         print(json.dumps({"error": str(exc)}), file=sys.stderr)
         return 1
@@ -368,7 +432,10 @@ def dispatch_internal(args, store, gitops, docs_root):
         store.add_comment(args.ticket_id, args.actor, args.body, code_snippet=args.code_snippet)
         print(json.dumps({"ok": True}))
     elif args.command == "transition":
-        store.transition_status(args.ticket_id, args.actor, args.status)
+        store.transition_status(
+            args.ticket_id, args.actor, args.status,
+            no_claim_reason=args.no_claim_reason,
+        )
         if args.status == "closed":
             check_and_record_closure(store, args.ticket_id, args.actor)
         print(json.dumps({"ok": True}))
@@ -405,7 +472,7 @@ def dispatch_internal(args, store, gitops, docs_root):
         )
         print(json.dumps({"event_hash": ehash}))
     elif args.command == "discrepancy":
-        result = discrepancy_for_ticket_singlerepo(store, args.ticket_id)
+        result = discrepancy_for_ticket(store, gitops, args.ticket_id, args.stage)
         print(json.dumps(result))
     elif args.command == "promote":
         if args.project and gitops is not None:
@@ -451,7 +518,14 @@ def dispatch_internal(args, store, gitops, docs_root):
         project_id = store.register_project(args.new_codename, args.new_prefix, args.source_root)
         print(json.dumps({"project_id": project_id}))
     elif args.command == "list-projects":
-        print(json.dumps({"projects": store.list_projects()}))
+        print(json.dumps({"projects": store.list_projects(status=args.status)}))
+    elif args.command == "archive-project":
+        print(json.dumps(store.archive_project(args.project_prefix, args.actor, note=args.note)))
+    elif args.command == "unarchive-project":
+        print(json.dumps(store.unarchive_project(args.project_prefix, args.actor, note=args.note)))
+    elif args.command == "set-project-source-root":
+        print(json.dumps(store.set_project_source_root(
+            args.project_prefix, args.actor, args.source_root, note=args.note)))
     elif args.command == "hotlist-create":
         hotlist_id = store.create_hotlist(args.name, args.actor)
         print(json.dumps({"hotlist_id": hotlist_id}))
@@ -469,6 +543,12 @@ def dispatch_internal(args, store, gitops, docs_root):
         print(json.dumps(result))
     elif args.command == "hotlist-list":
         print(json.dumps({"hotlists": store.list_hotlists()}))
+    elif args.command == "current-state":
+        text = store.render_current_state(args.name, args.budget_chars)
+        if text is None:
+            print(json.dumps({"error": f"no such hotlist {args.name!r}"}), file=sys.stderr)
+            return 1
+        print(text)
     elif args.command == "dataset-create":
         dataset_id = store.create_dataset(args.name, args.actor)
         print(json.dumps({"dataset_id": dataset_id}))

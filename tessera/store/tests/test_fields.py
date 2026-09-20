@@ -15,7 +15,7 @@ class FieldTests(unittest.TestCase):
         self.tmp_dir.cleanup()
 
     def test_base_and_bug_fields_first_class(self):
-        # severity/priority are a 0-4 ordered int scale (0=Highest, 4=Lowest),
+        # TESS-44: severity/priority are a 0-4 ordered int scale (0=Highest, 4=Lowest),
         # not free text -- priority=1 is "High" (P1), severity=0 is "Highest" (S0).
         tid = self.store.create_ticket(
             ticket_type="Bug", reporter="me", actor="agent", assignee="alice",
@@ -52,7 +52,7 @@ class FieldTests(unittest.TestCase):
         self.assertEqual(ticket["custom_fields"]["sprint"], 8)
 
     def test_custom_field_rebuild_matches_live_for_dict_and_non_ascii_values(self):
-        # ticket_fields.field_value was serialized with plain json.dumps() on
+        # TESS-20: ticket_fields.field_value was serialized with plain json.dumps() on
         # the live path (insertion key order, ensure_ascii default True) but with
         # canonical_json() on replay (sorted keys, ensure_ascii=False) -- a dict-valued
         # field or any non-ASCII text diverged between live and rebuilt for identical
@@ -70,7 +70,7 @@ class FieldTests(unittest.TestCase):
         self.assertEqual(sorted(live["ticket_fields"]), sorted(rebuilt["ticket_fields"]))
 
     def test_summary_and_description_at_creation_and_via_setters(self):
-        # real first-class fields (Jira parity -- Summary/Description are
+        # TESS-42: real first-class fields (Jira parity -- Summary/Description are
         # distinct from Steps to Reproduce there), not the ad hoc custom_fields.summary
         # convention this replaces.
         tid = self.store.create_ticket(
@@ -126,7 +126,7 @@ class FieldTests(unittest.TestCase):
 
 
     def test_priority_and_severity_are_settable_after_create(self):
-        # The whole defect was that this could not be done at all, so the test
+        # TESS-98. The whole defect was that this could not be done at all, so the test
         # asserts the COLUMN moved, not just that the call returned.
         tid = self.store.create_ticket(ticket_type="Bug", reporter="me", actor="agent")
         self.assertIsNone(self.store.get_ticket(tid)["priority"])

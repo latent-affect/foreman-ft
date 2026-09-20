@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ..exceptions import GitCommandError, NonFastForwardError, SyncedFolderError
+from ..exceptions import GitCommandError, InvalidRevisionError, NonFastForwardError, SyncedFolderError
 from ..gitops import GitOps
 from ...store.store import Store
 
@@ -136,7 +136,7 @@ class StageTests(unittest.TestCase):
         self.assertEqual(stale2, 0)
 
     def test_reconcile_stage_git_failure_does_not_silently_mark_stale(self):
-        # A linked commit that was never fetched into this stage repo makes
+        # TESS-68: a linked commit that was never fetched into this stage repo makes
         # `git merge-base --is-ancestor` fail with a real git error (object doesn't
         # exist), returncode != 0 and != 1 -- a different failure than a genuine
         # "not an ancestor" (returncode 1). Before the fix, reconcile_stage collapsed
@@ -164,7 +164,7 @@ class StageTests(unittest.TestCase):
         self.assertEqual(before, after)
 
     def test_missing_stage_repo_gives_clear_error_not_raw_git_fatal(self):
-        # reconcile_stage/diff/etc. on a stage that has never been promoted
+        # TESS-64: reconcile_stage/diff/etc. on a stage that has never been promoted
         # used to surface a raw `fatal: cannot change to '<path>': No such file or
         # directory` from the git subprocess itself -- real (non-silent) but easy to
         # misread as "nothing happened." Now the missing-repo case is named explicitly,
@@ -197,6 +197,41 @@ class StageTests(unittest.TestCase):
         ).fetchone()
         self.assertEqual(row[0], "feature/x")
         self.assertIsNone(row[1])
+
+    def test_files_touched_rejects_argument_injection_shaped_revision(self):
+        self.ops.init_stage("dev", source_repo=self.src)
+        self.ops.promote_stage("dev", self.c2, "agent")
+        with self.assertRaises(InvalidRevisionError):
+            self.ops.files_touched("dev", "--output=/tmp/tess159-pwned")
+
+    def test_diff_rejects_argument_injection_shaped_revision(self):
+        self.ops.init_stage("dev", source_repo=self.src)
+        self.ops.promote_stage("dev", self.c2, "agent")
+        with self.assertRaises(InvalidRevisionError):
+            self.ops.diff("dev", "--output=/tmp/tess159-pwned")
+
+    def test_files_touched_arbitrary_write_payload_no_longer_writes_a_file(self):
+        # TESS-159 live-reproduced payload: before the fix, this exact commit_sha caused
+        # `git show --output=<path> ...` to write a real file at an attacker-chosen path
+        # -- an arbitrary-write primitive reachable via ticket data. Reproduces the same
+        # payload shape here and asserts the target file is never created.
+        self.ops.init_stage("dev", source_repo=self.src)
+        self.ops.promote_stage("dev", self.c2, "agent")
+        target = self.root / "tess159-pwned.txt"
+        self.assertFalse(target.exists())
+        with self.assertRaises(InvalidRevisionError):
+            self.ops.files_touched("dev", f"--output={target}")
+        self.assertFalse(target.exists())
+
+    def test_diff_and_files_touched_reject_bare_branch_name(self):
+        # ARCHITECTURE.md:262-267 -- a bare ref/branch name must not resolve as if it
+        # were a pinned commit.
+        self.ops.init_stage("dev", source_repo=self.src)
+        self.ops.promote_stage("dev", self.c2, "agent")
+        with self.assertRaises(InvalidRevisionError):
+            self.ops.files_touched("dev", "master")
+        with self.assertRaises(InvalidRevisionError):
+            self.ops.diff("dev", "master")
 
     def test_promote_nonexistent_commit_raises_git_command_error_not_nonfastforward(self):
         # code-review finding: a commit that was never fetched (merge-base exits 128,
