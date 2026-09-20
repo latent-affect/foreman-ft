@@ -27,3 +27,8 @@ dev-harness Run 2 build.pdf
 # installed on a specific machine, and the filename alone discloses which. The committed part is
 # example.sh.template, which is not matched by this pattern. Write your own descriptor from it.
 bollard/lib/credential_targets/*.sh
+
+# Session-continuity artifacts (handoff docs) are internal operational notes for the next
+# working session, not something the public needs -- this repo ships the product, not a
+# history of how it was built session to session.
+HANDOFF-*.md
