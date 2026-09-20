@@ -10,3 +10,8 @@ ROADMAP.md
 ARCHITECTURE-REVIEW.md
 prepare_notebook.py
 repo_context_part_*.txt
+
+# Session-continuity artifacts (handoff docs) are internal operational notes for the next
+# working session, not something the public needs -- this repo ships the product, not a
+# history of how it was built session to session.
+HANDOFF-*.md
